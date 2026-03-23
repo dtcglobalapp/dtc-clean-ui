@@ -817,3 +817,125 @@ body.dtc-page {
     border-radius: 18px;
   }
 }
+/* 🔥 MOBILE FIRST — CHILD PROFILE SIMPLIFICADO */
+@media (max-width: 600px) {
+
+  /* Ocultar cosas pesadas en móvil */
+  .profile-stats,
+  .overview-grid,
+  .profile-notes-block,
+  .guardian-list,
+  #documentsTableWrap,
+  #deliveryTableWrap {
+    display: none !important;
+  }
+
+  /* Panel lateral más limpio */
+  .profile-side {
+    position: static;
+    text-align: center;
+  }
+
+  .profile-photo {
+    width: 140px;
+    height: 140px;
+    border-radius: 20px;
+  }
+
+  .profile-name-block h2 {
+    font-size: 22px;
+  }
+
+  /* Botones grandes tipo app */
+  .profile-actions .btn,
+  #sendToAgencyBtn {
+    width: 100%;
+    font-size: 16px;
+    min-height: 52px;
+  }
+
+  /* Compactar layout */
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  /* Header botones full width */
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    flex: 1;
+    min-height: 48px;
+  }
+}
+/* 🔥 MOBILE CARDS — CHILDREN LIST */
+.children-cards-wrap {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.child-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fbfcfe;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.child-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.child-card-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.child-card-name strong {
+  font-size: 16px;
+}
+
+.child-card-classroom {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.child-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.child-card-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.child-card-item span {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.child-card-actions {
+  display: flex;
+  gap: 8px;
+}

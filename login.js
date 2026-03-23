@@ -7,16 +7,19 @@ const loginBtn = document.getElementById("loginBtn");
 const messageBox = document.getElementById("messageBox");
 
 function showMessage(text, type = "info") {
+  if (!messageBox) return;
   messageBox.textContent = text;
   messageBox.className = `message ${type}`;
 }
 
 function hideMessage() {
+  if (!messageBox) return;
   messageBox.textContent = "";
   messageBox.className = "message hidden";
 }
 
 function setLoading(isLoading) {
+  if (!loginBtn) return;
   loginBtn.disabled = isLoading;
   loginBtn.textContent = isLoading ? "Signing in..." : "Sign In";
 }

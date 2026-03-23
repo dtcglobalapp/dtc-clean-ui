@@ -2,33 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#1d4ed8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="DTC Clean" />
   <title>DTC Clean — Children</title>
   <link rel="stylesheet" href="./children.css" />
 </head>
 <body class="dtc-page">
-  <header class="page-header">
-    <div>
-      <p class="eyebrow">DTC Clean</p>
-      <h1>Children</h1>
-      <p class="subtitle">View, search, and manage children records for your organization.</p>
-    </div>
-
-    <div class="header-actions">
-      <a class="btn btn-secondary" href="../dashboard.html">Back</a>
-      <a class="btn btn-primary" href="./child-form.html">Add Child</a>
-    </div>
-  </header>
-
   <main class="page-content">
-    <section class="panel">
-      <div class="panel-toolbar">
+    <header class="page-header children-header">
+      <div>
+        <p class="eyebrow">DTC Clean</p>
+        <h1>Children</h1>
+        <p class="subtitle">
+          View, search, and manage children records for your organization.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
+        <a class="btn btn-primary" href="./child-form.html">Add Child</a>
+      </div>
+    </header>
+
+    <section class="panel children-panel">
+      <div class="panel-toolbar children-toolbar">
         <div class="search-wrap">
           <label class="sr-only" for="searchInput">Search children</label>
           <input
             id="searchInput"
             type="search"
-            placeholder="Search by first name, last name, classroom..."
+            placeholder="Search by name, classroom..."
             autocomplete="off"
           />
         </div>
