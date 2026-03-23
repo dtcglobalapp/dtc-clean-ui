@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Child</title>
+  <link rel="stylesheet" href="./children.css" />
+</head>
+<body class="dtc-page">
+
+  <main class="page-content">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">DTC Clean</p>
+        <h1>Edit Child</h1>
+        <p class="subtitle">Update an existing child record, manage guardians, and strengthen pickup safety.</p>
+      </div>
+
+      <div class="header-actions">
+        <a id="backToProfileBtn" class="btn btn-secondary" href="#">Back</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div id="loadingState" class="state-box">
+        <p>Loading child record...</p>
+      </div>
+
+      <form id="childEditForm" class="form-grid hidden">
+        <div class="form-field form-field-full">
+          <label>Child Photo</label>
+
+          <div class="photo-edit-row">
+            <div class="photo-preview-card">
+              <img
+                id="photoPreview"
+                class="photo-preview-image"
+                src="https://placehold.co/320x320?text=Child+Photo"
+                alt="Child photo preview"
+              />
+            </div>
+
+            <div class="photo-upload-panel">
+              <label class="btn btn-secondary photo-file-btn" for="photo_file">
+                Choose Photo
+              </label>
+              <input type="file" id="photo_file" accept="image/*" class="hidden-file-input" />
+
+              <p class="field-help">
+                Upload a clear child photo. The file will be saved to DTC storage and attached to this child record.
+              </p>
+
+              <div id="selectedPhotoName" class="photo-file-name">No new photo selected.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="first_name">First Name</label>
+          <input type="text" id="first_name" required />
+        </div>
+
+        <div class="form-field">
+          <label for="middle_name">Middle Name</label>
+          <input type="text" id="middle_name" />
+        </div>
+
+        <div class="form-field">
+          <label for="last_name">Last Name</label>
+          <input type="text" id="last_name" required />
+        </div>
+
+        <div class="form-field">
+          <label for="date_of_birth">Date of Birth</label>
+          <input type="date" id="date_of_birth" />
+        </div>
+
+        <div class="form-field">
+          <label for="gender">Gender</label>
+          <select id="gender">
+            <option value="">Select gender</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="enrollment_date">Enrollment Date</label>
+          <input type="date" id="enrollment_date" />
+        </div>
+
+        <div class="form-field">
+          <label for="classroom">Classroom</label>
+          <select id="classroom">
+            <option value="">Select classroom</option>
+            <option value="Infants">Infants (under 2 years)</option>
+            <option value="Toddlers">Toddlers (2 to under 3 years)</option>
+            <option value="Preschool">Preschool (3 to under 5 years)</option>
+            <option value="School Age">School Age (5+ years)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="waitlist">Waitlist</option>
+            <option value="graduated">Graduated</option>
+          </select>
+        </div>
+
+        <div class="form-field form-field-full">
+          <label for="notes">Notes</label>
+          <textarea id="notes" rows="5" placeholder="Write notes here..."></textarea>
+        </div>
+
+        <div class="form-actions form-field-full">
+          <button type="submit" id="saveBtn" class="btn btn-primary">Save Changes</button>
+          <a id="cancelToProfileBtn" href="#" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </section>
+
+    <section id="guardiansSection" class="panel hidden">
+      <div class="section-heading">
+        <div>
+          <h2>Guardians</h2>
+          <p class="subtitle small">Create new guardians or assign existing ones to this child.</p>
+        </div>
+      </div>
+
+      <div id="guardiansMessageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div class="guardian-editor-layout">
+        <div class="guardian-column">
+          <div class="subpanel">
+            <h3 class="subpanel-title">Assigned Guardians</h3>
+
+            <div id="assignedGuardiansEmpty" class="state-box">
+              <p>No guardians linked yet.</p>
+            </div>
+
+            <div id="assignedGuardiansList" class="guardian-linked-list hidden"></div>
+          </div>
+        </div>
+
+        <div class="guardian-column guardian-column-stack">
+          <div class="subpanel">
+            <h3 class="subpanel-title">Add Existing Guardian</h3>
+
+            <form id="linkGuardianForm" class="form-grid compact-grid">
+              <div class="form-field form-field-full">
+                <label for="existing_guardian_id">Guardian</label>
+                <select id="existing_guardian_id">
+                  <option value="">Select existing guardian</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="existing_is_primary">Primary Guardian</label>
+                <select id="existing_is_primary">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="existing_pickup_authorized">Pickup Authorized</label>
+                <select id="existing_pickup_authorized">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="existing_emergency_contact">Emergency Contact</label>
+                <select id="existing_emergency_contact">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+
+              <div class="form-actions form-field-full">
+                <button type="submit" class="btn btn-primary">Assign Guardian</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="subpanel">
+            <h3 class="subpanel-title">Create New Guardian</h3>
+
+            <form id="createGuardianForm" class="form-grid compact-grid">
+              <div class="form-field">
+                <label for="guardian_first_name">First Name</label>
+                <input type="text" id="guardian_first_name" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_last_name">Last Name</label>
+                <input type="text" id="guardian_last_name" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_relationship">Relationship</label>
+                <select id="guardian_relationship">
+                  <option value="">Select relationship</option>
+                  <option value="Mother">Mother</option>
+                  <option value="Father">Father</option>
+                  <option value="Grandmother">Grandmother</option>
+                  <option value="Grandfather">Grandfather</option>
+                  <option value="Aunt">Aunt</option>
+                  <option value="Uncle">Uncle</option>
+                  <option value="Sibling">Sibling</option>
+                  <option value="Family Friend">Family Friend</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_phone">Primary Phone</label>
+                <input type="text" id="guardian_phone" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_phone_extension">Primary Ext.</label>
+                <input type="text" id="guardian_phone_extension" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_secondary_phone">Secondary Phone</label>
+                <input type="text" id="guardian_secondary_phone" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_secondary_phone_extension">Secondary Ext.</label>
+                <input type="text" id="guardian_secondary_phone_extension" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_email">Email</label>
+                <input type="email" id="guardian_email" />
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_preferred_contact_method">Preferred Contact</label>
+                <select id="guardian_preferred_contact_method">
+                  <option value="">Select preferred method</option>
+                  <option value="Call">Call</option>
+                  <option value="Text">Text</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Email">Email</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="guardian_photo_file">Guardian Photo</label>
+                <label class="btn btn-secondary photo-file-btn" for="guardian_photo_file">Choose Photo</label>
+                <input type="file" id="guardian_photo_file" accept="image/*" class="hidden-file-input" />
+                <div id="guardianSelectedPhotoName" class="photo-file-name">No new guardian photo selected.</div>
+              </div>
+
+              <div class="form-field">
+                <label for="new_is_primary">Primary Guardian</label>
+                <select id="new_is_primary">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="new_pickup_authorized">Pickup Authorized</label>
+                <select id="new_pickup_authorized">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="new_emergency_contact">Emergency Contact</label>
+                <select id="new_emergency_contact">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+
+              <div class="form-actions form-field-full">
+                <button type="submit" class="btn btn-primary">Create and Assign Guardian</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="guardianEditModal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>Edit Guardian</h3>
+          <p class="subtitle small">Correct and update guardian information without leaving this page.</p>
+        </div>
+        <button id="closeGuardianModalBtn" class="modal-close-btn" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div id="guardianEditMessageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <form id="guardianEditForm" class="form-grid compact-grid">
+        <input type="hidden" id="edit_guardian_id" />
+
+        <div class="form-field">
+          <label for="edit_guardian_first_name">First Name</label>
+          <input type="text" id="edit_guardian_first_name" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_last_name">Last Name</label>
+          <input type="text" id="edit_guardian_last_name" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_relationship">Relationship</label>
+          <select id="edit_guardian_relationship">
+            <option value="">Select relationship</option>
+            <option value="Mother">Mother</option>
+            <option value="Father">Father</option>
+            <option value="Grandmother">Grandmother</option>
+            <option value="Grandfather">Grandfather</option>
+            <option value="Aunt">Aunt</option>
+            <option value="Uncle">Uncle</option>
+            <option value="Sibling">Sibling</option>
+            <option value="Family Friend">Family Friend</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_phone">Primary Phone</label>
+          <input type="text" id="edit_guardian_phone" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_phone_extension">Primary Ext.</label>
+          <input type="text" id="edit_guardian_phone_extension" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_secondary_phone">Secondary Phone</label>
+          <input type="text" id="edit_guardian_secondary_phone" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_secondary_phone_extension">Secondary Ext.</label>
+          <input type="text" id="edit_guardian_secondary_phone_extension" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_email">Email</label>
+          <input type="email" id="edit_guardian_email" />
+        </div>
+
+        <div class="form-field">
+          <label for="edit_guardian_preferred_contact_method">Preferred Contact</label>
+          <select id="edit_guardian_preferred_contact_method">
+            <option value="">Select preferred method</option>
+            <option value="Call">Call</option>
+            <option value="Text">Text</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Email">Email</option>
+          </select>
+        </div>
+
+        <div class="form-actions form-field-full">
+          <button id="saveGuardianChangesBtn" type="submit" class="btn btn-primary">Save Guardian Changes</button>
+          <button id="cancelGuardianModalBtn" type="button" class="btn btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./child-edit.js"></script>
+</body>
+</html>

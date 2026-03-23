@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DTC Clean — Children</title>
+  <link rel="stylesheet" href="./children.css" />
+</head>
+<body class="dtc-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">DTC Clean</p>
+      <h1>Children</h1>
+      <p class="subtitle">View, search, and manage children records for your organization.</p>
+    </div>
+
+    <div class="header-actions">
+      <a class="btn btn-secondary" href="../dashboard.html">Back</a>
+      <a class="btn btn-primary" href="./child-form.html">Add Child</a>
+    </div>
+  </header>
+
+  <main class="page-content">
+    <section class="panel">
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <label class="sr-only" for="searchInput">Search children</label>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search by first name, last name, classroom..."
+            autocomplete="off"
+          />
+        </div>
+
+        <button id="refreshBtn" class="btn btn-secondary" type="button">
+          Refresh
+        </button>
+      </div>
+
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div id="loadingState" class="state-box hidden">
+        <p>Loading children records...</p>
+      </div>
+
+      <div id="emptyState" class="state-box hidden">
+        <h2>No children found</h2>
+        <p>There are no matching child records yet for this organization.</p>
+        <a class="btn btn-primary" href="./child-form.html">Create first child</a>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Date of Birth</th>
+              <th>Gender</th>
+              <th>Classroom</th>
+              <th>Status</th>
+              <th>Enrollment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="childrenTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./children-list.js"></script>
+</body>
+</html>

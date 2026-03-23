@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC Clean — Alert Center</title>
+  <link rel="stylesheet" href="./alerts-center.css" />
+</head>
+<body class="dtc-alerts-page">
+  <main class="alerts-shell">
+    <header class="alerts-header">
+      <div>
+        <p class="eyebrow">DTC Clean</p>
+        <h1>Alert Center</h1>
+        <p class="subtitle">
+          Review important alerts, approve suggested actions, and contact families with control.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
+        <button id="refreshBtn" class="btn btn-primary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <section class="alerts-layout">
+      <section class="panel">
+        <div class="panel-top">
+          <div class="search-wrap">
+            <label class="sr-only" for="searchInput">Search alerts</label>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Search by child, title, type, status..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+        <div id="loadingState" class="state-box hidden">
+          <p>Loading alerts...</p>
+        </div>
+
+        <div id="emptyState" class="state-box hidden">
+          <h2>No alerts found</h2>
+          <p>DTC has no active alerts to review right now.</p>
+        </div>
+
+        <div id="alertsList" class="alerts-list"></div>
+      </section>
+
+      <aside class="panel decision-panel">
+        <div class="decision-header">
+          <h2>Decision Center</h2>
+          <p class="subtitle small">
+            Select an alert to review the suggested message and choose how to contact the guardian.
+          </p>
+        </div>
+
+        <div id="decisionEmpty" class="state-box">
+          <h2>Select an alert</h2>
+          <p>Choose one alert from the list to view contact recommendations and actions.</p>
+        </div>
+
+        <div id="decisionContent" class="decision-content hidden">
+          <div class="decision-card">
+            <div class="decision-block">
+              <span class="label">Child</span>
+              <strong id="detailChildName">—</strong>
+            </div>
+
+            <div class="decision-block">
+              <span class="label">Guardian</span>
+              <strong id="detailGuardianName">—</strong>
+            </div>
+
+            <div class="decision-block">
+              <span class="label">Preferred Contact</span>
+              <strong id="detailPreferredMethod">—</strong>
+            </div>
+
+            <div class="decision-block">
+              <span class="label">Suggested Action</span>
+              <strong id="detailSuggestedMethod">—</strong>
+            </div>
+
+            <div class="decision-block">
+              <span class="label">Title</span>
+              <strong id="detailTitle">—</strong>
+            </div>
+
+            <div class="decision-block">
+              <span class="label">Message Preview</span>
+              <div id="detailMessage" class="message-preview">—</div>
+            </div>
+          </div>
+
+          <div class="actions-grid">
+            <button id="actionCall" class="action-btn" type="button">Call</button>
+            <button id="actionText" class="action-btn" type="button">Text</button>
+            <button id="actionWhatsApp" class="action-btn" type="button">WhatsApp</button>
+            <button id="actionEmail" class="action-btn" type="button">Email</button>
+          </div>
+
+          <section class="decision-history-card" aria-labelledby="historyTitle">
+            <div class="decision-history-header">
+              <h3 id="historyTitle">Action History</h3>
+              <p class="subtitle small">Every contact attempt and decision will appear here.</p>
+            </div>
+
+            <div id="historyLoading" class="state-box hidden">
+              <p>Loading history...</p>
+            </div>
+
+            <div id="historyEmpty" class="state-box">
+              <h2>No actions yet</h2>
+              <p>This alert has no saved action history yet.</p>
+            </div>
+
+            <div id="historyList" class="history-list hidden"></div>
+          </section>
+
+          <div class="decision-footer">
+            <button id="dismissBtn" class="btn btn-secondary" type="button">Dismiss Alert</button>
+            <button id="completeBtn" class="btn btn-primary" type="button">Mark Completed</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script type="module" src="./alerts-center.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC Clean — Upload Child Document</title>
+  <link rel="stylesheet" href="./documents.css" />
+</head>
+<body class="dtc-page">
+
+  <main class="page-content">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">DTC Clean</p>
+        <h1>Upload Child Document</h1>
+        <p class="subtitle">
+          Upload and classify child documents such as vaccines, medical forms, agreements, and signed records.
+          All newly uploaded documents are automatically saved as <strong>Pending Review</strong> until the daycare verifies them.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./documents-list.html">Back to Documents</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <form id="documentForm" class="form-grid">
+        <div class="form-field">
+          <label for="child_id">Child</label>
+          <select id="child_id" required>
+            <option value="">Select child</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="document_type">Document Type</label>
+          <select id="document_type" required>
+            <option value="">Select document type</option>
+            <option value="medical_form">Medical Form</option>
+            <option value="vaccination_record">Vaccination Record</option>
+            <option value="health_care_plan">Health Care Plan</option>
+            <option value="allergy_plan">Allergy Plan</option>
+            <option value="medication_authorization">Medication Authorization</option>
+            <option value="physical_exam">Physical Exam</option>
+            <option value="emergency_form">Emergency Form</option>
+            <option value="parent_agreement">Parent Agreement</option>
+            <option value="pickup_authorization">Pickup Authorization</option>
+            <option value="incident_report">Incident Report</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="title">Title</label>
+          <input
+            type="text"
+            id="title"
+            placeholder="Example: Vaccination Record - Emma Liranzo"
+            required
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Review Status</label>
+          <div class="readonly-badge-wrap">
+            <span class="badge pending_review">Pending Review</span>
+          </div>
+          <p class="field-help">
+            This status is assigned automatically. The daycare will review and approve the document later.
+          </p>
+        </div>
+
+        <div class="form-field">
+          <label for="issue_date">Issue Date</label>
+          <input type="date" id="issue_date" />
+        </div>
+
+        <div class="form-field">
+          <label for="expires_at">Expiration Date</label>
+          <input type="date" id="expires_at" />
+        </div>
+
+        <div class="form-field checkbox-row form-field-full">
+          <label class="checkbox-label">
+            <input type="checkbox" id="requires_renewal" />
+            <span>Requires renewal</span>
+          </label>
+        </div>
+
+        <div class="form-field form-field-full">
+          <label for="notes">Notes</label>
+          <textarea
+            id="notes"
+            rows="5"
+            placeholder="Write notes about this document..."
+          ></textarea>
+        </div>
+
+        <div class="form-field form-field-full">
+          <label for="file_input">Document File (PDF or image)</label>
+          <input type="file" id="file_input" accept=".pdf,image/*" required />
+          <p class="field-help">
+            Parents may upload a photo or PDF first. The daycare can later verify, replace, or correct the file after reviewing the physical document.
+          </p>
+        </div>
+
+        <div class="form-actions form-field-full">
+          <button type="submit" id="saveBtn" class="btn btn-primary">Upload Document</button>
+          <a class="btn btn-secondary" href="./documents-list.html">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="./documents-upload.js"></script>
+</body>
+</html>

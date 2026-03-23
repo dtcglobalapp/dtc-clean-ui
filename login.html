@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DTC Clean — Login</title>
+  <link rel="stylesheet" href="./login.css" />
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-card">
+      <p class="eyebrow">DTC Clean</p>
+      <h1>Sign in</h1>
+      <p class="subtitle">Access your daycare management workspace securely.</p>
+
+      <form id="loginForm" class="login-form">
+        <label>
+          <span>Email</span>
+          <input id="emailInput" type="email" autocomplete="email" required />
+        </label>
+
+        <label>
+          <span>Password</span>
+          <input id="passwordInput" type="password" autocomplete="current-password" required />
+        </label>
+
+        <button id="loginBtn" class="btn btn-primary" type="submit">
+          Sign In
+        </button>
+      </form>
+
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./login.js"></script>
+</body>
+</html>

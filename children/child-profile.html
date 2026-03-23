@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC Clean — Child Profile</title>
+  <link rel="stylesheet" href="./children.css" />
+</head>
+<body class="dtc-page">
+
+  <main class="page-content">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">DTC Clean</p>
+        <h1>Child Profile</h1>
+        <p class="subtitle">Complete record overview for this child.</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./children-list.html">Back</a>
+        <a id="editChildBtn" class="btn btn-primary" href="#">Edit Child</a>
+      </div>
+    </header>
+
+    <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+    <section id="loadingState" class="panel">
+      <div class="state-box">
+        <p>Loading child profile...</p>
+      </div>
+    </section>
+
+    <section id="profileContent" class="profile-layout hidden">
+      <aside class="panel profile-side">
+        <div class="profile-photo-wrap">
+          <img
+            id="childPhoto"
+            class="profile-photo"
+            src=""
+            alt="Child photo"
+          />
+        </div>
+
+        <div class="profile-photo-actions">
+          <label class="btn btn-secondary photo-file-btn" for="profilePhotoInput">Change Photo</label>
+          <input type="file" id="profilePhotoInput" accept="image/*" class="hidden-file-input" />
+          <button id="savePhotoBtn" class="btn btn-primary" type="button">Save Photo</button>
+          <div id="profilePhotoFileName" class="photo-file-name">No new photo selected.</div>
+        </div>
+
+        <div class="profile-name-block">
+          <h2 id="profileName">—</h2>
+          <p id="profileClassroom" class="profile-muted">—</p>
+          <span id="profileStatus" class="badge active">active</span>
+        </div>
+
+        <div class="profile-stats">
+          <div class="stat-card">
+            <span class="stat-label">Age</span>
+            <strong id="profileAge">—</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Gender</span>
+            <strong id="profileGender">—</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">DOB</span>
+            <strong id="profileDob">—</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Enrollment</span>
+            <strong id="profileEnrollment">—</strong>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <a id="documentsBtn" class="btn btn-secondary" href="#">Documents</a>
+          <button id="uploadDocumentBtn" class="btn btn-secondary" type="button">Upload Document</button>
+        </div>
+      </aside>
+
+      <section class="profile-main">
+        <div class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Overview</h2>
+              <p class="subtitle small">Basic child information and internal notes.</p>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <div class="overview-item">
+              <span class="overview-label">First Name</span>
+              <strong id="overviewFirstName">—</strong>
+            </div>
+
+            <div class="overview-item">
+              <span class="overview-label">Middle Name</span>
+              <strong id="overviewMiddleName">—</strong>
+            </div>
+
+            <div class="overview-item">
+              <span class="overview-label">Last Name</span>
+              <strong id="overviewLastName">—</strong>
+            </div>
+
+            <div class="overview-item">
+              <span class="overview-label">Classroom</span>
+              <strong id="overviewClassroom">—</strong>
+            </div>
+
+            <div class="overview-item">
+              <span class="overview-label">Status</span>
+              <strong id="overviewStatus">—</strong>
+            </div>
+
+            <div class="overview-item">
+              <span class="overview-label">Agreement Signed</span>
+              <strong id="overviewAgreement">—</strong>
+            </div>
+          </div>
+
+          <div class="profile-notes-block">
+            <span class="overview-label">Notes</span>
+            <div id="overviewNotes" class="notes-box">—</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Guardians</h2>
+              <p class="subtitle small">Authorized guardians linked to this child.</p>
+            </div>
+          </div>
+
+          <div id="guardiansEmpty" class="state-box">
+            <p>No guardians linked yet.</p>
+          </div>
+
+          <div id="guardiansList" class="guardian-list hidden"></div>
+        </div>
+
+        <!-- DOCUMENTS -->
+        <div class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Documents</h2>
+              <p class="subtitle small">Manage, send, and track documents for this child.</p>
+            </div>
+
+            <div class="header-actions">
+              <button id="sendToAgencyBtn" class="btn btn-primary" type="button">Send to Agency</button>
+            </div>
+          </div>
+
+          <div id="documentsEmpty" class="state-box">
+            <p>No documents uploaded yet for this child.</p>
+          </div>
+
+          <div id="documentsTableWrap" class="table-wrap hidden">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Issue Date</th>
+                  <th>Expires</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="documentsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DELIVERY HISTORY -->
+        <div class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Delivery History</h2>
+              <p class="subtitle small">Proof of documents sent to agencies and contacts.</p>
+            </div>
+          </div>
+
+          <div id="deliveryEmpty" class="state-box">
+            <p>No delivery records yet.</p>
+          </div>
+
+          <div id="deliveryTableWrap" class="table-wrap hidden">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Document</th>
+                  <th>Sent To</th>
+                  <th>Date</th>
+                  <th>Sent By</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="deliveryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./child-profile.js"></script>
+</body>
+</html>

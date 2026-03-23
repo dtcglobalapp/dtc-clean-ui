@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DTC Clean — Dashboard</title>
+  <link rel="stylesheet" href="./dashboard.css" />
+</head>
+<body class="dtc-dashboard-page">
+  <main class="dashboard-shell">
+    <header class="dashboard-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">DTC Clean</p>
+        <h1>Daycare Dashboard</h1>
+        <p class="hero-subtitle">
+          Welcome to your control center. Review key areas of the daycare, manage children,
+          documents, agreements, and prepare DTC for the next level.
+        </p>
+      </div>
+
+      <div class="hero-badge">
+        <span class="hero-badge-label">Business</span>
+        <strong>Miriam Group Daycare</strong>
+      </div>
+    </header>
+
+    <section class="quick-stats">
+      <article class="stat-card">
+        <span class="stat-icon">👶</span>
+        <div class="stat-text">
+          <span class="stat-label">Children</span>
+          <strong id="childrenCount">—</strong>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-icon">📄</span>
+        <div class="stat-text">
+          <span class="stat-label">Documents</span>
+          <strong id="documentsCount">—</strong>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-icon">⏳</span>
+        <div class="stat-text">
+          <span class="stat-label">Pending Review</span>
+          <strong id="pendingDocsCount">—</strong>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <span class="stat-icon">⚠️</span>
+        <div class="stat-text">
+          <span class="stat-label">Expiring Soon</span>
+          <strong id="expiringDocsCount">—</strong>
+        </div>
+      </article>
+    </section>
+
+    <section class="alerts-panel">
+      <div class="section-header">
+        <div>
+          <h2>Alerts & Reminders</h2>
+          <p>Important follow-ups that help avoid stress, delays, and compliance problems.</p>
+        </div>
+
+        <div class="header-actions">
+          <a class="btn btn-secondary" href="./alerts/alerts-center.html">Open Alert Center</a>
+        </div>
+      </div>
+
+      <div id="alertsList" class="alerts-list">
+        <article class="alert-card neutral">
+          <div class="alert-icon">💡</div>
+          <div class="alert-copy">
+            <h3>DTC is ready to grow</h3>
+            <p>Your daycare dashboard is active. Alerts will become smarter as more modules are connected.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="modules-panel">
+      <div class="section-header">
+        <div>
+          <h2>Main Modules</h2>
+          <p>Open the areas you need most, quickly and clearly.</p>
+        </div>
+      </div>
+
+      <div class="module-grid">
+        <a class="module-card children-card" href="./children/children-list.html">
+          <div class="module-icon">👶</div>
+          <div class="module-body">
+            <h3>Children</h3>
+            <p>View, add, edit, and manage all children enrolled in the daycare.</p>
+          </div>
+          <span class="module-link">Open Module</span>
+        </a>
+
+        <a class="module-card documents-card" href="./agreements/documents-list.html">
+          <div class="module-icon">📄</div>
+          <div class="module-body">
+            <h3>Documents</h3>
+            <p>Track medical records, forms, expiration dates, reviews, and transmission history.</p>
+          </div>
+          <span class="module-link">Open Module</span>
+        </a>
+
+        <a class="module-card agreements-card" href="./agreements/documents-list.html">
+          <div class="module-icon">🧾</div>
+          <div class="module-body">
+            <h3>Agreements</h3>
+            <p>Prepare DTC for signed parent agreements, legal policies, and audit-ready records.</p>
+          </div>
+          <span class="module-link">Open Module</span>
+        </a>
+
+        <a class="module-card guardians-card" href="./children/children-list.html">
+          <div class="module-icon">👨‍👩‍👧</div>
+          <div class="module-body">
+            <h3>Guardians</h3>
+            <p>Access guardian information through each child profile and strengthen pickup safety.</p>
+          </div>
+          <span class="module-link">Open Through Profile</span>
+        </a>
+
+        <a class="module-card reports-card" href="./alerts/alerts-center.html">
+          <div class="module-icon">🚨</div>
+          <div class="module-body">
+            <h3>Alert Center</h3>
+            <p>Let DTC suggest the best contact method and keep the owner in control of every outreach.</p>
+          </div>
+          <span class="module-link">Open Module</span>
+        </a>
+
+        <a class="module-card settings-card" href="./children/children-list.html">
+          <div class="module-icon">⚙️</div>
+          <div class="module-body">
+            <h3>Setup & Records</h3>
+            <p>Continue shaping the business foundation: children, parents, documents, and workflows.</p>
+          </div>
+          <span class="module-link">Continue Building</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./dashboard.js"></script>
+</body>
+</html>

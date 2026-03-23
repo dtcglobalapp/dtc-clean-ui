@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC Clean — Child Documents</title>
+  <link rel="stylesheet" href="./documents.css" />
+</head>
+<body class="dtc-page">
+
+  <main class="page-content">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">DTC Clean</p>
+        <h1 id="pageTitle">Child Documents</h1>
+        <p id="pageSubtitle" class="subtitle">
+          Review, approve, print, and track sensitive child documents uploaded by the daycare team.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a id="backBtn" class="btn btn-secondary" href="../dashboard.html">Back</a>
+        <a id="uploadBtn" class="btn btn-primary" href="./documents-upload.html">Upload Document</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <label class="sr-only" for="searchInput">Search documents</label>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search by child, title, type, status..."
+            autocomplete="off"
+          />
+        </div>
+
+        <button id="refreshBtn" class="btn btn-secondary" type="button">
+          Refresh
+        </button>
+      </div>
+
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div id="loadingState" class="state-box hidden">
+        <p>Loading documents...</p>
+      </div>
+
+      <div id="emptyState" class="state-box hidden">
+        <h2>No documents found</h2>
+        <p>There are no child documents saved yet for this organization.</p>
+        <a id="emptyUploadBtn" class="btn btn-primary" href="./documents-upload.html">Upload First Document</a>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Child</th>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Issue Date</th>
+              <th>Expires</th>
+              <th>Renewal</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="documentsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel transmission-panel">
+      <div class="section-heading">
+        <div>
+          <h2>Transmission History</h2>
+          <p class="subtitle small">
+            View when a document was sent, to whom, and by whom.
+          </p>
+        </div>
+      </div>
+
+      <div id="transmissionMessageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div id="transmissionEmptyState" class="state-box">
+        <h2>Select a document</h2>
+        <p>Click the <strong>History</strong> button on a document row to load its transmission history.</p>
+      </div>
+
+      <div class="table-wrap hidden" id="transmissionTableWrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Sent At</th>
+              <th>Recipient Email</th>
+              <th>Recipient Type</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="transmissionsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./documents-list.js"></script>
+</body>
+</html>
