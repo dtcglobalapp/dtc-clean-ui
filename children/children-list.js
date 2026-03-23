@@ -3,14 +3,12 @@ import { getChildren } from "./children-api.js";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
-const tableBody = document.getElementById("childrenTableBody");
+const childrenGrid = document.getElementById("childrenGrid");
 const loadingState = document.getElementById("loadingState");
 const emptyState = document.getElementById("emptyState");
-const tableWrap = document.getElementById("tableWrap");
 const messageBox = document.getElementById("messageBox");
 
 let allChildren = [];
-let mobileCardsWrap = null;
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
@@ -38,33 +36,6 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
-function parseDateOnly(value) {
-  if (!value || typeof value !== "string") return null;
-
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return null;
-
-  const [, year, month, day] = match;
-  return {
-    year: Number(year),
-    month: Number(month),
-    day: Number(day),
-  };
-}
-
-function formatDate(value) {
-  if (!value) return "—";
-
-  const parsed = parseDateOnly(value);
-  if (parsed) {
-    return `${parsed.month}/${parsed.day}/${parsed.year}`;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString();
-}
-
 function fullName(child) {
   return [child.first_name ?? "", child.middle_name ?? "", child.last_name ?? ""]
     .join(" ")
@@ -77,117 +48,50 @@ function statusBadge(status = "") {
   return `<span class="badge ${escapeHtml(safe)}">${escapeHtml(status || "unknown")}</span>`;
 }
 
-function isMobileLayout() {
-  return window.innerWidth <= 760;
-}
-
-function ensureMobileCardsWrap() {
-  if (mobileCardsWrap) return mobileCardsWrap;
-
-  mobileCardsWrap = document.createElement("div");
-  mobileCardsWrap.id = "childrenCardsWrap";
-  mobileCardsWrap.className = "children-cards-wrap hidden";
-
-  if (tableWrap && tableWrap.parentNode) {
-    tableWrap.parentNode.insertBefore(mobileCardsWrap, tableWrap.nextSibling);
+function getPhotoUrl(child) {
+  if (child.photo_url && String(child.photo_url).trim()) {
+    return String(child.photo_url).trim();
   }
-
-  return mobileCardsWrap;
+  return "";
 }
 
-function childRow(child) {
-  const name = fullName(child);
-  const gender = child.gender || "—";
-  const classroom = child.classroom || "—";
-  const dob = formatDate(child.date_of_birth);
-  const enrollmentDate = formatDate(child.enrollment_date);
+function childTile(child) {
+  const name = fullName(child) || "Unnamed Child";
+  const classroom = child.classroom || "No classroom";
+  const photoUrl = getPhotoUrl(child);
+  const profileHref = `./child-profile.html?id=${encodeURIComponent(child.id)}`;
 
   return `
-    <tr>
-      <td>
-        <div class="name-cell">
-          <span class="name-main">${escapeHtml(name || "Unnamed Child")}</span>
-          <span class="name-sub">ID: ${escapeHtml(child.id)}</span>
-        </div>
-      </td>
-      <td>${escapeHtml(dob)}</td>
-      <td>${escapeHtml(gender)}</td>
-      <td>${escapeHtml(classroom)}</td>
-      <td>${statusBadge(child.status)}</td>
-      <td>${escapeHtml(enrollmentDate)}</td>
-      <td>
-        <div class="row-actions">
-          <a class="link-btn" href="./child-edit.html?id=${encodeURIComponent(child.id)}">Edit</a>
-          <a class="link-btn" href="./child-profile.html?id=${encodeURIComponent(child.id)}">Profile</a>
-        </div>
-      </td>
-    </tr>
-  `;
-}
+    <a class="child-tile" href="${profileHref}">
+      <div class="child-photo-wrap">
+        ${
+          photoUrl
+            ? `<img class="child-photo" src="${escapeHtml(photoUrl)}" alt="${escapeHtml(name)}" />`
+            : `<div class="child-photo-placeholder" aria-hidden="true">👶</div>`
+        }
+      </div>
 
-function childCard(child) {
-  const name = fullName(child);
-  const gender = child.gender || "—";
-  const classroom = child.classroom || "—";
-  const dob = formatDate(child.date_of_birth);
+      <p class="child-name">${escapeHtml(name)}</p>
+      <p class="child-classroom">${escapeHtml(classroom)}</p>
 
-  return `
-    <article class="child-card">
-      <div class="child-card-top">
-        <div class="child-card-name">
-          <strong>${escapeHtml(name || "Unnamed Child")}</strong>
-          <span class="child-card-classroom">${escapeHtml(classroom)}</span>
-        </div>
+      <div class="child-status">
         ${statusBadge(child.status)}
       </div>
-
-      <div class="child-card-grid">
-        <div class="child-card-item">
-          <span>DOB</span>
-          <strong>${escapeHtml(dob)}</strong>
-        </div>
-        <div class="child-card-item">
-          <span>Gender</span>
-          <strong>${escapeHtml(gender)}</strong>
-        </div>
-      </div>
-
-      <div class="child-card-actions">
-        <a class="link-btn" href="./child-profile.html?id=${encodeURIComponent(child.id)}">Profile</a>
-        <a class="link-btn" href="./child-edit.html?id=${encodeURIComponent(child.id)}">Edit</a>
-      </div>
-    </article>
+    </a>
   `;
 }
 
-function renderTable(rows) {
-  if (!tableBody || !tableWrap || !emptyState) return;
-
-  const mobileWrap = ensureMobileCardsWrap();
+function renderChildren(rows) {
+  if (!childrenGrid || !emptyState) return;
 
   if (!rows.length) {
-    tableBody.innerHTML = "";
+    childrenGrid.innerHTML = "";
     emptyState.classList.remove("hidden");
-    tableWrap.classList.add("hidden");
-    mobileWrap.innerHTML = "";
-    mobileWrap.classList.add("hidden");
     return;
   }
 
   emptyState.classList.add("hidden");
-
-  if (isMobileLayout()) {
-    tableWrap.classList.add("hidden");
-    mobileWrap.classList.remove("hidden");
-    mobileWrap.innerHTML = rows.map(childCard).join("");
-    tableBody.innerHTML = "";
-    return;
-  }
-
-  mobileWrap.classList.add("hidden");
-  mobileWrap.innerHTML = "";
-  tableWrap.classList.remove("hidden");
-  tableBody.innerHTML = rows.map(childRow).join("");
+  childrenGrid.innerHTML = rows.map(childTile).join("");
 }
 
 function filterChildren(query) {
@@ -214,7 +118,7 @@ function filterChildren(query) {
 
 function rerenderCurrentView() {
   const filtered = filterChildren(searchInput?.value || "");
-  renderTable(filtered);
+  renderChildren(filtered);
 }
 
 async function loadChildren() {
@@ -231,14 +135,8 @@ async function loadChildren() {
   } catch (error) {
     console.error("Load children error:", error);
     showMessage(`Could not load children: ${error.message}`, "error");
-
-    if (tableBody) tableBody.innerHTML = "";
+    if (childrenGrid) childrenGrid.innerHTML = "";
     if (emptyState) emptyState.classList.remove("hidden");
-    if (tableWrap) tableWrap.classList.add("hidden");
-
-    const mobileWrap = ensureMobileCardsWrap();
-    mobileWrap.innerHTML = "";
-    mobileWrap.classList.add("hidden");
   } finally {
     showLoading(false);
   }
@@ -252,15 +150,9 @@ refreshBtn?.addEventListener("click", () => {
   loadChildren();
 });
 
-window.addEventListener("resize", () => {
-  rerenderCurrentView();
-});
-
 async function boot() {
   const user = await requireAuth();
   if (!user) return;
-
-  ensureMobileCardsWrap();
   await loadChildren();
 }
 
