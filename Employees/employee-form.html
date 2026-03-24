@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DTC — Employee Form</title>
+  <link rel="stylesheet" href="./employees.css" />
+</head>
+
+<body class="dtc-page">
+  <main class="page-content">
+
+    <header class="page-header">
+      <div class="brand-lockup">
+        <div class="brand-line">
+          <p class="brand-main">DTC</p>
+          <p class="brand-sub">Control Total (Daycares)</p>
+        </div>
+        <h1 id="formTitle">Add Employee</h1>
+        <p class="subtitle">
+          Create or update staff access, roles, and kiosk permissions.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./employees-list.html">Back</a>
+      </div>
+    </header>
+
+    <section class="panel">
+
+      <form id="employeeForm">
+
+        <!-- PHOTO -->
+        <div class="form-group">
+          <label>Employee Photo</label>
+          <input type="file" id="photoInput" accept="image/*" />
+        </div>
+
+        <!-- NAME -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input id="firstName" required />
+          </div>
+
+          <div class="form-group">
+            <label>Last Name</label>
+            <input id="lastName" required />
+          </div>
+        </div>
+
+        <!-- CONTACT -->
+        <div class="form-group">
+          <label>Email</label>
+          <input id="email" type="email" />
+        </div>
+
+        <div class="form-group">
+          <label>Phone</label>
+          <input id="phone" />
+        </div>
+
+        <!-- ROLE -->
+        <div class="form-group">
+          <label>Role</label>
+          <select id="role">
+            <option value="employee">Employee</option>
+            <option value="assistant">Assistant</option>
+            <option value="admin">Admin</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+
+        <!-- STATUS -->
+        <div class="form-group">
+          <label>Status</label>
+          <select id="status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <!-- PIN -->
+        <div class="form-group">
+          <label>PIN (4-6 digits)</label>
+          <input id="pin" type="number" />
+        </div>
+
+        <!-- TOGGLES -->
+        <div class="form-row">
+          <label>
+            <input type="checkbox" id="pinEnabled" checked />
+            Enable PIN access
+          </label>
+
+          <label>
+            <input type="checkbox" id="faceEnabled" />
+            Enable Face Scan
+          </label>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <a class="btn btn-secondary" href="./employees-list.html">Cancel</a>
+        </div>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="./employee-form.js"></script>
+</body>
+</html>

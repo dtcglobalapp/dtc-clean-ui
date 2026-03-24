@@ -22,7 +22,9 @@ const ui = mountKioskUI(root, {
 
       await sleep(700);
 
-      // DEMO: luego esto vendrá del reconocimiento facial real
+      // DEMO TEMPORAL:
+      // hasta que construyamos reconocimiento facial real,
+      // el face scan demo tomará el primer empleado activo con PIN 1111
       const demoPin = "1111";
 
       const pos = await getCurrentPosition();
@@ -45,10 +47,10 @@ const ui = mountKioskUI(root, {
         return;
       }
 
-      ui.setFaceStatus(`✅ ${data.display || "Face user recognized"}`, true);
+      ui.setFaceStatus(`✅ Welcome ${data.display || "Employee"}`, true);
 
       await sleep(1200);
-      routeByRole(data.role);
+      routeByRole(data.role, data);
     } catch (err) {
       ui.setFaceStatus(`Error: ${err.message || err}`, false);
     }
@@ -63,12 +65,12 @@ const ui = mountKioskUI(root, {
         return;
       }
 
-      ui.setPinStatus("Validating PIN…", true);
+      ui.setPinStatus(`Validating ${res.user.display}…`, true);
 
       const pos = await getCurrentPosition();
 
       const { data, error } = await supabase.rpc("dtc_check_in", {
-        p_org_id: ORGANIZATION_ID,
+        p_org_id: res.user.organization_id || ORGANIZATION_ID,
         p_pin: pin,
         p_lat: Number(pos.coords.latitude.toFixed(6)),
         p_lon: Number(pos.coords.longitude.toFixed(6)),
@@ -85,11 +87,11 @@ const ui = mountKioskUI(root, {
         return;
       }
 
-      ui.setPinStatus(`✅ ${data.display || "Access granted"}`, true);
+      ui.setPinStatus(`✅ Welcome ${data.display || res.user.display || "User"}`, true);
       ui.clearPin();
 
       await sleep(1200);
-      routeByRole(data.role);
+      routeByRole(data.role, data);
     } catch (err) {
       ui.setPinStatus(`Error: ${err.message || err}`, false);
     }
@@ -104,23 +106,27 @@ const ui = mountKioskUI(root, {
 
 console.log("✅ DTC Kiosk ready");
 
-function routeByRole(role) {
+function routeByRole(role, data = {}) {
+  const display = encodeURIComponent(data.display || "User");
+  const logId = encodeURIComponent(data.log_id || "");
+  const roleSafe = encodeURIComponent(role || "employee");
+
   if (role === "owner" || role === "admin") {
-    window.location.href = "../dashboard.html";
+    window.location.href = `../dashboard.html?kiosk=1&role=${roleSafe}&display=${display}&log_id=${logId}`;
     return;
   }
 
-  if (role === "employee") {
-    window.location.href = "../dashboard.html";
+  if (role === "employee" || role === "assistant" || role === "director") {
+    window.location.href = `../Employees/employee-profile.html?kiosk=1&display=${display}&role=${roleSafe}&log_id=${logId}`;
     return;
   }
 
   if (role === "guardian") {
-    window.location.href = "../children/children-list.html";
+    window.location.href = `../children/children-list.html?kiosk=1&role=${roleSafe}&display=${display}&log_id=${logId}`;
     return;
   }
 
-  window.location.href = "../dashboard.html";
+  window.location.href = `../dashboard.html?kiosk=1&role=${roleSafe}&display=${display}&log_id=${logId}`;
 }
 
 function getCurrentPosition() {

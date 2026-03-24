@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DTC — Employee Profile</title>
+  <link rel="stylesheet" href="./employees.css" />
+</head>
+
+<body class="dtc-page">
+  <main class="page-content">
+
+    <!-- HEADER -->
+    <header class="page-header">
+      <div class="brand-lockup">
+        <div class="brand-line">
+          <p class="brand-main">DTC</p>
+          <p class="brand-sub">Control Total (Daycares)</p>
+        </div>
+
+        <h1>Employee Profile</h1>
+        <p class="subtitle">
+          View employee access, identity, and kiosk permissions.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./employees-list.html">Back</a>
+        <a id="editBtn" class="btn btn-primary">Edit</a>
+      </div>
+    </header>
+
+    <!-- PROFILE CARD -->
+    <section class="panel">
+
+      <div class="profile-card">
+
+        <!-- PHOTO -->
+        <div class="profile-photo-wrap">
+          <img id="employeePhoto" class="profile-photo" src="" alt="Employee Photo" />
+        </div>
+
+        <!-- NAME -->
+        <h2 id="employeeName">—</h2>
+        <p id="employeeRole" class="muted">—</p>
+
+        <!-- STATUS -->
+        <div id="employeeStatus" class="badge">—</div>
+
+      </div>
+
+    </section>
+
+    <!-- ACCESS -->
+    <section class="panel">
+
+      <h3>Access & Security</h3>
+
+      <div class="info-grid">
+
+        <div class="info-box">
+          <label>PIN</label>
+          <p id="employeePin">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>PIN Enabled</label>
+          <p id="pinEnabled">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>Face Scan</label>
+          <p id="faceEnabled">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>Allowed Radius</label>
+          <p id="radius">—</p>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- CONTACT -->
+    <section class="panel">
+
+      <h3>Contact Info</h3>
+
+      <div class="info-grid">
+
+        <div class="info-box">
+          <label>Email</label>
+          <p id="employeeEmail">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>Phone</label>
+          <p id="employeePhone">—</p>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- NOTES -->
+    <section class="panel">
+
+      <h3>Notes</h3>
+      <p id="employeeNotes" class="muted">No notes available.</p>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="./employee-profile.js"></script>
+</body>
+</html>

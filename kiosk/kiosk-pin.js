@@ -1,30 +1,49 @@
 import { supabase } from "../auth.js";
 
 /*
-🔥 DTC KIOSK PIN SYSTEM
+🔥 DTC KIOSK PIN SYSTEM — REAL EMPLOYEES
+
+Lee desde:
+- public.employees
 
 Soporta:
-- Base de datos (producción)
-- Cache local (offline)
-- Validación rápida
+- base de datos (producción)
+- cache local (offline)
 */
 
-const CACHE_KEY = "dtc_kiosk_pins";
+const CACHE_KEY = "dtc_employee_pins";
+const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
 
 /*
-📥 Obtener PINs desde base de datos
+📥 Obtener PINs desde employees
 */
 async function fetchPinsFromDB() {
   const { data, error } = await supabase
-    .from("dtc_kiosk_pins")
-    .select("pin, role, display_name");
+    .from("employees")
+    .select(`
+      id,
+      organization_id,
+      first_name,
+      middle_name,
+      last_name,
+      display_name,
+      role,
+      status,
+      pin,
+      pin_enabled,
+      face_scan_enabled
+    `)
+    .eq("organization_id", ORGANIZATION_ID)
+    .eq("status", "active")
+    .eq("pin_enabled", true)
+    .not("pin", "is", null);
 
   if (error) {
-    console.error("PIN fetch error:", error);
+    console.error("Employee PIN fetch error:", error);
     return null;
   }
 
-  return data;
+  return data ?? [];
 }
 
 /*
@@ -63,11 +82,26 @@ async function getPins() {
 
   const cached = getPinsFromCache();
   if (cached && cached.length) {
-    console.warn("Using cached PINs (offline mode)");
+    console.warn("Using cached employee PINs (offline mode)");
     return cached;
   }
 
   return [];
+}
+
+function buildDisplayName(employee) {
+  if (employee.display_name && String(employee.display_name).trim()) {
+    return String(employee.display_name).trim();
+  }
+
+  return [
+    employee.first_name ?? "",
+    employee.middle_name ?? "",
+    employee.last_name ?? "",
+  ]
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim() || "Employee";
 }
 
 /*
@@ -83,8 +117,7 @@ export async function validatePin(pin) {
   }
 
   const pins = await getPins();
-
-  const hit = pins.find((p) => p.pin === pin);
+  const hit = pins.find((p) => String(p.pin) === String(pin));
 
   if (!hit) {
     return { ok: false, error: "PIN no reconocido" };
@@ -93,8 +126,12 @@ export async function validatePin(pin) {
   return {
     ok: true,
     user: {
+      employee_id: hit.id,
+      organization_id: hit.organization_id,
       role: hit.role,
-      display: hit.display_name || `PIN:${pin}`,
+      display: buildDisplayName(hit),
+      pin_enabled: Boolean(hit.pin_enabled),
+      face_scan_enabled: Boolean(hit.face_scan_enabled),
     },
   };
 }
