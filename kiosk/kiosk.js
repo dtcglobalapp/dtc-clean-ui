@@ -24,7 +24,7 @@ const ui = mountKioskUI(root, {
 
       // DEMO TEMPORAL:
       // hasta que construyamos reconocimiento facial real,
-      // el face scan demo tomará el primer empleado activo con PIN 1111
+      // el face scan demo tomará el empleado con PIN 1111
       const demoPin = "1111";
 
       const pos = await getCurrentPosition();
@@ -117,7 +117,7 @@ function routeByRole(role, data = {}) {
   }
 
   if (role === "employee" || role === "assistant" || role === "director") {
-    window.location.href = `../Employees/employee-profile.html?kiosk=1&display=${display}&role=${roleSafe}&log_id=${logId}`;
+    window.location.href = `../Employees/employee-kiosk.html?kiosk=1&display=${display}&role=${roleSafe}&log_id=${logId}`;
     return;
   }
 

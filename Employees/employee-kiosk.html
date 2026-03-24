@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#1d4ed8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="DTC Kiosk" />
+  <title>DTC — Employee Kiosk</title>
+  <link rel="stylesheet" href="./employees.css" />
+  <style>
+    .kiosk-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .kiosk-hero {
+      background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .kiosk-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .kiosk-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kiosk-clock {
+      min-width: 220px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      text-align: right;
+    }
+
+    .kiosk-clock-time {
+      display: block;
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .kiosk-clock-date {
+      display: block;
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .kiosk-welcome {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 20px;
+      align-items: center;
+    }
+
+    .kiosk-photo-wrap {
+      width: 140px;
+      height: 140px;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #eef2f7;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kiosk-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .kiosk-photo-placeholder {
+      font-size: 56px;
+      opacity: 0.7;
+    }
+
+    .kiosk-copy h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.05;
+    }
+
+    .kiosk-copy p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 760px;
+    }
+
+    .kiosk-role-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .kiosk-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .kiosk-section h2 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .kiosk-section p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .kiosk-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .kiosk-action-btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      min-height: 90px;
+      padding: 18px;
+      background: #fbfcfe;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 8px;
+      text-align: left;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .kiosk-action-btn:hover {
+      transform: translateY(-1px);
+      background: #ffffff;
+    }
+
+    .kiosk-action-btn strong {
+      font-size: 22px;
+      line-height: 1.1;
+      color: var(--text);
+    }
+
+    .kiosk-action-btn span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .kiosk-action-btn.primary {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-color: #bfdbfe;
+    }
+
+    .kiosk-action-btn.success {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-color: #bbf7d0;
+    }
+
+    .kiosk-action-btn.warning {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-color: #fde68a;
+    }
+
+    .kiosk-action-btn.neutral {
+      background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+      border-color: #dbe4ef;
+    }
+
+    .kiosk-status-box {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #fbfcfe;
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .kiosk-status-label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .kiosk-status-message {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .kiosk-status-message.success {
+      color: var(--success-text);
+    }
+
+    .kiosk-status-message.error {
+      color: var(--danger-text);
+    }
+
+    .kiosk-footer-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .kiosk-footer-row .btn {
+      min-height: 50px;
+      padding: 0 18px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 820px) {
+      .kiosk-welcome {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .kiosk-copy h1 {
+        font-size: 32px;
+      }
+
+      .kiosk-role-row {
+        justify-content: center;
+      }
+
+      .kiosk-clock {
+        min-width: 100%;
+        text-align: left;
+      }
+
+      .kiosk-actions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kiosk-action-btn {
+        min-height: 82px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .kiosk-hero,
+      .kiosk-section {
+        padding: 16px;
+        border-radius: 20px;
+      }
+
+      .kiosk-photo-wrap {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+      }
+
+      .kiosk-copy h1 {
+        font-size: 28px;
+      }
+
+      .kiosk-clock-time {
+        font-size: 26px;
+      }
+
+      .kiosk-action-btn strong {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body class="dtc-page">
+  <main class="kiosk-shell">
+    <section class="kiosk-hero">
+      <div class="kiosk-topline">
+        <div class="kiosk-brand">
+          <div class="brand-line">
+            <p class="brand-main">DTC</p>
+            <p class="brand-sub">Control Total (Daycares)</p>
+          </div>
+        </div>
+
+        <aside class="kiosk-clock">
+          <span id="clockTime" class="kiosk-clock-time">--:--</span>
+          <span id="clockDate" class="kiosk-clock-date">Loading date…</span>
+        </aside>
+      </div>
+
+      <div class="kiosk-welcome">
+        <div class="kiosk-photo-wrap">
+          <img id="employeePhoto" class="kiosk-photo hidden" alt="Employee Photo" />
+          <div id="employeePhotoPlaceholder" class="kiosk-photo-placeholder" aria-hidden="true">🧑‍💼</div>
+        </div>
+
+        <div class="kiosk-copy">
+          <h1 id="welcomeTitle">Welcome</h1>
+          <p id="welcomeSubtitle">
+            Your kiosk session is active. Choose what you want to do next.
+          </p>
+
+          <div class="kiosk-role-row">
+            <span id="employeeRoleBadge" class="badge employee">employee</span>
+            <span id="employeeModeBadge" class="badge active">kiosk mode</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kiosk-section">
+      <h2>Quick Actions</h2>
+      <p>Fast buttons for daily staff flow inside the daycare.</p>
+
+      <div class="kiosk-actions-grid">
+        <button id="checkInBtn" class="kiosk-action-btn success" type="button">
+          <strong>Check In</strong>
+          <span>Start the work session and record staff presence.</span>
+        </button>
+
+        <button id="checkOutBtn" class="kiosk-action-btn warning" type="button">
+          <strong>Check Out</strong>
+          <span>Close the session when the employee leaves the location.</span>
+        </button>
+
+        <button id="viewTodayBtn" class="kiosk-action-btn primary" type="button">
+          <strong>View Today</strong>
+          <span>Open today’s summary and latest kiosk events.</span>
+        </button>
+
+        <button id="backToKioskBtn" class="kiosk-action-btn neutral" type="button">
+          <strong>Back to Kiosk</strong>
+          <span>Return to the main kiosk access screen.</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="kiosk-section">
+      <h2>Session Status</h2>
+      <p>The employee flow will grow here with attendance, alerts, and daily guidance.</p>
+
+      <div class="kiosk-status-box">
+        <span class="kiosk-status-label">Current session</span>
+        <p id="sessionStatus" class="kiosk-status-message">
+          Waiting for the next action…
+        </p>
+      </div>
+
+      <div class="kiosk-footer-row">
+        <a class="btn btn-secondary" href="../kiosk.html">Main Kiosk</a>
+        <a class="btn btn-primary" href="../dashboard.html">Admin Dashboard</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./employee-kiosk.js"></script>
+</body>
+</html>
