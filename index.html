@@ -1,84 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
-  <title>DTC Clean</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#1d4ed8" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="DTC Clean" />
-  <meta http-equiv="refresh" content="0; url=./login.html" />
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      background: #f6f8fb;
-      color: #172033;
-      font-family: Inter, Arial, sans-serif;
-    }
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DTC</title>
 
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding:
-        max(16px, env(safe-area-inset-top))
-        max(16px, env(safe-area-inset-right))
-        max(16px, env(safe-area-inset-bottom))
-        max(16px, env(safe-area-inset-left));
-    }
+  <script>
+    // 🔥 REDIRECCIÓN INTELIGENTE (temporal)
 
-    .redirect-card {
-      width: min(100%, 420px);
-      background: #ffffff;
-      border: 1px solid #dde3ec;
-      border-radius: 22px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      padding: 28px 22px;
-      text-align: center;
-    }
+    const isAdmin = localStorage.getItem("dtc_admin_mode");
 
-    .eyebrow {
-      margin: 0 0 8px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #1d4ed8;
+    if (isAdmin === "true") {
+      window.location.href = "/login.html";
+    } else {
+      window.location.href = "/kiosk.html";
     }
+  </script>
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      line-height: 1.1;
-    }
-
-    p {
-      margin: 0;
-      color: #6b7280;
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    a {
-      color: #1d4ed8;
-      text-decoration: none;
-      font-weight: 600;
-    }
-  </style>
 </head>
-<body>
-  <main class="redirect-card">
-    <p class="eyebrow">DTC Clean</p>
-    <h1>Opening DTC…</h1>
-    <p>
-      If you are not redirected automatically,
-      <a href="./login.html">tap here</a>.
-    </p>
-  </main>
-</body>
+<body></body>
 </html>
