@@ -24,7 +24,7 @@ const ui = mountKioskUI(root, {
 
       // DEMO TEMPORAL:
       // hasta que construyamos reconocimiento facial real,
-      // el face scan demo tomará el empleado con PIN 1111
+      // el face scan demo usa el empleado con PIN 1111
       const demoPin = "1111";
 
       const pos = await getCurrentPosition();
@@ -39,6 +39,14 @@ const ui = mountKioskUI(root, {
 
       if (error) {
         ui.setFaceStatus(`SQL Error: ${error.message}`, false);
+        return;
+      }
+
+      // ✅ Caso especial: ya estaba dentro
+      if (data?.status === "error" && data?.current_state === "in" && data?.employee_id) {
+        ui.setFaceStatus(`✅ ${data.display || "Employee"} is already checked in`, true);
+        await sleep(1000);
+        routeByRole(data.role, data);
         return;
       }
 
@@ -79,6 +87,15 @@ const ui = mountKioskUI(root, {
 
       if (error) {
         ui.setPinStatus(`SQL Error: ${error.message}`, false);
+        return;
+      }
+
+      // ✅ Caso especial: ya estaba dentro
+      if (data?.status === "error" && data?.current_state === "in" && data?.employee_id) {
+        ui.setPinStatus(`✅ ${data.display || res.user.display || "Employee"} is already checked in`, true);
+        ui.clearPin();
+        await sleep(1000);
+        routeByRole(data.role, data);
         return;
       }
 

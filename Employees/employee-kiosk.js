@@ -26,6 +26,8 @@ const backToKioskBtn = document.getElementById("backToKioskBtn");
 
 const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
 
+let currentState = "out";
+
 function setText(el, value) {
   if (!el) return;
   el.textContent = value;
@@ -83,21 +85,24 @@ function setPhoto(photoUrl, altText) {
   employeePhotoPlaceholder.classList.remove("hidden");
 }
 
-function setActionState(currentState) {
-  if (!checkInBtn || !checkOutBtn) return;
+function setButtonState(button, enabled) {
+  if (!button) return;
+  button.disabled = !enabled;
+  button.style.opacity = enabled ? "1" : "0.55";
+  button.style.cursor = enabled ? "pointer" : "not-allowed";
+}
+
+function setActionState(state) {
+  currentState = state || "out";
 
   if (currentState === "in") {
-    checkInBtn.disabled = true;
-    checkInBtn.style.opacity = "0.6";
-    checkOutBtn.disabled = false;
-    checkOutBtn.style.opacity = "1";
+    setButtonState(checkInBtn, false);
+    setButtonState(checkOutBtn, true);
     return;
   }
 
-  checkInBtn.disabled = false;
-  checkInBtn.style.opacity = "1";
-  checkOutBtn.disabled = true;
-  checkOutBtn.style.opacity = "0.6";
+  setButtonState(checkInBtn, true);
+  setButtonState(checkOutBtn, false);
 }
 
 async function loadSessionStatus() {
@@ -178,21 +183,58 @@ function mapGeoError(err) {
   }
 }
 
+async function getEmployeePin() {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("pin")
+    .eq("organization_id", ORGANIZATION_ID)
+    .eq("id", employeeId)
+    .single();
+
+  if (error) throw error;
+  return data?.pin || null;
+}
+
 async function handleCheckIn() {
   if (!employeeId) {
     setStatus("Missing employee id.", "error");
     return;
   }
 
+  if (currentState === "in") {
+    setStatus("Employee is already checked in.", "error");
+    return;
+  }
+
   try {
     setStatus("Recording check-in…");
 
+    const pin = await getEmployeePin();
+
+    if (!pin) {
+      setStatus("This employee does not have a PIN assigned.", "error");
+      return;
+    }
+
     const pos = await getCurrentPosition();
 
-    // Check-in here is guarded by current state indirectly through a temporary PIN lookup path.
-    // In this employee screen, check-in should normally already be done before arriving,
-    // so this button will mostly stay disabled while current_state = in.
-    setStatus("Check-in is already managed from kiosk entry.", "error");
+    const { data, error } = await supabase.rpc("dtc_check_in", {
+      p_org_id: ORGANIZATION_ID,
+      p_pin: pin,
+      p_lat: Number(pos.coords.latitude.toFixed(6)),
+      p_lon: Number(pos.coords.longitude.toFixed(6)),
+      p_method: "kiosk",
+    });
+
+    if (error) throw error;
+
+    if (!data || data.status !== "success") {
+      setStatus(data?.message || "Could not record check-in.", "error");
+      return;
+    }
+
+    setStatus("Check-in recorded successfully.", "success");
+    await loadSessionStatus();
   } catch (error) {
     console.error("Employee kiosk check-in error:", error);
     setStatus(error.message || "Could not record check-in.", "error");
@@ -202,6 +244,11 @@ async function handleCheckIn() {
 async function handleCheckOut() {
   if (!employeeId) {
     setStatus("Missing employee id.", "error");
+    return;
+  }
+
+  if (currentState !== "in") {
+    setStatus("Employee is not currently checked in.", "error");
     return;
   }
 
@@ -218,9 +265,7 @@ async function handleCheckOut() {
       p_method: "kiosk",
     });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     if (!data || data.status !== "success") {
       setStatus(data?.message || "Could not record check-out.", "error");
