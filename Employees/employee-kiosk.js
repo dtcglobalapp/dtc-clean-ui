@@ -1,4 +1,4 @@
-import { requireAuth, supabase } from "../auth.js";
+import { supabase } from "../auth.js";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -6,6 +6,7 @@ const kioskMode = params.get("kiosk");
 const display = params.get("display") || "Employee";
 const role = (params.get("role") || "employee").toLowerCase();
 const logId = params.get("log_id") || "";
+const employeeId = params.get("employee_id") || "";
 
 const employeePhoto = document.getElementById("employeePhoto");
 const employeePhotoPlaceholder = document.getElementById("employeePhotoPlaceholder");
@@ -67,92 +68,170 @@ function setStatus(message, type = "") {
   sessionStatus.className = `kiosk-status-message${type ? ` ${type}` : ""}`;
 }
 
-async function tryLoadEmployeePhoto() {
-  try {
-    const { data, error } = await supabase
-      .from("employees")
-      .select("photo_url, display_name, role")
-      .eq("organization_id", ORGANIZATION_ID)
-      .ilike("display_name", display)
-      .limit(1)
-      .maybeSingle();
+function setPhoto(photoUrl, altText) {
+  if (!employeePhoto || !employeePhotoPlaceholder) return;
 
-    if (error) {
-      console.warn("Employee kiosk photo load error:", error);
-      return;
-    }
+  if (photoUrl) {
+    employeePhoto.src = photoUrl;
+    employeePhoto.alt = altText || "Employee Photo";
+    employeePhoto.classList.remove("hidden");
+    employeePhotoPlaceholder.classList.add("hidden");
+    return;
+  }
 
-    if (!data) return;
+  employeePhoto.classList.add("hidden");
+  employeePhotoPlaceholder.classList.remove("hidden");
+}
 
-    if (data.photo_url && employeePhoto) {
-      employeePhoto.src = data.photo_url;
-      employeePhoto.alt = data.display_name || display;
-      employeePhoto.classList.remove("hidden");
-      employeePhotoPlaceholder?.classList.add("hidden");
-    }
+function setActionState(currentState) {
+  if (!checkInBtn || !checkOutBtn) return;
 
-    if (data.display_name) {
-      setText(welcomeTitle, `Welcome, ${data.display_name}`);
-    }
+  if (currentState === "in") {
+    checkInBtn.disabled = true;
+    checkInBtn.style.opacity = "0.6";
+    checkOutBtn.disabled = false;
+    checkOutBtn.style.opacity = "1";
+    return;
+  }
 
-    if (data.role && employeeRoleBadge) {
-      employeeRoleBadge.textContent = formatRole(data.role);
-      employeeRoleBadge.className = `badge ${formatRole(data.role)}`;
-    }
-  } catch (err) {
-    console.warn("Employee kiosk load warning:", err);
+  checkInBtn.disabled = false;
+  checkInBtn.style.opacity = "1";
+  checkOutBtn.disabled = true;
+  checkOutBtn.style.opacity = "0.6";
+}
+
+async function loadSessionStatus() {
+  if (!employeeId) {
+    setStatus("Missing employee session context.", "error");
+    setActionState("out");
+    return;
+  }
+
+  const { data, error } = await supabase.rpc("dtc_employee_session_status", {
+    p_org_id: ORGANIZATION_ID,
+    p_employee_id: employeeId,
+  });
+
+  if (error) {
+    console.error("Employee session status error:", error);
+    setStatus(`Could not load session: ${error.message}`, "error");
+    return;
+  }
+
+  if (!data || data.status !== "success") {
+    setStatus(data?.message || "Could not load employee session.", "error");
+    return;
+  }
+
+  setText(welcomeTitle, `Welcome, ${data.display || display}`);
+  setText(
+    welcomeSubtitle,
+    data.current_state === "in"
+      ? "You are currently checked in. Choose your next action."
+      : "You are currently checked out. Choose your next action."
+  );
+
+  if (employeeRoleBadge) {
+    employeeRoleBadge.textContent = formatRole(data.role || role);
+    employeeRoleBadge.className = `badge ${formatRole(data.role || role)}`;
+  }
+
+  setPhoto(data.photo_url || "", data.display || display);
+  setActionState(data.current_state || "out");
+
+  if (data.current_state === "in") {
+    setStatus("Employee is currently checked in.", "success");
+  } else {
+    setStatus("Employee is currently checked out.");
   }
 }
 
-async function logKioskAction(eventType) {
-  try {
-    const { error } = await supabase
-      .from("dtc_kiosk_logs")
-      .insert([
-        {
-          organization_id: ORGANIZATION_ID,
-          event_type: eventType,
-          method: "kiosk",
-          display_name: display,
-          role,
-          notes: `Employee kiosk action: ${eventType}`,
-          metadata: {
-            source: "employee-kiosk",
-            kiosk_mode: kioskMode,
-            previous_log_id: logId || null,
-          },
-        },
-      ]);
+async function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation not supported"));
+      return;
+    }
 
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Employee kiosk action log error:", error);
-    return false;
+    navigator.geolocation.getCurrentPosition(
+      resolve,
+      (err) => reject(new Error(mapGeoError(err))),
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
+function mapGeoError(err) {
+  switch (err.code) {
+    case 1:
+      return "Location permission denied";
+    case 2:
+      return "Location unavailable";
+    case 3:
+      return "Timed out getting location";
+    default:
+      return "Unknown geolocation error";
   }
 }
 
 async function handleCheckIn() {
-  setStatus("Recording check-in…");
+  if (!employeeId) {
+    setStatus("Missing employee id.", "error");
+    return;
+  }
 
-  const ok = await logKioskAction("check_in");
+  try {
+    setStatus("Recording check-in…");
 
-  if (ok) {
-    setStatus("Check-in recorded successfully.", "success");
-  } else {
-    setStatus("Could not record check-in.", "error");
+    const pos = await getCurrentPosition();
+
+    // Check-in here is guarded by current state indirectly through a temporary PIN lookup path.
+    // In this employee screen, check-in should normally already be done before arriving,
+    // so this button will mostly stay disabled while current_state = in.
+    setStatus("Check-in is already managed from kiosk entry.", "error");
+  } catch (error) {
+    console.error("Employee kiosk check-in error:", error);
+    setStatus(error.message || "Could not record check-in.", "error");
   }
 }
 
 async function handleCheckOut() {
-  setStatus("Recording check-out…");
+  if (!employeeId) {
+    setStatus("Missing employee id.", "error");
+    return;
+  }
 
-  const ok = await logKioskAction("check_out");
+  try {
+    setStatus("Recording check-out…");
 
-  if (ok) {
+    const pos = await getCurrentPosition();
+
+    const { data, error } = await supabase.rpc("dtc_check_out", {
+      p_org_id: ORGANIZATION_ID,
+      p_employee_id: employeeId,
+      p_lat: Number(pos.coords.latitude.toFixed(6)),
+      p_lon: Number(pos.coords.longitude.toFixed(6)),
+      p_method: "kiosk",
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.status !== "success") {
+      setStatus(data?.message || "Could not record check-out.", "error");
+      return;
+    }
+
     setStatus("Check-out recorded successfully.", "success");
-  } else {
-    setStatus("Could not record check-out.", "error");
+    await loadSessionStatus();
+  } catch (error) {
+    console.error("Employee kiosk check-out error:", error);
+    setStatus(error.message || "Could not record check-out.", "error");
   }
 }
 
@@ -165,8 +244,6 @@ function handleBackToKiosk() {
 }
 
 async function boot() {
-  await requireAuth().catch(() => null);
-
   setText(welcomeTitle, `Welcome, ${display}`);
   setText(
     welcomeSubtitle,
@@ -183,17 +260,17 @@ async function boot() {
     employeeModeBadge.className = "badge active";
   }
 
-  setStatus("Session loaded. Waiting for the next action…");
+  setStatus("Loading session…");
 
   tickClock();
   setInterval(tickClock, 1000);
-
-  await tryLoadEmployeePhoto();
 
   checkInBtn?.addEventListener("click", handleCheckIn);
   checkOutBtn?.addEventListener("click", handleCheckOut);
   viewTodayBtn?.addEventListener("click", handleViewToday);
   backToKioskBtn?.addEventListener("click", handleBackToKiosk);
+
+  await loadSessionStatus();
 }
 
 boot();

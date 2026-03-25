@@ -110,6 +110,7 @@ function routeByRole(role, data = {}) {
   const display = encodeURIComponent(data.display || "User");
   const logId = encodeURIComponent(data.log_id || "");
   const roleSafe = encodeURIComponent(role || "employee");
+  const employeeId = encodeURIComponent(data.employee_id || "");
 
   if (role === "owner" || role === "admin") {
     window.location.href = `../dashboard.html?kiosk=1&role=${roleSafe}&display=${display}&log_id=${logId}`;
@@ -117,7 +118,8 @@ function routeByRole(role, data = {}) {
   }
 
   if (role === "employee" || role === "assistant" || role === "director") {
-    window.location.href = `../Employees/employee-kiosk.html?kiosk=1&display=${display}&role=${roleSafe}&log_id=${logId}`;
+    window.location.href =
+      `../Employees/employee-kiosk.html?kiosk=1&display=${display}&role=${roleSafe}&log_id=${logId}&employee_id=${employeeId}`;
     return;
   }
 
