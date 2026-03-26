@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DTC — Employee Profile</title>
+  <link rel="stylesheet" href="./employees.css" />
+</head>
+
+<body class="dtc-page">
+  <main class="page-content">
+
+    <!-- HEADER -->
+    <header class="page-header">
+      <div class="brand-lockup">
+        <p class="brand-main">DTC</p>
+        <p class="brand-sub">Control Total (Daycares)</p>
+
+        <h1 id="employeeName">Employee</h1>
+        <p class="subtitle">Smart employee profile</p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./employees-list.html">Back</a>
+        <a id="editBtn" class="btn btn-primary">Edit</a>
+      </div>
+    </header>
+
+    <!-- PROFILE CARD -->
+    <section class="panel profile-main">
+
+      <div class="profile-top">
+        <img id="employeePhoto" class="profile-photo" src="" />
+        
+        <div>
+          <h2 id="employeeNameTop">—</h2>
+          <p id="employeeRole" class="muted">—</p>
+          <div id="employeeStatus" class="badge">—</div>
+        </div>
+      </div>
+
+      <!-- QUICK STATS -->
+      <div class="stats-grid">
+
+        <div class="stat-box">
+          <label>Hours Worked</label>
+          <p id="totalHours">0h</p>
+        </div>
+
+        <div class="stat-box">
+          <label>Sessions</label>
+          <p id="totalSessions">0</p>
+        </div>
+
+        <div class="stat-box">
+          <label>Earned</label>
+          <p id="earned">$0</p>
+        </div>
+
+        <div class="stat-box">
+          <label>Pending</label>
+          <p id="pending">$0</p>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ACCESS -->
+    <section class="panel">
+      <h3>Access & Security</h3>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <label>PIN</label>
+          <p id="employeePin">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>PIN Enabled</label>
+          <p id="pinEnabled">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>Face Scan</label>
+          <p id="faceEnabled">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>Allowed Radius</label>
+          <p id="radius">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="panel">
+      <h3>Contact Info</h3>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <label>Email</label>
+          <p id="employeeEmail">—</p>
+        </div>
+
+        <div class="info-box">
+          <label>Phone</label>
+          <p id="employeePhone">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORK SESSIONS -->
+    <section class="panel">
+      <h3>Recent Work Sessions</h3>
+      <div id="sessionsList" class="list"></div>
+    </section>
+
+    <!-- PAYMENTS -->
+    <section class="panel">
+      <h3>Payments</h3>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <label>Total Paid</label>
+          <p id="paid">$0</p>
+        </div>
+
+        <div class="stat-box">
+          <label>Pending</label>
+          <p id="pending2">$0</p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="./employee-profile.js"></script>
+</body>
+</html>
