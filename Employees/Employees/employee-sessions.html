@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DTC — Payroll Preview</title>
+  <link rel="stylesheet" href="./employees.css" />
+</head>
+<body class="dtc-page">
+  <main class="page-content">
+    <header class="page-header">
+      <div class="brand-lockup">
+        <div class="brand-line">
+          <p class="brand-main">DTC</p>
+          <p class="brand-sub">Control Total (Daycares)</p>
+        </div>
+        <h1>Payroll Preview</h1>
+        <p class="subtitle">
+          Review work sessions, hours, and attendance flow before payroll is calculated.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <label class="sr-only" for="searchInput">Search sessions</label>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search by employee name, status, method..."
+            autocomplete="off"
+          />
+        </div>
+
+        <button id="refreshBtn" class="btn btn-secondary" type="button">
+          Refresh
+        </button>
+      </div>
+
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div id="loadingState" class="state-box hidden">
+        <p>Loading work sessions...</p>
+      </div>
+
+      <div id="emptyState" class="state-box hidden">
+        <h2>No work sessions found</h2>
+        <p>No employee sessions have been recorded yet.</p>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Status</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Minutes</th>
+              <th>Check In Method</th>
+              <th>Check Out Method</th>
+            </tr>
+          </thead>
+          <tbody id="sessionsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./employee-sessions.js"></script>
+</body>
+</html>
