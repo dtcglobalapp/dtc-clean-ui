@@ -2,6 +2,8 @@ import { requireAuth, supabase } from "./auth.js";
 
 const childrenCount = document.getElementById("childrenCount");
 const documentsCount = document.getElementById("documentsCount");
+const employeesCount = document.getElementById("employeesCount");
+const openSessionsCount = document.getElementById("openSessionsCount");
 const pendingDocsCount = document.getElementById("pendingDocsCount");
 const expiringDocsCount = document.getElementById("expiringDocsCount");
 const alertsList = document.getElementById("alertsList");
@@ -53,18 +55,28 @@ async function loadDashboard() {
   if (!user) return;
 
   try {
-    const [{ data: children, error: childrenError }, { data: documents, error: documentsError }] =
-      await Promise.all([
-        supabase.from("children").select("id", { count: "exact" }),
-        supabase.from("child_documents").select("id, review_status, expires_at", { count: "exact" }),
-      ]);
+    const [
+      { data: children, error: childrenError },
+      { data: documents, error: documentsError },
+      { data: employees, error: employeesError },
+      { data: openSessions, error: openSessionsError },
+    ] = await Promise.all([
+      supabase.from("children").select("id", { count: "exact" }),
+      supabase.from("child_documents").select("id, review_status, expires_at", { count: "exact" }),
+      supabase.from("employees").select("id, status", { count: "exact" }).eq("status", "active"),
+      supabase.from("dtc_work_sessions").select("id, session_status", { count: "exact" }).eq("session_status", "open"),
+    ]);
 
     if (childrenError) throw childrenError;
     if (documentsError) throw documentsError;
+    if (employeesError) throw employeesError;
+    if (openSessionsError) throw openSessionsError;
 
     const docs = documents ?? [];
     const totalChildren = children?.length ?? 0;
     const totalDocuments = docs.length;
+    const totalEmployees = employees?.length ?? 0;
+    const totalOpenSessions = openSessions?.length ?? 0;
     const pending = docs.filter((doc) => doc.review_status === "pending_review").length;
 
     const now = todayKey();
@@ -75,10 +87,22 @@ async function loadDashboard() {
 
     setText(childrenCount, totalChildren);
     setText(documentsCount, totalDocuments);
+    setText(employeesCount, totalEmployees);
+    setText(openSessionsCount, totalOpenSessions);
     setText(pendingDocsCount, pending);
     setText(expiringDocsCount, expiringSoon);
 
     const alerts = [];
+
+    if (totalOpenSessions > 0) {
+      alerts.push({
+        icon: "🕒",
+        title: `${totalOpenSessions} employee session${totalOpenSessions === 1 ? "" : "s"} currently open`,
+        message:
+          "Review who is still checked in and confirm attendance before payroll is calculated.",
+        tone: "neutral",
+      });
+    }
 
     if (pending > 0) {
       alerts.push({
@@ -110,6 +134,16 @@ async function loadDashboard() {
       });
     }
 
+    if (totalEmployees === 0) {
+      alerts.push({
+        icon: "👩‍🏫",
+        title: "Employees module needs setup",
+        message:
+          "Create employee records with PIN access so the kiosk and payroll preview can grow properly.",
+        tone: "neutral",
+      });
+    }
+
     if (!alerts.length) {
       alerts.push({
         icon: "✅",
@@ -126,6 +160,8 @@ async function loadDashboard() {
 
     setText(childrenCount, "—");
     setText(documentsCount, "—");
+    setText(employeesCount, "—");
+    setText(openSessionsCount, "—");
     setText(pendingDocsCount, "—");
     setText(expiringDocsCount, "—");
 
