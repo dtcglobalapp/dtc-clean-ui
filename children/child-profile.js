@@ -35,6 +35,7 @@ const documentsTableWrap = document.getElementById("documentsTableWrap");
 const editChildBtn = document.getElementById("editChildBtn");
 const documentsBtn = document.getElementById("documentsBtn");
 const uploadDocumentBtn = document.getElementById("uploadDocumentBtn");
+const manageGuardiansBtn = document.getElementById("manageGuardiansBtn");
 
 const profilePhotoInput = document.getElementById("profilePhotoInput");
 const savePhotoBtn = document.getElementById("savePhotoBtn");
@@ -312,6 +313,10 @@ function fillChildProfile(child) {
 
   if (documentsBtn) {
     documentsBtn.href = `../agreements/documents-list.html?child_id=${encodeURIComponent(child.id)}`;
+  }
+
+  if (manageGuardiansBtn) {
+    manageGuardiansBtn.href = `../guardians/child-guardian-link.html?child_id=${encodeURIComponent(child.id)}`;
   }
 }
 
