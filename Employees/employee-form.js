@@ -1,47 +1,83 @@
 import { requireAuth, supabase } from "../auth.js";
+import { getAppConfig } from "../core/app-config.js";
+import { t } from "../core/i18n.js";
 
 const params = new URLSearchParams(window.location.search);
 const employeeId = params.get("id");
 
 const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
+const STORAGE_BUCKET = "dtc-documents";
 
-const formTitle = document.getElementById("formTitle");
-const employeeForm = document.getElementById("employeeForm");
+const el = (id) => document.getElementById(id);
 
-const photoInput = document.getElementById("photoInput");
-const firstNameInput = document.getElementById("firstName");
-const lastNameInput = document.getElementById("lastName");
-const emailInput = document.getElementById("email");
-const phoneInput = document.getElementById("phone");
-const roleInput = document.getElementById("role");
-const statusInput = document.getElementById("status");
-const pinInput = document.getElementById("pin");
-const pinEnabledInput = document.getElementById("pinEnabled");
-const faceEnabledInput = document.getElementById("faceEnabled");
+const firstName = el("firstName");
+const lastName = el("lastName");
+const email = el("email");
+const phone = el("phone");
+const role = el("role");
+const status = el("status");
+const pin = el("pin");
+const pinEnabled = el("pinEnabled");
+const faceEnabled = el("faceEnabled");
+const saveBtn = el("saveBtn");
+const photoInput = el("photoInput");
+const photoPreview = el("photoPreview");
+
+const brandMain = el("brandMain");
+const brandSub = el("brandSub");
+const pageTitle = el("pageTitle");
+const pageSubtitle = el("pageSubtitle");
 
 let selectedPhotoFile = null;
-let existingPhotoUrl = "";
+let existingPhotoUrl = null;
 
-function buildDisplayName(firstName, lastName) {
-  return [firstName, lastName].filter(Boolean).join(" ").trim();
+function buildDisplayName() {
+  return `${firstName.value.trim()} ${lastName.value.trim()}`.replace(/\s+/g, " ").trim();
 }
 
 function buildPhotoPath(fileName) {
   const safeName = String(fileName || "employee-photo")
     .replace(/\s+/g, "-")
     .replace(/[^\w.-]/g, "");
+
   return `employees/${Date.now()}-${safeName}`;
+}
+
+function validateForm() {
+  if (!firstName.value.trim()) {
+    alert("First Name is required.");
+    return false;
+  }
+
+  if (!lastName.value.trim()) {
+    alert("Last Name is required.");
+    return false;
+  }
+
+  const pinValue = pin.value.trim();
+  if (pinValue && !/^\d{4,8}$/.test(pinValue)) {
+    alert("PIN must contain 4 to 8 digits.");
+    return false;
+  }
+
+  return true;
+}
+
+function setSaving(isSaving) {
+  if (!saveBtn) return;
+  saveBtn.disabled = isSaving;
+  saveBtn.textContent = isSaving ? "Saving..." : "Save";
 }
 
 async function uploadPhotoIfNeeded() {
   if (!selectedPhotoFile) {
-    return existingPhotoUrl || null;
+    return existingPhotoUrl;
   }
 
   const storagePath = buildPhotoPath(selectedPhotoFile.name);
 
   const { error: uploadError } = await supabase.storage
-    .from("dtc-documents")
+    .from(STORAGE_BUCKET)
     .upload(storagePath, selectedPhotoFile, {
       upsert: false,
       contentType: selectedPhotoFile.type || "application/octet-stream",
@@ -50,7 +86,7 @@ async function uploadPhotoIfNeeded() {
   if (uploadError) throw uploadError;
 
   const { data } = supabase.storage
-    .from("dtc-documents")
+    .from(STORAGE_BUCKET)
     .getPublicUrl(storagePath);
 
   return data?.publicUrl || null;
@@ -68,64 +104,46 @@ async function loadEmployee() {
   if (error) throw error;
   if (!data) return;
 
-  formTitle.textContent = "Edit Employee";
+  firstName.value = data.first_name || "";
+  lastName.value = data.last_name || "";
+  email.value = data.email || "";
+  phone.value = data.phone || "";
+  role.value = data.role || "employee";
+  status.value = data.status || "active";
+  pin.value = data.pin || "";
+  pinEnabled.checked = Boolean(data.pin_enabled);
+  faceEnabled.checked = Boolean(data.face_scan_enabled);
 
-  firstNameInput.value = data.first_name || "";
-  lastNameInput.value = data.last_name || "";
-  emailInput.value = data.email || "";
-  phoneInput.value = data.phone || "";
-  roleInput.value = data.role || "employee";
-  statusInput.value = data.status || "active";
-  pinInput.value = data.pin || "";
-  pinEnabledInput.checked = Boolean(data.pin_enabled);
-  faceEnabledInput.checked = Boolean(data.face_scan_enabled);
-
-  existingPhotoUrl = data.photo_url || "";
+  existingPhotoUrl = data.photo_url || null;
+  if (existingPhotoUrl && photoPreview) {
+    photoPreview.src = existingPhotoUrl;
+  }
 }
 
-async function saveEmployee(event) {
-  event.preventDefault();
+async function saveEmployee() {
+  if (!validateForm()) return;
 
-  const first_name = firstNameInput.value.trim();
-  const last_name = lastNameInput.value.trim();
-  const email = emailInput.value.trim() || null;
-  const phone = phoneInput.value.trim() || null;
-  const role = roleInput.value;
-  const status = statusInput.value;
-  const pin = pinInput.value.trim() || null;
-  const pin_enabled = pinEnabledInput.checked;
-  const face_scan_enabled = faceEnabledInput.checked;
-
-  if (!first_name || !last_name) {
-    alert("First Name and Last Name are required.");
-    return;
-  }
-
-  if (pin && !/^\d{4,8}$/.test(pin)) {
-    alert("PIN must be 4 to 8 digits.");
-    return;
-  }
+  setSaving(true);
 
   try {
-    const photo_url = await uploadPhotoIfNeeded();
+    const photoUrl = await uploadPhotoIfNeeded();
 
     const payload = {
       organization_id: ORGANIZATION_ID,
-      first_name,
+      first_name: firstName.value.trim(),
       middle_name: null,
-      last_name,
-      display_name: buildDisplayName(first_name, last_name),
-      photo_url,
-      role,
-      status,
-      email,
-      phone,
-      pin,
-      pin_enabled,
-      face_scan_enabled,
+      last_name: lastName.value.trim(),
+      display_name: buildDisplayName(),
+      photo_url: photoUrl,
+      email: email.value.trim() || null,
+      phone: phone.value.trim() || null,
+      role: role.value,
+      status: status.value,
+      pin: pin.value.trim() || null,
+      pin_enabled: pinEnabled.checked,
+      face_scan_enabled: faceEnabled.checked,
       primary_location_label: "Main Daycare",
       allowed_checkin_radius_meters: 150,
-      notes: null,
     };
 
     if (employeeId) {
@@ -147,22 +165,41 @@ async function saveEmployee(event) {
   } catch (error) {
     console.error("Save employee error:", error);
     alert(error.message || "Could not save employee.");
+  } finally {
+    setSaving(false);
   }
+}
+
+async function boot() {
+  await requireAuth();
+
+  const config = await getAppConfig();
+
+  brandMain.textContent = config.platform_name;
+  brandSub.textContent = config.vertical_name;
+
+  pageTitle.textContent = employeeId
+    ? t("employeeForm.editTitle")
+    : t("employeeForm.addTitle");
+
+  pageSubtitle.textContent = t("employeeForm.subtitle");
+
+  await loadEmployee();
 }
 
 photoInput?.addEventListener("change", () => {
-  selectedPhotoFile = photoInput.files?.[0] || null;
+  const file = photoInput.files?.[0] || null;
+  selectedPhotoFile = file;
+
+  if (!file || !photoPreview) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    photoPreview.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 });
 
-employeeForm?.addEventListener("submit", saveEmployee);
-
-async function boot() {
-  const user = await requireAuth();
-  if (!user) return;
-
-  if (employeeId) {
-    await loadEmployee();
-  }
-}
+saveBtn?.addEventListener("click", saveEmployee);
 
 boot();

@@ -13,15 +13,11 @@
     <!-- HEADER -->
     <header class="page-header">
       <div class="brand-lockup">
-        <div class="brand-line">
-          <p class="brand-main">DTC</p>
-          <p class="brand-sub">Control Total (Daycares)</p>
-        </div>
+        <p class="brand-main">DTC</p>
+        <p class="brand-sub">Control Total (Daycares)</p>
 
-        <h1>Employee Profile</h1>
-        <p class="subtitle">
-          View employee access, identity, and kiosk permissions.
-        </p>
+        <h1 id="employeeName">Employee</h1>
+        <p class="subtitle">Smart employee profile</p>
       </div>
 
       <div class="header-actions">
@@ -31,21 +27,40 @@
     </header>
 
     <!-- PROFILE CARD -->
-    <section class="panel">
+    <section class="panel profile-main">
 
-      <div class="profile-card">
+      <div class="profile-top">
+        <img id="employeePhoto" class="profile-photo" src="" />
+        
+        <div>
+          <h2 id="employeeNameTop">—</h2>
+          <p id="employeeRole" class="muted">—</p>
+          <div id="employeeStatus" class="badge">—</div>
+        </div>
+      </div>
 
-        <!-- PHOTO -->
-        <div class="profile-photo-wrap">
-          <img id="employeePhoto" class="profile-photo" src="" alt="Employee Photo" />
+      <!-- QUICK STATS -->
+      <div class="stats-grid">
+
+        <div class="stat-box">
+          <label>Hours Worked</label>
+          <p id="totalHours">0h</p>
         </div>
 
-        <!-- NAME -->
-        <h2 id="employeeName">—</h2>
-        <p id="employeeRole" class="muted">—</p>
+        <div class="stat-box">
+          <label>Sessions</label>
+          <p id="totalSessions">0</p>
+        </div>
 
-        <!-- STATUS -->
-        <div id="employeeStatus" class="badge">—</div>
+        <div class="stat-box">
+          <label>Earned</label>
+          <p id="earned">$0</p>
+        </div>
+
+        <div class="stat-box">
+          <label>Pending</label>
+          <p id="pending">$0</p>
+        </div>
 
       </div>
 
@@ -53,11 +68,9 @@
 
     <!-- ACCESS -->
     <section class="panel">
-
       <h3>Access & Security</h3>
 
       <div class="info-grid">
-
         <div class="info-box">
           <label>PIN</label>
           <p id="employeePin">—</p>
@@ -77,18 +90,14 @@
           <label>Allowed Radius</label>
           <p id="radius">—</p>
         </div>
-
       </div>
-
     </section>
 
     <!-- CONTACT -->
     <section class="panel">
-
       <h3>Contact Info</h3>
 
       <div class="info-grid">
-
         <div class="info-box">
           <label>Email</label>
           <p id="employeeEmail">—</p>
@@ -98,16 +107,30 @@
           <label>Phone</label>
           <p id="employeePhone">—</p>
         </div>
-
       </div>
-
     </section>
 
-    <!-- NOTES -->
+    <!-- WORK SESSIONS -->
     <section class="panel">
+      <h3>Recent Work Sessions</h3>
+      <div id="sessionsList" class="list"></div>
+    </section>
 
-      <h3>Notes</h3>
-      <p id="employeeNotes" class="muted">No notes available.</p>
+    <!-- PAYMENTS -->
+    <section class="panel">
+      <h3>Payments</h3>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <label>Total Paid</label>
+          <p id="paid">$0</p>
+        </div>
+
+        <div class="stat-box">
+          <label>Pending</label>
+          <p id="pending2">$0</p>
+        </div>
+      </div>
 
     </section>
 

@@ -1,154 +1,45 @@
 import { requireAuth, supabase } from "../auth.js";
+import { getAppConfig } from "../core/app-config.js";
 
 const params = new URLSearchParams(window.location.search);
 const employeeId = params.get("id");
 
-const editBtn = document.getElementById("editBtn");
-
-const employeePhoto = document.getElementById("employeePhoto");
-const employeeName = document.getElementById("employeeName");
-const employeeRole = document.getElementById("employeeRole");
-const employeeStatus = document.getElementById("employeeStatus");
-
-const employeePin = document.getElementById("employeePin");
-const pinEnabled = document.getElementById("pinEnabled");
-const faceEnabled = document.getElementById("faceEnabled");
-const radius = document.getElementById("radius");
-
-const employeeEmail = document.getElementById("employeeEmail");
-const employeePhone = document.getElementById("employeePhone");
-
-const employeeNotes = document.getElementById("employeeNotes");
-
-function escapeHtml(value = "") {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+if (!employeeId || employeeId.length < 10) {
+  document.body.innerHTML = "<h2>Invalid employee ID</h2>";
+  throw new Error("Invalid ID");
 }
 
-function setText(el, value) {
-  if (!el) return;
-  el.textContent = value ?? "—";
+const el = (id) => document.getElementById(id);
+
+// ELEMENTS
+const employeeName = el("employeeName");
+const employeeNameTop = el("employeeNameTop");
+const employeeRole = el("employeeRole");
+const employeeStatus = el("employeeStatus");
+const employeePhoto = el("employeePhoto");
+
+const totalHours = el("totalHours");
+const totalSessions = el("totalSessions");
+const earned = el("earned");
+const pending = el("pending");
+
+const sessionsList = el("sessionsList");
+
+// BRAND
+const brandMain = document.querySelector(".brand-main");
+const brandSub = document.querySelector(".brand-sub");
+
+// HELPERS
+function formatMoney(v) {
+  return `$${(v || 0).toFixed(2)}`;
 }
 
-function formatRole(role = "") {
-  if (!role) return "—";
-
-  const map = {
-    owner: "Owner",
-    admin: "Admin",
-    director: "Director",
-    employee: "Employee",
-    assistant: "Assistant",
-  };
-
-  return map[role] || role;
+function formatDate(d) {
+  return new Date(d).toLocaleString();
 }
 
-function formatStatus(status = "") {
-  if (!status) return "—";
-
-  const map = {
-    active: "active",
-    inactive: "inactive",
-    suspended: "suspended",
-  };
-
-  return map[status] || status;
-}
-
-function formatBoolean(value) {
-  return value ? "Yes" : "No";
-}
-
-function formatPin(pin) {
-  if (!pin) return "—";
-  return pin;
-}
-
-function formatRadius(value) {
-  if (value === null || value === undefined || value === "") return "—";
-  return `${value} meters`;
-}
-
-function formatPhone(value) {
-  if (!value) return "—";
-
-  const digits = String(value).replace(/\D/g, "");
-
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-
-  if (digits.length === 11 && digits.startsWith("1")) {
-    const d = digits.slice(1);
-    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
-  }
-
-  return value;
-}
-
-function getDisplayName(employee) {
-  if (employee.display_name && String(employee.display_name).trim()) {
-    return String(employee.display_name).trim();
-  }
-
-  return [employee.first_name, employee.middle_name, employee.last_name]
-    .filter(Boolean)
-    .join(" ")
-    .trim() || "Unnamed Employee";
-}
-
-function getPhotoUrl(employee) {
-  if (employee.photo_url && String(employee.photo_url).trim()) {
-    return String(employee.photo_url).trim();
-  }
-
-  return "https://placehold.co/400x400?text=Employee";
-}
-
-function applyStatusBadge(status) {
-  if (!employeeStatus) return;
-
-  const safeStatus = String(status || "inactive").toLowerCase();
-  employeeStatus.className = `badge ${escapeHtml(safeStatus)}`;
-  employeeStatus.textContent = formatStatus(safeStatus);
-}
-
-function fillProfile(employee) {
-  const name = getDisplayName(employee);
-
-  if (employeePhoto) {
-    employeePhoto.src = getPhotoUrl(employee);
-    employeePhoto.alt = name;
-  }
-
-  setText(employeeName, name);
-  setText(employeeRole, formatRole(employee.role));
-  applyStatusBadge(employee.status);
-
-  setText(employeePin, formatPin(employee.pin));
-  setText(pinEnabled, formatBoolean(employee.pin_enabled));
-  setText(faceEnabled, formatBoolean(employee.face_scan_enabled));
-  setText(radius, formatRadius(employee.allowed_checkin_radius_meters));
-
-  setText(employeeEmail, employee.email || "—");
-  setText(employeePhone, formatPhone(employee.phone));
-  setText(employeeNotes, employee.notes || "No notes available.");
-
-  if (editBtn) {
-    editBtn.href = `./employee-form.html?id=${encodeURIComponent(employee.id)}`;
-  }
-}
-
+// LOAD EMPLOYEE
 async function loadEmployee() {
-  if (!employeeId) {
-    throw new Error("Missing employee id in URL.");
-  }
-
   const { data, error } = await supabase
     .from("employees")
     .select("*")
@@ -156,28 +47,88 @@ async function loadEmployee() {
     .single();
 
   if (error) throw error;
-  if (!data) throw new Error("Employee not found.");
-
   return data;
 }
 
-async function boot() {
-  const user = await requireAuth();
-  if (!user) return;
+// LOAD SESSIONS
+async function loadSessions() {
+  const { data, error } = await supabase
+    .from("dtc_work_sessions")
+    .select("*")
+    .eq("employee_id", employeeId)
+    .order("check_in_at", { ascending: false });
 
-  try {
-    const employee = await loadEmployee();
-    fillProfile(employee);
-  } catch (error) {
-    console.error("Employee profile load error:", error);
-    document.body.innerHTML = `
-      <main style="padding:24px;font-family:Inter,Arial,sans-serif;">
-        <h1 style="margin:0 0 10px;">Employee Profile</h1>
-        <p style="color:#991b1b;">${escapeHtml(error.message || "Could not load employee profile.")}</p>
-        <p><a href="./employees-list.html">Back to Employees</a></p>
-      </main>
+  if (error) throw error;
+  return data || [];
+}
+
+// PROCESS DATA
+function processSessions(sessions) {
+  let minutes = 0;
+
+  sessions.forEach((s) => {
+    if (s.check_in_at && s.check_out_at) {
+      const diff =
+        (new Date(s.check_out_at) - new Date(s.check_in_at)) / 60000;
+      minutes += diff;
+    }
+  });
+
+  const hours = minutes / 60;
+
+  totalHours.textContent = `${hours.toFixed(2)}h`;
+  totalSessions.textContent = sessions.length;
+
+  // ⚠️ temporal (luego va a DB)
+  const hourlyRate = 15;
+  const totalEarned = hours * hourlyRate;
+
+  earned.textContent = formatMoney(totalEarned);
+  pending.textContent = formatMoney(totalEarned * 0.2);
+}
+
+// RENDER SESSIONS
+function renderSessions(sessions) {
+  sessionsList.innerHTML = "";
+
+  sessions.slice(0, 5).forEach((s) => {
+    const div = document.createElement("div");
+    div.className = "list-item";
+
+    div.innerHTML = `
+      <div>
+        <strong>${formatDate(s.check_in_at)}</strong><br/>
+        ${s.check_out_at ? formatDate(s.check_out_at) : "Open session"}
+      </div>
     `;
-  }
+
+    sessionsList.appendChild(div);
+  });
+}
+
+// BOOT
+async function boot() {
+  await requireAuth();
+
+  // 🔥 NUEVO: cargar config global
+  const config = await getAppConfig();
+
+  brandMain.textContent = config.platform_name;
+  brandSub.textContent = config.vertical_name;
+
+  const employee = await loadEmployee();
+  const sessions = await loadSessions();
+
+  employeeName.textContent = employee.display_name;
+  employeeNameTop.textContent = employee.display_name;
+  employeeRole.textContent = employee.role;
+  employeeStatus.textContent = employee.status;
+
+  employeePhoto.src =
+    employee.photo_url || "https://placehold.co/200x200";
+
+  processSessions(sessions);
+  renderSessions(sessions);
 }
 
 boot();
