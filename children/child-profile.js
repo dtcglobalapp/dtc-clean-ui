@@ -249,7 +249,7 @@ function documentRow(doc) {
 }
 
 function guardianCard(guardian) {
-  const relationship = guardian.relationship_to_child || "Guardian";
+  const relationship = guardian.relationship_to_child || guardian.relationship_default || "Guardian";
   const primaryPhone = buildPhoneLine(guardian.phone, guardian.phone_extension);
   const secondaryPhone = buildPhoneLine(guardian.secondary_phone, guardian.secondary_phone_extension);
   const email = guardian.email || "—";
@@ -259,7 +259,15 @@ function guardianCard(guardian) {
   return `
     <article class="guardian-card">
       <div class="guardian-card-body">
-        <h3>${escapeHtml(`${guardian.first_name || ""} ${guardian.last_name || ""}`.trim() || "Unnamed Guardian")}</h3>
+        <div class="guardian-card-top">
+          <h3>${escapeHtml(`${guardian.first_name || ""} ${guardian.last_name || ""}`.trim() || "Unnamed Guardian")}</h3>
+          <div class="guardian-badges">
+            ${guardian.is_primary ? `<span class="badge active">primary</span>` : ""}
+            ${guardian.pickup_allowed ? `<span class="badge active">pickup ok</span>` : `<span class="badge inactive">no pickup</span>`}
+            ${guardian.emergency_contact ? `<span class="badge inactive">emergency</span>` : ""}
+            ${guardian.remote_signature_allowed ? `<span class="badge active">remote sign</span>` : ""}
+          </div>
+        </div>
         <p><strong>Relationship:</strong> ${escapeHtml(relationship)}</p>
         <p><strong>Phone:</strong> ${escapeHtml(primaryPhone)}</p>
         ${secondaryPhone !== "—" ? `<p><strong>Secondary:</strong> ${escapeHtml(secondaryPhone)}</p>` : ""}
@@ -305,10 +313,6 @@ function fillChildProfile(child) {
   if (documentsBtn) {
     documentsBtn.href = `../agreements/documents-list.html?child_id=${encodeURIComponent(child.id)}`;
   }
-
-  if (uploadDocumentBtn && uploadDocumentBtn.tagName === "A") {
-    uploadDocumentBtn.href = `../agreements/documents-upload.html?child_id=${encodeURIComponent(child.id)}`;
-  }
 }
 
 async function loadGuardians(childIdValue) {
@@ -316,29 +320,40 @@ async function loadGuardians(childIdValue) {
     .from("child_guardians")
     .select(`
       guardian_id,
+      relationship_to_child,
       is_primary,
-      pickup_authorized,
+      pickup_allowed,
       emergency_contact,
+      remote_signature_allowed,
       guardians (
         id,
         first_name,
+        middle_name,
         last_name,
-        relationship_to_child,
+        relationship_default,
         phone,
-        phone_extension,
-        secondary_phone,
-        secondary_phone_extension,
-        preferred_contact_method,
         email,
+        whatsapp,
         photo_url
       )
     `)
-    .eq("child_id", childIdValue);
+    .eq("child_id", childIdValue)
+    .eq("status", "active");
 
   if (error) throw error;
 
   const guardians = (data ?? [])
-    .map((item) => item.guardians)
+    .map((item) => {
+      if (!item.guardians) return null;
+      return {
+        ...item.guardians,
+        relationship_to_child: item.relationship_to_child,
+        is_primary: item.is_primary,
+        pickup_allowed: item.pickup_allowed,
+        emergency_contact: item.emergency_contact,
+        remote_signature_allowed: item.remote_signature_allowed,
+      };
+    })
     .filter(Boolean);
 
   if (!guardians.length) {
