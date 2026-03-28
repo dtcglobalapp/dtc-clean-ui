@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DTC — Guardian</title>
+  <link rel="stylesheet" href="./guardians.css" />
+</head>
+<body class="dtc-page">
+  <main class="page-content">
+
+    <header class="page-header">
+      <div class="brand-lockup">
+        <div class="brand-line">
+          <p class="brand-main" id="brandMain">DTC</p>
+          <p class="brand-sub" id="brandSub">Daycare Control</p>
+        </div>
+
+        <h1 id="pageTitle">Add Guardian</h1>
+        <p id="pageSubtitle" class="subtitle">
+          Create or update guardian access, pickup permissions, and contact details.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="./guardians-list.html">Back</a>
+      </div>
+    </header>
+
+    <section class="panel guardian-form-panel">
+
+      <div class="guardian-form-grid">
+
+        <div class="guardian-form-main">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input id="firstName" type="text" placeholder="Carmeli" />
+            </div>
+
+            <div class="form-group">
+              <label for="middleName">Middle Name</label>
+              <input id="middleName" type="text" placeholder="L" />
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input id="lastName" type="text" placeholder="Matos" />
+            </div>
+
+            <div class="form-group">
+              <label for="relationshipDefault">Relationship</label>
+              <select id="relationshipDefault">
+                <option value="">Select relationship</option>
+                <option value="Mother">Mother</option>
+                <option value="Father">Father</option>
+                <option value="Grandmother">Grandmother</option>
+                <option value="Grandfather">Grandfather</option>
+                <option value="Aunt">Aunt</option>
+                <option value="Uncle">Uncle</option>
+                <option value="Sibling">Sibling</option>
+                <option value="Guardian">Guardian</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input id="email" type="email" placeholder="guardian@example.com" />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone</label>
+              <input id="phone" type="text" placeholder="(347) 321-0587" />
+            </div>
+
+            <div class="form-group">
+              <label for="whatsapp">WhatsApp</label>
+              <input id="whatsapp" type="text" placeholder="(347) 321-0587" />
+            </div>
+
+            <div class="form-group">
+              <label for="status">Status</label>
+              <select id="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="pin">PIN</label>
+              <input id="pin" type="text" maxlength="8" placeholder="4-8 digits" />
+            </div>
+
+            <div class="form-group">
+              <label for="governmentIdType">Government ID Type</label>
+              <select id="governmentIdType">
+                <option value="">Select ID type</option>
+                <option value="Driver License">Driver License</option>
+                <option value="State ID">State ID</option>
+                <option value="Passport">Passport</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="governmentIdLast4">Government ID Last 4</label>
+              <input id="governmentIdLast4" type="text" maxlength="4" placeholder="1234" />
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group guardian-toggle-group">
+              <label class="toggle-row">
+                <input id="pinEnabled" type="checkbox" />
+                <span>Enable PIN access</span>
+              </label>
+
+              <label class="toggle-row">
+                <input id="faceScanEnabled" type="checkbox" />
+                <span>Enable Face Scan</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea id="notes" rows="5" placeholder="Pickup notes, legal restrictions, communication notes..."></textarea>
+          </div>
+        </div>
+
+        <aside class="guardian-form-side">
+          <div class="photo-card">
+            <div class="photo-preview-wrap">
+              <img
+                id="photoPreview"
+                class="photo-preview"
+                src="https://placehold.co/500x500?text=Guardian"
+                alt="Guardian Preview"
+              />
+            </div>
+
+            <div class="photo-actions">
+              <label class="btn btn-secondary photo-btn" for="photoInput">Choose Photo</label>
+              <input id="photoInput" type="file" accept="image/*" hidden />
+              <p class="photo-help">Upload a clear guardian photo for pickup safety and identification.</p>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+
+      <div class="form-actions">
+        <button id="saveBtn" class="btn btn-primary" type="button">Save Guardian</button>
+        <a class="btn btn-secondary" href="./guardians-list.html">Cancel</a>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="./guardian-form.js"></script>
+</body>
+</html>
