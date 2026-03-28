@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DTC — Guardian Profile</title>
+  <link rel="stylesheet" href="./guardians.css" />
+</head>
+<body class="dtc-page">
+  <main class="page-content">
+
+    <header class="page-header">
+      <div class="brand-lockup">
+        <div class="brand-line">
+          <p id="brandMain" class="brand-main">DTC</p>
+          <p id="brandSub" class="brand-sub">Daycare Control</p>
+        </div>
+
+        <h1>Guardian Profile</h1>
+        <p class="subtitle">
+          View guardian access, permissions, and contact details.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a href="./guardians-list.html" class="btn btn-secondary">Back</a>
+        <a id="editBtn" class="btn btn-primary">Edit</a>
+      </div>
+    </header>
+
+    <!-- PROFILE HEADER -->
+    <section class="panel guardian-profile-header">
+
+      <div class="guardian-profile-main">
+        <div class="guardian-photo">
+          <img id="photo" src="https://placehold.co/400x400?text=Guardian" />
+        </div>
+
+        <div class="guardian-info">
+          <h2 id="name">Guardian Name</h2>
+          <p id="relationship">Relationship</p>
+
+          <div id="statusBadge" class="badge">active</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ACCESS -->
+    <section class="panel">
+      <h3>Access & Security</h3>
+
+      <div class="profile-grid">
+        <div>
+          <p class="label">PIN</p>
+          <p id="pin">—</p>
+        </div>
+
+        <div>
+          <p class="label">PIN Enabled</p>
+          <p id="pinEnabled">—</p>
+        </div>
+
+        <div>
+          <p class="label">Face Scan</p>
+          <p id="faceScan">—</p>
+        </div>
+
+        <div>
+          <p class="label">Government ID</p>
+          <p id="govId">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="panel">
+      <h3>Contact Info</h3>
+
+      <div class="profile-grid">
+        <div>
+          <p class="label">Email</p>
+          <p id="email">—</p>
+        </div>
+
+        <div>
+          <p class="label">Phone</p>
+          <p id="phone">—</p>
+        </div>
+
+        <div>
+          <p class="label">WhatsApp</p>
+          <p id="whatsapp">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTES -->
+    <section class="panel">
+      <h3>Notes</h3>
+      <p id="notes">No notes available.</p>
+    </section>
+
+  </main>
+
+  <script type="module" src="./guardian-profile.js"></script>
+</body>
+</html>
