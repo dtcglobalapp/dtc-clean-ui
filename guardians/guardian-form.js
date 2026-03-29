@@ -1,5 +1,6 @@
 import { requireAuth, supabase } from "../auth.js";
 import { getAppConfig } from "../core/app-config.js";
+import { prepareSquareImage } from "../core/image-tools.js";
 
 const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
 const STORAGE_BUCKET = "dtc-documents";
@@ -31,7 +32,8 @@ const photoInput = el("photoInput");
 const photoPreview = el("photoPreview");
 const saveBtn = el("saveBtn");
 
-let selectedPhotoFile = null;
+let selectedPhotoBlob = null;
+let selectedPhotoName = null;
 let existingPhotoUrl = null;
 
 function buildPhotoPath(fileName) {
@@ -40,15 +42,6 @@ function buildPhotoPath(fileName) {
     .replace(/[^\w.-]/g, "");
 
   return `guardians/${Date.now()}-${safeName}`;
-}
-
-function buildDisplayName() {
-  return [firstName.value, middleName.value, lastName.value]
-    .filter(Boolean)
-    .map((v) => String(v).trim())
-    .filter(Boolean)
-    .join(" ")
-    .trim();
 }
 
 function validateForm() {
@@ -84,17 +77,17 @@ function setSaving(isSaving) {
 }
 
 async function uploadPhotoIfNeeded() {
-  if (!selectedPhotoFile) {
+  if (!selectedPhotoBlob) {
     return existingPhotoUrl;
   }
 
-  const storagePath = buildPhotoPath(selectedPhotoFile.name);
+  const storagePath = buildPhotoPath(selectedPhotoName || "guardian-photo.jpg");
 
   const { error: uploadError } = await supabase.storage
     .from(STORAGE_BUCKET)
-    .upload(storagePath, selectedPhotoFile, {
+    .upload(storagePath, selectedPhotoBlob, {
       upsert: false,
-      contentType: selectedPhotoFile.type || "application/octet-stream",
+      contentType: selectedPhotoBlob.type || "image/jpeg",
     });
 
   if (uploadError) throw uploadError;
@@ -202,17 +195,24 @@ async function boot() {
   await loadGuardian();
 }
 
-photoInput?.addEventListener("change", () => {
+photoInput?.addEventListener("change", async () => {
   const file = photoInput.files?.[0] || null;
-  selectedPhotoFile = file;
-
   if (!file || !photoPreview) return;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    photoPreview.src = reader.result;
-  };
-  reader.readAsDataURL(file);
+  try {
+    const prepared = await prepareSquareImage(file, {
+      size: 600,
+      type: "image/jpeg",
+      quality: 0.88,
+    });
+
+    selectedPhotoBlob = prepared.blob;
+    selectedPhotoName = prepared.fileName;
+    photoPreview.src = prepared.previewUrl;
+  } catch (error) {
+    console.error("Prepare guardian photo error:", error);
+    alert("Could not prepare image.");
+  }
 });
 
 saveBtn?.addEventListener("click", saveGuardian);

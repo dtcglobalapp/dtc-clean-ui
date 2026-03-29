@@ -1,5 +1,6 @@
 import { requireAuth, supabase } from "../auth.js";
 import { getChildById, updateChild } from "./children-api.js";
+import { prepareSquareImage } from "../core/image-tools.js";
 
 const params = new URLSearchParams(window.location.search);
 const childId = params.get("id");
@@ -47,7 +48,8 @@ const deliveryTableWrap = document.getElementById("deliveryTableWrap");
 const deliveryTableBody = document.getElementById("deliveryTableBody");
 
 let currentChild = null;
-let selectedProfilePhoto = null;
+let selectedProfilePhotoBlob = null;
+let selectedProfilePhotoName = null;
 let currentDocuments = [];
 
 function showMessage(text, type = "error") {
@@ -481,7 +483,7 @@ function buildPhotoPath(fileName) {
 }
 
 async function uploadProfilePhoto() {
-  if (!selectedProfilePhoto || !currentChild) return;
+  if (!selectedProfilePhotoBlob || !currentChild) return;
 
   hideMessage();
 
@@ -491,13 +493,13 @@ async function uploadProfilePhoto() {
   }
 
   try {
-    const storagePath = buildPhotoPath(selectedProfilePhoto.name);
+    const storagePath = buildPhotoPath(selectedProfilePhotoName || "child-photo.jpg");
 
     const { error } = await supabase.storage
       .from("dtc-documents")
-      .upload(storagePath, selectedProfilePhoto, {
+      .upload(storagePath, selectedProfilePhotoBlob, {
         upsert: false,
-        contentType: selectedProfilePhoto.type || "application/octet-stream",
+        contentType: selectedProfilePhotoBlob.type || "image/jpeg",
       });
 
     if (error) throw error;
@@ -522,7 +524,8 @@ async function uploadProfilePhoto() {
       profilePhotoFileName.textContent = "No new photo selected.";
     }
 
-    selectedProfilePhoto = null;
+    selectedProfilePhotoBlob = null;
+    selectedProfilePhotoName = null;
 
     if (profilePhotoInput) {
       profilePhotoInput.value = "";
@@ -644,16 +647,32 @@ async function sendToAgency() {
   }
 }
 
-profilePhotoInput?.addEventListener("change", () => {
+profilePhotoInput?.addEventListener("change", async () => {
   const file = profilePhotoInput.files?.[0] || null;
-  selectedProfilePhoto = file;
 
-  if (file) {
-    if (profilePhotoFileName) profilePhotoFileName.textContent = file.name;
-    setPhoto(URL.createObjectURL(file));
-  } else {
+  if (!file) {
     if (profilePhotoFileName) profilePhotoFileName.textContent = "No new photo selected.";
     setPhoto(currentChild?.photo_url || getDefaultPhoto());
+    selectedProfilePhotoBlob = null;
+    selectedProfilePhotoName = null;
+    return;
+  }
+
+  try {
+    const prepared = await prepareSquareImage(file, {
+      size: 600,
+      type: "image/jpeg",
+      quality: 0.88,
+    });
+
+    selectedProfilePhotoBlob = prepared.blob;
+    selectedProfilePhotoName = prepared.fileName;
+
+    if (profilePhotoFileName) profilePhotoFileName.textContent = prepared.fileName;
+    setPhoto(prepared.previewUrl);
+  } catch (error) {
+    console.error("Prepare child photo error:", error);
+    showMessage("Could not prepare child photo.", "error");
   }
 });
 

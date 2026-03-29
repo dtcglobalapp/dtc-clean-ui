@@ -1,6 +1,7 @@
 import { requireAuth, supabase } from "../auth.js";
 import { getAppConfig } from "../core/app-config.js";
 import { t } from "../core/i18n.js";
+import { prepareSquareImage } from "../core/image-tools.js";
 
 const params = new URLSearchParams(window.location.search);
 const employeeId = params.get("id");
@@ -28,7 +29,8 @@ const brandSub = el("brandSub");
 const pageTitle = el("pageTitle");
 const pageSubtitle = el("pageSubtitle");
 
-let selectedPhotoFile = null;
+let selectedPhotoBlob = null;
+let selectedPhotoName = null;
 let existingPhotoUrl = null;
 
 function buildDisplayName() {
@@ -70,17 +72,17 @@ function setSaving(isSaving) {
 }
 
 async function uploadPhotoIfNeeded() {
-  if (!selectedPhotoFile) {
+  if (!selectedPhotoBlob) {
     return existingPhotoUrl;
   }
 
-  const storagePath = buildPhotoPath(selectedPhotoFile.name);
+  const storagePath = buildPhotoPath(selectedPhotoName || "employee-photo.jpg");
 
   const { error: uploadError } = await supabase.storage
     .from(STORAGE_BUCKET)
-    .upload(storagePath, selectedPhotoFile, {
+    .upload(storagePath, selectedPhotoBlob, {
       upsert: false,
-      contentType: selectedPhotoFile.type || "application/octet-stream",
+      contentType: selectedPhotoBlob.type || "image/jpeg",
     });
 
   if (uploadError) throw uploadError;
@@ -178,26 +180,35 @@ async function boot() {
   brandMain.textContent = config.platform_name;
   brandSub.textContent = config.vertical_name;
 
-  pageTitle.textContent = employeeId
-    ? t("employeeForm.editTitle")
-    : t("employeeForm.addTitle");
+  if (employeeId) {
+    pageTitle.textContent = t("employeeForm.editTitle");
+  } else {
+    pageTitle.textContent = t("employeeForm.addTitle");
+  }
 
   pageSubtitle.textContent = t("employeeForm.subtitle");
 
   await loadEmployee();
 }
 
-photoInput?.addEventListener("change", () => {
+photoInput?.addEventListener("change", async () => {
   const file = photoInput.files?.[0] || null;
-  selectedPhotoFile = file;
-
   if (!file || !photoPreview) return;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    photoPreview.src = reader.result;
-  };
-  reader.readAsDataURL(file);
+  try {
+    const prepared = await prepareSquareImage(file, {
+      size: 600,
+      type: "image/jpeg",
+      quality: 0.88,
+    });
+
+    selectedPhotoBlob = prepared.blob;
+    selectedPhotoName = prepared.fileName;
+    photoPreview.src = prepared.previewUrl;
+  } catch (error) {
+    console.error("Prepare employee photo error:", error);
+    alert("Could not prepare image.");
+  }
 });
 
 saveBtn?.addEventListener("click", saveEmployee);
