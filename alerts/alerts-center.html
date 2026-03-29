@@ -3,15 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DTC Clean — Alert Center</title>
+  <meta name="apple-mobile-web-app-title" content="DTC" />
+  <title>DTC — Alert Center</title>
   <link rel="stylesheet" href="./alerts-center.css" />
+  <style>
+    .brand-lockup {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-main {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #2563eb;
+    }
+
+    .brand-sub {
+      margin: 0;
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+  </style>
 </head>
 <body class="dtc-alerts-page">
   <main class="alerts-shell">
     <header class="alerts-header">
-      <div>
-        <p class="eyebrow">DTC Clean</p>
-        <h1>Alert Center</h1>
+      <div class="brand-lockup">
+        <p class="brand-main" data-brand>DTC</p>
+        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
+        <h1 data-page-title>Alert Center</h1>
         <p class="subtitle">
           Review important alerts, approve suggested actions, and contact families with control.
         </p>
@@ -131,6 +157,11 @@
     </section>
   </main>
 
-  <script type="module" src="./alerts-center.js"></script>
+  <script type="module">
+    import "./alerts-center.js";
+    import { applyBranding } from "../core/brand.js";
+
+    applyBranding();
+  </script>
 </body>
 </html>
