@@ -6,11 +6,21 @@ import {
   openCreateDialog,
   openEditDialog,
 } from "./child-guardian-link-dialogs.js";
-import { createLink, makePrimary, removeLink, saveEditLink, toggleBlock } from "./child-guardian-link-controller.js";
-import { filterAvailableRows, renderAvailable, renderLinked } from "./child-guardian-link-render.js";
+import {
+  createLink,
+  makePrimary,
+  removeLink,
+  saveEditLink,
+  toggleBlock,
+} from "./child-guardian-link-controller.js";
+import {
+  filterAvailableRows,
+  renderAvailable,
+  renderLinked,
+} from "./child-guardian-link-render.js";
 import { toast } from "./child-guardian-link-utils.js";
 
-export function wireChildGuardianLinkEvents({ dom, state, refreshAll }) {
+export function wireChildGuardianLinkEvents({ dom, state }) {
   dom.guardianSearchInput.addEventListener("input", () => renderLinked({ dom, state }));
   dom.showBlockedOnly.addEventListener("change", () => renderLinked({ dom, state }));
   dom.showPickupOnly.addEventListener("change", () => renderLinked({ dom, state }));

@@ -12,13 +12,18 @@ import {
   closeEditDialog,
   findLinkedByLinkId,
 } from "./child-guardian-link-dialogs.js";
-import { sortLinkedRows, renderAvailable, renderHero, renderLinked } from "./child-guardian-link-render.js";
+import {
+  renderAvailable,
+  renderHero,
+  renderLinked,
+  sortLinkedRows,
+} from "./child-guardian-link-render.js";
 import {
   getCanPickup,
   getGuardianName,
   getPickupBlocked,
+  toast,
 } from "./child-guardian-link-utils.js";
-import { toast } from "./child-guardian-link-utils.js";
 
 export async function refreshAll({ dom, state }) {
   await loadChild({ dom, state });
@@ -56,7 +61,7 @@ export async function loadAvailable({ dom, state }) {
 
   try {
     const data = await fetchAvailableGuardians();
-    state.available = data;
+    state.available = Array.isArray(data) ? data : [];
     renderAvailable({ dom, state });
   } catch (error) {
     console.error("loadAvailable error", error);

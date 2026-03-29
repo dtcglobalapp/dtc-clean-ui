@@ -19,7 +19,7 @@ async function init() {
     return;
   }
 
-  wireChildGuardianLinkEvents({ dom, state, refreshAll });
+  wireChildGuardianLinkEvents({ dom, state });
   await refreshAll({ dom, state });
 }
 
