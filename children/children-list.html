@@ -19,13 +19,6 @@
       gap: 6px;
     }
 
-    .brand-line {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     .brand-main {
       margin: 0;
       font-size: 12px;
@@ -40,6 +33,7 @@
       font-size: 14px;
       color: var(--muted);
       font-weight: 600;
+      line-height: 1.35;
     }
 
     .children-gallery-panel {
@@ -157,11 +151,9 @@
   <main class="page-content">
     <header class="page-header children-header">
       <div class="brand-lockup">
-        <div class="brand-line">
-          <p class="brand-main">DTC</p>
-          <p class="brand-sub">Control Total (Daycares)</p>
-        </div>
-        <h1>Children</h1>
+        <p class="brand-main" data-brand>DTC</p>
+        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
+        <h1 data-page-title>Children</h1>
         <p class="subtitle">
           The children are the heart of DTC. Tap a photo to open the child profile quickly.
         </p>
@@ -208,6 +200,11 @@
     </section>
   </main>
 
-  <script type="module" src="./children-list.js"></script>
+  <script type="module">
+    import "./children-list.js";
+    import { applyBranding } from "../core/brand.js";
+
+    applyBranding();
+  </script>
 </body>
 </html>

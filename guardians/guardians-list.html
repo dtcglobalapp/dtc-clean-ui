@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-title" content="DTC" />
   <title>DTC — Guardians</title>
   <link rel="stylesheet" href="./guardians.css" />
 </head>
@@ -11,12 +12,10 @@
 
     <header class="page-header">
       <div class="brand-lockup">
-        <div class="brand-line">
-          <p class="brand-main" id="brandMain">DTC</p>
-          <p class="brand-sub" id="brandSub">Control Total (Daycares)</p>
-        </div>
+        <p class="brand-main" data-brand>DTC</p>
+        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
 
-        <h1 id="pageTitle">Guardians</h1>
+        <h1 id="pageTitle" data-page-title>Guardians</h1>
         <p id="pageSubtitle" class="subtitle">
           Manage parents, pickup contacts, emergency contacts, and future remote signature access.
         </p>
@@ -60,6 +59,11 @@
 
   </main>
 
-  <script type="module" src="./guardians-list.js"></script>
+  <script type="module">
+    import "./guardians-list.js";
+    import { applyBranding } from "../core/brand.js";
+
+    applyBranding();
+  </script>
 </body>
 </html>

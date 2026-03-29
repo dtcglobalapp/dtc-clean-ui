@@ -3,16 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DTC Clean — Child Profile</title>
+  <meta name="apple-mobile-web-app-title" content="DTC" />
+  <title>DTC — Child Profile</title>
   <link rel="stylesheet" href="./children.css" />
+  <style>
+    .brand-lockup {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-main {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    .brand-sub {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+      line-height: 1.35;
+    }
+  </style>
 </head>
 <body class="dtc-page">
 
   <main class="page-content">
     <header class="page-header">
-      <div>
-        <p class="eyebrow">DTC Clean</p>
-        <h1>Child Profile</h1>
+      <div class="brand-lockup">
+        <p class="brand-main" data-brand>DTC</p>
+        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
+        <h1 data-page-title>Child Profile</h1>
         <p class="subtitle">Complete record overview for this child.</p>
       </div>
 
@@ -210,6 +236,11 @@
     </section>
   </main>
 
-  <script type="module" src="./child-profile.js"></script>
+  <script type="module">
+    import "./child-profile.js";
+    import { applyBranding } from "../core/brand.js";
+
+    applyBranding();
+  </script>
 </body>
 </html>

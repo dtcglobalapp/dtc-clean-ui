@@ -12,13 +12,40 @@
   <meta name="apple-mobile-web-app-title" content="DTC" />
   <title>DTC — Dashboard</title>
   <link rel="stylesheet" href="./dashboard.css" />
+  <style>
+    .brand-lockup {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand-main {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #2563eb;
+    }
+
+    .brand-sub {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.3;
+      color: #64748b;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body class="dtc-dashboard-page">
   <main class="dashboard-shell">
     <header class="dashboard-topbar">
       <div class="topbar-copy">
-        <p class="eyebrow" data-brand>DTC</p>
-        <h1>Dashboard</h1>
+        <div class="brand-lockup">
+          <p class="brand-main" data-brand>DTC</p>
+          <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
+        </div>
+        <h1 data-page-title>Dashboard</h1>
       </div>
 
       <div class="topbar-badge">
