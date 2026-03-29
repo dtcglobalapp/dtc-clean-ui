@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  />
+  <title>DTC — Child Guardian Link Pro</title>
+
+  <link rel="stylesheet" href="../core/dtc/shell.css" />
+  <link rel="stylesheet" href="../employees/employees.css" />
+  <link rel="stylesheet" href="./child-guardian-link.css" />
+</head>
+<body class="dtc-shell">
+  <main class="dtc-page cg-page">
+    <div id="dtc-nav"></div>
+    <div id="dtc-season-banner"></div>
+
+    <section class="cg-hero">
+      <div class="cg-hero-left">
+        <div class="cg-child-avatar" id="childAvatar" aria-hidden="true">👶</div>
+        <div class="cg-hero-copy">
+          <div class="cg-kicker">Guardian Links</div>
+          <h1 id="childTitle">Child Guardian Link</h1>
+          <p id="childSubtitle">Manage who is linked, who can pick up, and who is primary.</p>
+        </div>
+      </div>
+
+      <div class="cg-hero-actions">
+        <a id="backToProfileBtn" class="cg-btn cg-btn-secondary" href="../child-profile.html">
+          ← Back to Child Profile
+        </a>
+        <button id="linkGuardianBtn" class="cg-btn cg-btn-primary" type="button">
+          + Link Guardian
+        </button>
+      </div>
+    </section>
+
+    <section class="cg-toolbar">
+      <div class="cg-search-wrap">
+        <input
+          id="guardianSearchInput"
+          class="cg-search"
+          type="search"
+          placeholder="Search linked guardians..."
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="cg-toolbar-right">
+        <label class="cg-toggle-inline">
+          <input id="showBlockedOnly" type="checkbox" />
+          <span>Blocked pickup only</span>
+        </label>
+
+        <label class="cg-toggle-inline">
+          <input id="showPickupOnly" type="checkbox" />
+          <span>Pickup allowed only</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="cg-layout">
+      <div class="cg-panel">
+        <div class="cg-panel-header">
+          <div>
+            <h2>Linked Guardians</h2>
+            <p>Tap a card to manage permissions, primary status and pickup access.</p>
+          </div>
+          <div class="cg-count" id="linkedCountBadge">0 linked</div>
+        </div>
+
+        <div id="linkedGuardianGrid" class="cg-card-grid">
+          <div class="cg-empty-state">
+            <div class="cg-empty-icon">🛡️</div>
+            <h3>No guardians linked yet</h3>
+            <p>Use the button above to connect this child with a guardian.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="cg-panel cg-side-panel">
+        <div class="cg-panel-header">
+          <div>
+            <h2>Available Guardians</h2>
+            <p>Select one and create a new link for this child.</p>
+          </div>
+        </div>
+
+        <div class="cg-side-search">
+          <input
+            id="availableGuardianSearchInput"
+            class="cg-search"
+            type="search"
+            placeholder="Search all guardians..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div id="availableGuardiansList" class="cg-available-list">
+          <div class="cg-empty-mini">Loading guardians…</div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Edit Link Modal -->
+  <dialog id="editLinkDialog" class="cg-dialog">
+    <form id="editLinkForm" class="cg-dialog-card" method="dialog">
+      <div class="cg-dialog-header">
+        <div>
+          <h3>Edit Link</h3>
+          <p>Update the relationship and permissions for this guardian.</p>
+        </div>
+        <button type="button" class="cg-icon-btn" id="closeEditDialogBtn" aria-label="Close">✕</button>
+      </div>
+
+      <input type="hidden" id="editLinkId" />
+
+      <div class="cg-form-grid">
+        <label class="cg-field">
+          <span>Relationship to child</span>
+          <input id="editRelationship" type="text" placeholder="Mother, Father, Aunt, Uncle..." />
+        </label>
+
+        <label class="cg-field">
+          <span>Notes</span>
+          <textarea id="editNotes" rows="4" placeholder="Special pickup notes, custody notes, restrictions..."></textarea>
+        </label>
+      </div>
+
+      <div class="cg-switch-grid">
+        <label class="cg-switch-card">
+          <input id="editCanPickup" type="checkbox" />
+          <div>
+            <strong>Pickup allowed</strong>
+            <small>This guardian is authorized for pickup.</small>
+          </div>
+        </label>
+
+        <label class="cg-switch-card">
+          <input id="editPickupBlocked" type="checkbox" />
+          <div>
+            <strong>Pickup blocked</strong>
+            <small>Use this when pickup must be denied.</small>
+          </div>
+        </label>
+
+        <label class="cg-switch-card">
+          <input id="editPrimary" type="checkbox" />
+          <div>
+            <strong>Primary guardian</strong>
+            <small>This becomes the main guardian for this child.</small>
+          </div>
+        </label>
+
+        <label class="cg-switch-card">
+          <input id="editIsActive" type="checkbox" checked />
+          <div>
+            <strong>Link active</strong>
+            <small>Turn off only if the relationship is no longer active.</small>
+          </div>
+        </label>
+      </div>
+
+      <div class="cg-dialog-actions">
+        <button id="deleteFromDialogBtn" class="cg-btn cg-btn-danger" type="button">
+          Remove Link
+        </button>
+        <div class="cg-dialog-actions-right">
+          <button id="cancelEditDialogBtn" class="cg-btn cg-btn-secondary" type="button">
+            Cancel
+          </button>
+          <button id="saveEditDialogBtn" class="cg-btn cg-btn-primary" type="submit">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Create Link Modal -->
+  <dialog id="createLinkDialog" class="cg-dialog">
+    <form id="createLinkForm" class="cg-dialog-card" method="dialog">
+      <div class="cg-dialog-header">
+        <div>
+          <h3>Link Guardian</h3>
+          <p>Create a new link between this child and a guardian.</p>
+        </div>
+        <button type="button" class="cg-icon-btn" id="closeCreateDialogBtn" aria-label="Close">✕</button>
+      </div>
+
+      <input type="hidden" id="createGuardianId" />
+
+      <div class="cg-selected-guardian" id="selectedGuardianPreview">
+        Select a guardian from the right panel first.
+      </div>
+
+      <div class="cg-form-grid">
+        <label class="cg-field">
+          <span>Relationship to child</span>
+          <input id="createRelationship" type="text" placeholder="Mother, Father, Aunt, Uncle..." />
+        </label>
+
+        <label class="cg-field">
+          <span>Notes</span>
+          <textarea id="createNotes" rows="4" placeholder="Optional notes for this link..."></textarea>
+        </label>
+      </div>
+
+      <div class="cg-switch-grid">
+        <label class="cg-switch-card">
+          <input id="createCanPickup" type="checkbox" checked />
+          <div>
+            <strong>Pickup allowed</strong>
+            <small>Authorize this guardian for pickup.</small>
+          </div>
+        </label>
+
+        <label class="cg-switch-card">
+          <input id="createPickupBlocked" type="checkbox" />
+          <div>
+            <strong>Pickup blocked</strong>
+            <small>Use only when pickup should be denied.</small>
+          </div>
+        </label>
+
+        <label class="cg-switch-card">
+          <input id="createPrimary" type="checkbox" />
+          <div>
+            <strong>Primary guardian</strong>
+            <small>Set as primary immediately after linking.</small>
+          </div>
+        </label>
+
+        <label class="cg-switch-card">
+          <input id="createIsActive" type="checkbox" checked />
+          <div>
+            <strong>Link active</strong>
+            <small>Keep enabled for normal use.</small>
+          </div>
+        </label>
+      </div>
+
+      <div class="cg-dialog-actions">
+        <div></div>
+        <div class="cg-dialog-actions-right">
+          <button id="cancelCreateDialogBtn" class="cg-btn cg-btn-secondary" type="button">
+            Cancel
+          </button>
+          <button id="saveCreateDialogBtn" class="cg-btn cg-btn-primary" type="submit">
+            Create Link
+          </button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="../src/child-guardian-link.js"></script>
+</body>
+</html>
