@@ -73,7 +73,7 @@ export function renderHero({ dom, state }) {
   dom.childTitle.textContent = name;
   dom.childSubtitle.textContent = "Manage who is linked, who can pick up, and who is primary.";
   dom.childAvatar.textContent = getInitials(name);
-  dom.backToProfileBtn.href = `../../children/child-profile.html?id=${encodeURIComponent(state.childId)}`;
+  dom.backToProfileBtn.href = `/children/child-profile.html?id=${encodeURIComponent(state.childId)}`;
 }
 
 export function renderLinked({ dom, state }) {
