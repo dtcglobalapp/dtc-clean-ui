@@ -144,3 +144,35 @@ Si algo rompe escalabilidad, claridad o separación:
 ## 🔥 FRASE CLAVE DTC
 
 “Construimos para miles desde el principio, no para arreglar después.”
+
+Módulo: Kiosko Inteligente DTC
+
+- Reconoce rostro
+- Decide rol automáticamente
+- Envía a la persona al flujo correcto
+- Si no reconoce el rostro, muestra demo/lobby comercial
+- Incluye superusuario global Felencho
+- Incluye operador de prueba Bob
+- Sirve para daycare y futuros negocios
+- Registra toda acción importante
+- Respeta organización, permisos y seguridad
+- Debe crecer por fases: demo, conexión real, biometría avanzada
+
+DTC Kiosko debe implementar autenticación múltiple:
+
+1. Reconocimiento facial (principal)
+2. Código PIN (fallback obligatorio)
+3. Dispositivo móvil (nivel avanzado)
+4. Combinación de métodos para seguridad
+
+Ningún usuario debe quedar bloqueado si falla el rostro.
+El sistema siempre debe ofrecer una segunda vía de acceso segura.
+
+Biometría en DTC
+
+1. No se registra rostro sin identidad previa
+2. El rostro pertenece a un user_id
+3. El kiosko no crea identidades (fase inicial)
+4. El kiosko solo reconoce y enruta
+5. Registro biométrico ocurre en perfil del usuario
+6. Rostro no reconocido → lobby/demo

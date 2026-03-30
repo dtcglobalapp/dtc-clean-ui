@@ -1,5 +1,6 @@
 import { mountKioskUI } from "./kiosk-ui.js";
 import { validatePin } from "./kiosk-pin.js";
+import { routeIdentity } from "./kiosk-router.js";
 import { supabase } from "../auth.js";
 
 const root = document.getElementById("kiosk-root");
@@ -10,118 +11,324 @@ if (!root) {
   throw new Error("Missing #kiosk-root");
 }
 
-const ui = mountKioskUI(root, {
-  onFace: async () => {
-    try {
-      if (!navigator.onLine) {
-        ui.setFaceStatus("Offline. Use PIN access.", false);
-        return;
+let ui = null;
+
+function bootKiosk() {
+  root.innerHTML = "";
+
+  ui = mountKioskUI(root, {
+    onFace: async () => {
+      try {
+        if (!navigator.onLine) {
+          ui.setFaceStatus("Offline. Use PIN access.", false);
+          return;
+        }
+
+        ui.setFaceStatus("Starting magical mirror…", true);
+        await sleep(700);
+
+        showMagicMirrorMenu();
+      } catch (err) {
+        ui.setFaceStatus(`Error: ${err.message || err}`, false);
       }
+    },
 
-      ui.setFaceStatus("Starting camera validation…", true);
+    onPin: async (pin) => {
+      try {
+        const res = await validatePin(pin);
 
-      await sleep(700);
+        if (!res.ok) {
+          ui.setPinStatus(res.error, false);
+          return;
+        }
 
-      // DEMO TEMPORAL:
-      // hasta que construyamos reconocimiento facial real,
-      // el face scan demo usa el empleado con PIN 1111
-      const demoPin = "1111";
+        ui.setPinStatus(`Validating ${res.user.display}…`, true);
 
-      const pos = await getCurrentPosition();
+        const pos = await getCurrentPosition();
 
-      const { data, error } = await supabase.rpc("dtc_check_in", {
-        p_org_id: ORGANIZATION_ID,
-        p_pin: demoPin,
-        p_lat: Number(pos.coords.latitude.toFixed(6)),
-        p_lon: Number(pos.coords.longitude.toFixed(6)),
-        p_method: "face",
-      });
+        const { data, error } = await supabase.rpc("dtc_check_in", {
+          p_org_id: res.user.organization_id || ORGANIZATION_ID,
+          p_pin: pin,
+          p_lat: Number(pos.coords.latitude.toFixed(6)),
+          p_lon: Number(pos.coords.longitude.toFixed(6)),
+          p_method: "pin",
+        });
 
-      if (error) {
-        ui.setFaceStatus(`SQL Error: ${error.message}`, false);
-        return;
-      }
+        if (error) {
+          ui.setPinStatus(`SQL Error: ${error.message}`, false);
+          return;
+        }
 
-      // ✅ Caso especial: ya estaba dentro
-      if (data?.status === "error" && data?.current_state === "in" && data?.employee_id) {
-        ui.setFaceStatus(`✅ ${data.display || "Employee"} is already checked in`, true);
-        await sleep(1000);
-        routeByRole(data.role, data);
-        return;
-      }
+        if (data?.status === "error" && data?.current_state === "in" && data?.employee_id) {
+          ui.setPinStatus(`✅ ${data.display || res.user.display || "Employee"} is already checked in`, true);
+          ui.clearPin();
+          await sleep(1000);
+          routeByRole(data.role, data);
+          return;
+        }
 
-      if (!data || data.status !== "success") {
-        ui.setFaceStatus(data?.message || "Face check-in rejected", false);
-        return;
-      }
+        if (!data || data.status !== "success") {
+          ui.setPinStatus(data?.message || "Access denied", false);
+          return;
+        }
 
-      ui.setFaceStatus(`✅ Welcome ${data.display || "Employee"}`, true);
-
-      await sleep(1200);
-      routeByRole(data.role, data);
-    } catch (err) {
-      ui.setFaceStatus(`Error: ${err.message || err}`, false);
-    }
-  },
-
-  onPin: async (pin) => {
-    try {
-      const res = await validatePin(pin);
-
-      if (!res.ok) {
-        ui.setPinStatus(res.error, false);
-        return;
-      }
-
-      ui.setPinStatus(`Validating ${res.user.display}…`, true);
-
-      const pos = await getCurrentPosition();
-
-      const { data, error } = await supabase.rpc("dtc_check_in", {
-        p_org_id: res.user.organization_id || ORGANIZATION_ID,
-        p_pin: pin,
-        p_lat: Number(pos.coords.latitude.toFixed(6)),
-        p_lon: Number(pos.coords.longitude.toFixed(6)),
-        p_method: "pin",
-      });
-
-      if (error) {
-        ui.setPinStatus(`SQL Error: ${error.message}`, false);
-        return;
-      }
-
-      // ✅ Caso especial: ya estaba dentro
-      if (data?.status === "error" && data?.current_state === "in" && data?.employee_id) {
-        ui.setPinStatus(`✅ ${data.display || res.user.display || "Employee"} is already checked in`, true);
+        ui.setPinStatus(`✅ Welcome ${data.display || res.user.display || "User"}`, true);
         ui.clearPin();
-        await sleep(1000);
+
+        await sleep(1200);
         routeByRole(data.role, data);
-        return;
+      } catch (err) {
+        ui.setPinStatus(`Error: ${err.message || err}`, false);
       }
+    },
 
-      if (!data || data.status !== "success") {
-        ui.setPinStatus(data?.message || "Access denied", false);
-        return;
-      }
-
-      ui.setPinStatus(`✅ Welcome ${data.display || res.user.display || "User"}`, true);
+    onReset: () => {
+      ui.setFaceStatus("waiting…", true);
+      ui.setPinStatus("waiting…", true);
       ui.clearPin();
+    },
+  });
 
-      await sleep(1200);
-      routeByRole(data.role, data);
-    } catch (err) {
-      ui.setPinStatus(`Error: ${err.message || err}`, false);
+  console.log("✅ DTC Kiosk ready");
+}
+
+function showMagicMirrorMenu() {
+  routeIdentity({
+    root,
+    identity: {
+      type: "mirror_menu",
+      name: "Magic Mirror",
+    },
+    onBack: () => {
+      bootKiosk();
+    },
+    onRoute: async (selection) => {
+      switch (selection.type) {
+        case "felencho":
+          routeIdentity({
+            root,
+            identity: {
+              type: "felencho",
+              name: "Felencho",
+            },
+            onBack: () => {
+              showMagicMirrorMenu();
+            },
+            onRoute: (nextSelection) => {
+              handleMirrorSelection(nextSelection);
+            },
+          });
+          break;
+
+        case "bob":
+          routeIdentity({
+            root,
+            identity: {
+              type: "bob",
+              name: "Bob",
+            },
+            onBack: () => {
+              showMagicMirrorMenu();
+            },
+            onRoute: (nextSelection) => {
+              handleMirrorSelection(nextSelection);
+            },
+          });
+          break;
+
+        case "parent":
+          routeIdentity({
+            root,
+            identity: {
+              type: "parent",
+              name: "Parent / Guardian Demo",
+            },
+            onBack: () => {
+              showMagicMirrorMenu();
+            },
+          });
+          break;
+
+        case "employee":
+          await runDemoEmployeeFaceCheckIn();
+          break;
+
+        case "visitor":
+          routeIdentity({
+            root,
+            identity: {
+              type: "visitor",
+              name: "Visitor",
+            },
+            onBack: () => {
+              showMagicMirrorMenu();
+            },
+          });
+          break;
+
+        default:
+          bootKiosk();
+      }
+    },
+  });
+}
+
+function handleMirrorSelection(selection) {
+  switch (selection.type) {
+    case "owner":
+    case "admin":
+      routeIdentity({
+        root,
+        identity: {
+          type: selection.type,
+          name: "Felencho",
+        },
+        onBack: () => {
+          showMagicMirrorMenu();
+        },
+      });
+      break;
+
+    case "employee":
+      runDemoEmployeeFaceCheckIn();
+      break;
+
+    case "parent":
+      routeIdentity({
+        root,
+        identity: {
+          type: "parent",
+          name: "Felencho",
+        },
+        onBack: () => {
+          showMagicMirrorMenu();
+        },
+      });
+      break;
+
+    case "visitor":
+      routeIdentity({
+        root,
+        identity: {
+          type: "visitor",
+          name: "Felencho",
+        },
+        onBack: () => {
+          showMagicMirrorMenu();
+        },
+      });
+      break;
+
+    default:
+      showMagicMirrorMenu();
+  }
+}
+
+async function runDemoEmployeeFaceCheckIn() {
+  try {
+    root.innerHTML = `
+      <div style="min-height:100vh;display:grid;place-items:center;background:#0f172a;color:white;font-family:system-ui;padding:24px;">
+        <div style="text-align:center;max-width:520px;">
+          <h1 style="margin:0 0 10px;">Magic Mirror</h1>
+          <p style="opacity:.8;margin:0 0 18px;">Recognized employee demo. Validating check-in…</p>
+          <div style="padding:14px 18px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);">
+            Using demo employee PIN 1111
+          </div>
+        </div>
+      </div>
+    `;
+
+    const demoPin = "1111";
+    const pos = await getCurrentPosition();
+
+    const { data, error } = await supabase.rpc("dtc_check_in", {
+      p_org_id: ORGANIZATION_ID,
+      p_pin: demoPin,
+      p_lat: Number(pos.coords.latitude.toFixed(6)),
+      p_lon: Number(pos.coords.longitude.toFixed(6)),
+      p_method: "face",
+    });
+
+    if (error) {
+      routeIdentity({
+        root,
+        identity: {
+          type: "error",
+          name: "Mirror Error",
+          message: `SQL Error: ${error.message}`,
+        },
+        onBack: () => {
+          bootKiosk();
+        },
+      });
+      return;
     }
-  },
 
-  onReset: () => {
-    ui.setFaceStatus("waiting…", true);
-    ui.setPinStatus("waiting…", true);
-    ui.clearPin();
-  },
-});
+    if (data?.status === "error" && data?.current_state === "in" && data?.employee_id) {
+      routeIdentity({
+        root,
+        identity: {
+          type: "employee",
+          name: data.display || "Employee",
+          role: data.role,
+          message: `${data.display || "Employee"} is already checked in`,
+          data,
+        },
+        onBack: () => {
+          bootKiosk();
+        },
+        onRoute: () => {
+          routeByRole(data.role, data);
+        },
+      });
+      return;
+    }
 
-console.log("✅ DTC Kiosk ready");
+    if (!data || data.status !== "success") {
+      routeIdentity({
+        root,
+        identity: {
+          type: "error",
+          name: "Mirror Rejected",
+          message: data?.message || "Face check-in rejected",
+        },
+        onBack: () => {
+          bootKiosk();
+        },
+      });
+      return;
+    }
+
+    routeIdentity({
+      root,
+      identity: {
+        type: "employee",
+        name: data.display || "Employee",
+        role: data.role,
+        message: `✅ Welcome ${data.display || "Employee"}`,
+        data,
+      },
+      onBack: () => {
+        bootKiosk();
+      },
+      onRoute: () => {
+        routeByRole(data.role, data);
+      },
+    });
+  } catch (err) {
+    routeIdentity({
+      root,
+      identity: {
+        type: "error",
+        name: "Mirror Error",
+        message: err.message || String(err),
+      },
+      onBack: () => {
+        bootKiosk();
+      },
+    });
+  }
+}
 
 function routeByRole(role, data = {}) {
   const display = encodeURIComponent(data.display || "User");
@@ -140,7 +347,7 @@ function routeByRole(role, data = {}) {
     return;
   }
 
-  if (role === "guardian") {
+  if (role === "guardian" || role === "parent") {
     window.location.href = `../children/children-list.html?kiosk=1&role=${roleSafe}&display=${display}&log_id=${logId}`;
     return;
   }
@@ -183,3 +390,5 @@ function mapGeoError(err) {
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+bootKiosk();
