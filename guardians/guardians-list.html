@@ -65,5 +65,43 @@
 
     applyBranding();
   </script>
+
+  <script>
+    (function () {
+      const AUTO_REFRESH_MS = 5000;
+      let lastForcedRefreshAt = 0;
+
+      function forceFreshReload() {
+        const now = Date.now();
+
+        if (now - lastForcedRefreshAt < 1500) return;
+        lastForcedRefreshAt = now;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set("_refresh", String(now));
+        window.location.replace(url.toString());
+      }
+
+      window.addEventListener("pageshow", () => {
+        setTimeout(forceFreshReload, 300);
+      });
+
+      window.addEventListener("focus", () => {
+        setTimeout(forceFreshReload, 300);
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          setTimeout(forceFreshReload, 300);
+        }
+      });
+
+      setInterval(() => {
+        if (document.visibilityState === "visible") {
+          forceFreshReload();
+        }
+      }, AUTO_REFRESH_MS);
+    })();
+  </script>
 </body>
 </html>
