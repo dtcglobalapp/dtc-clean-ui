@@ -16,15 +16,10 @@
       --danger: #d13b3b;
       --danger-soft: #fff0f0;
       --success: #1f8f53;
-      --success-soft: #edf9f2;
       --warning: #a66b00;
-      --warning-soft: #fff8e6;
-      --purple: #6b4dd6;
-      --purple-soft: #f2edff;
       --card: rgba(255,255,255,0.06);
       --card-line: rgba(255,255,255,0.08);
       --shadow: 0 16px 40px rgba(20, 34, 66, 0.08);
-      --radius: 20px;
     }
 
     * { box-sizing: border-box; }
@@ -61,16 +56,49 @@
       min-width: 0;
     }
 
-    .avatar {
-      width: 68px;
-      height: 68px;
+    .hero-avatar {
+      width: 72px;
+      height: 72px;
       border-radius: 20px;
       background: linear-gradient(135deg, #308fff, #4d6fff);
       display: grid;
       place-items: center;
-      font-size: 30px;
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      overflow: hidden;
       flex: 0 0 auto;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .hero-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-copy .system-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 8px;
+    }
+
+    .hero-copy .brand-main {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .hero-copy .brand-sub {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.74);
     }
 
     .hero-copy small {
@@ -559,9 +587,13 @@
   <main class="page">
     <section class="hero">
       <div class="hero-left">
-        <div class="avatar" id="childAvatar">👶</div>
+        <div class="hero-avatar" id="childAvatar" aria-label="Child photo or initials">👶</div>
         <div class="hero-copy">
-          <small>Guardian Links</small>
+          <div class="system-brand">
+            <p class="brand-main" id="brandMain">DTC</p>
+            <p class="brand-sub" id="brandSub">Control Total (Daycares)</p>
+          </div>
+          <small id="businessName">Guardian Links</small>
           <h1 id="childTitle">Child Guardian Link</h1>
           <p id="childSubtitle">Manage who is linked, who can pick up, and who is primary.</p>
         </div>

@@ -1,7 +1,12 @@
 import { supabase } from "../auth.js";
+import { getAppConfig } from "../core/app-config.js";
 
 const params = new URLSearchParams(window.location.search);
 const childId = params.get("child_id");
+
+const brandMain = document.getElementById("brandMain");
+const brandSub = document.getElementById("brandSub");
+const businessName = document.getElementById("businessName");
 
 const childTitle = document.getElementById("childTitle");
 const childSubtitle = document.getElementById("childSubtitle");
@@ -46,6 +51,7 @@ const cancelCreateDialogBtn = document.getElementById("cancelCreateDialogBtn");
 
 const state = {
   organizationId: null,
+  organization: null,
   child: null,
   linked: [],
   available: [],
@@ -119,6 +125,18 @@ function childName(row) {
   return [row?.first_name, row?.last_name].filter(Boolean).join(" ").trim() || "Child";
 }
 
+function setChildHeroAvatar(child) {
+  const name = childName(child);
+  const photoUrl = child?.photo_url || "";
+
+  if (photoUrl) {
+    childAvatar.innerHTML = `<img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(name)}" />`;
+    return;
+  }
+
+  childAvatar.textContent = getInitials(name);
+}
+
 async function getOrganizationId() {
   if (state.organizationId) return state.organizationId;
 
@@ -143,12 +161,34 @@ async function getOrganizationId() {
   return state.organizationId;
 }
 
+async function loadBrandingAndOrganization() {
+  const config = await getAppConfig();
+  if (brandMain) brandMain.textContent = config.platform_name || "DTC";
+  if (brandSub) brandSub.textContent = config.vertical_name || "Control Total (Daycares)";
+
+  const orgId = await getOrganizationId();
+
+  const { data, error } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", orgId)
+    .maybeSingle();
+
+  if (!error && data?.name) {
+    state.organization = data;
+    businessName.textContent = data.name;
+    return;
+  }
+
+  businessName.textContent = "Guardian Links";
+}
+
 async function loadChild() {
   const orgId = await getOrganizationId();
 
   const { data, error } = await supabase
     .from("children")
-    .select("id, first_name, last_name, organization_id")
+    .select("id, first_name, last_name, photo_url, organization_id")
     .eq("id", childId)
     .eq("organization_id", orgId)
     .maybeSingle();
@@ -159,7 +199,7 @@ async function loadChild() {
   state.child = data;
   const name = childName(data);
   childTitle.textContent = name;
-  childAvatar.textContent = getInitials(name);
+  setChildHeroAvatar(data);
   childSubtitle.textContent = "Manage who is linked, who can pick up, and who is primary.";
   backToProfileBtn.href = `/children/child-profile.html?id=${encodeURIComponent(childId)}`;
 }
@@ -350,6 +390,7 @@ async function refreshAll() {
   linkedGuardianGrid.innerHTML = `<div class="empty">Loading linked guardians…</div>`;
   availableGuardiansList.innerHTML = `<div class="empty">Loading guardians…</div>`;
 
+  await loadBrandingAndOrganization();
   await loadChild();
   await loadLinked();
   await loadAvailable();
