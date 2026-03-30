@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-title" content="DTC" />
+  <title>DTC — Guardians</title>
+  <link rel="stylesheet" href="./guardians.css" />
+</head>
+<body class="dtc-page">
+  <main class="page-content">
+
+    <header class="page-header">
+      <div class="brand-lockup">
+        <p class="brand-main" data-brand>DTC</p>
+        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
+
+        <h1 id="pageTitle" data-page-title>Guardians</h1>
+        <p id="pageSubtitle" class="subtitle">
+          Manage parents, pickup contacts, emergency contacts, and future remote signature access.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
+        <a class="btn btn-primary" href="./guardian-form.html">Add Guardian</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-toolbar">
+        <div class="search-wrap">
+          <label class="sr-only" for="searchInput">Search guardians</label>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Search by guardian name, relationship, email, phone..."
+            autocomplete="off"
+          />
+        </div>
+
+        <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
+      </div>
+
+      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+
+      <div id="loadingState" class="state-box hidden">
+        <p>Loading guardians...</p>
+      </div>
+
+      <div id="emptyState" class="state-box hidden">
+        <h2>No guardians found</h2>
+        <p>There are no guardian records yet for this organization.</p>
+        <a class="btn btn-primary" href="./guardian-form.html">Create first guardian</a>
+      </div>
+
+      <div id="guardiansGrid" class="guardian-grid"></div>
+    </section>
+
+  </main>
+
+  <script type="module">
+    import "./guardians-list.js";
+    import { applyBranding } from "../core/brand.js";
+
+    applyBranding();
+  </script>
+  <script>
+  setInterval(() => {
+    if (document.visibilityState === "visible") {
+      window.location.reload();
+    }
+  }, 5000);
+</script>
+</body>
+</html>
