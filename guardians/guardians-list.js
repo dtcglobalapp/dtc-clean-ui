@@ -13,6 +13,11 @@ const brandMain = document.getElementById("brandMain");
 const brandSub = document.getElementById("brandSub");
 
 let allGuardians = [];
+let hasBooted = false;
+let isLoadingGuardians = false;
+let lastLoadAt = 0;
+
+const AUTO_REFRESH_COOLDOWN_MS = 1200;
 
 function showMessage(text, type = "info") {
   messageBox.textContent = text;
@@ -161,9 +166,15 @@ function filterGuardians(query) {
   });
 }
 
-async function loadGuardians() {
-  showLoading(true);
-  hideMessage();
+async function loadGuardians({ silent = false } = {}) {
+  if (isLoadingGuardians) return;
+
+  isLoadingGuardians = true;
+
+  if (!silent) {
+    showLoading(true);
+    hideMessage();
+  }
 
   try {
     const { data, error } = await supabase
@@ -176,9 +187,12 @@ async function loadGuardians() {
 
     allGuardians = data ?? [];
     renderGuardians(filterGuardians(searchInput.value));
+    lastLoadAt = Date.now();
 
     if (!allGuardians.length) {
       showMessage("No guardians found yet for this organization.", "info");
+    } else if (!silent) {
+      hideMessage();
     }
   } catch (error) {
     console.error("Load guardians error:", error);
@@ -187,8 +201,21 @@ async function loadGuardians() {
     emptyState.classList.remove("hidden");
     guardiansGrid.classList.add("hidden");
   } finally {
-    showLoading(false);
+    if (!silent) {
+      showLoading(false);
+    }
+    isLoadingGuardians = false;
   }
+}
+
+async function maybeAutoRefresh() {
+  if (!hasBooted) return;
+  if (isLoadingGuardians) return;
+
+  const now = Date.now();
+  if (now - lastLoadAt < AUTO_REFRESH_COOLDOWN_MS) return;
+
+  await loadGuardians({ silent: true });
 }
 
 async function boot() {
@@ -199,6 +226,7 @@ async function boot() {
   brandMain.textContent = config.platform_name;
   brandSub.textContent = config.vertical_name;
 
+  hasBooted = true;
   await loadGuardians();
 }
 
@@ -208,6 +236,20 @@ searchInput?.addEventListener("input", () => {
 
 refreshBtn?.addEventListener("click", () => {
   loadGuardians();
+});
+
+window.addEventListener("pageshow", () => {
+  maybeAutoRefresh();
+});
+
+window.addEventListener("focus", () => {
+  maybeAutoRefresh();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    maybeAutoRefresh();
+  }
 });
 
 boot();
