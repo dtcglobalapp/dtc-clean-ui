@@ -1,6 +1,10 @@
 import { supabase } from "../../../auth.js";
 
+let cachedOrganizationId = null;
+
 async function getCurrentOrganizationId() {
+  if (cachedOrganizationId) return cachedOrganizationId;
+
   const {
     data: { user },
     error: userError,
@@ -20,7 +24,8 @@ async function getCurrentOrganizationId() {
     throw new Error("No organization found for this user.");
   }
 
-  return membership.organization_id;
+  cachedOrganizationId = membership.organization_id;
+  return cachedOrganizationId;
 }
 
 export async function fetchChild(childId) {
@@ -41,13 +46,49 @@ export async function fetchLinkedGuardians(childId) {
   const orgId = await getCurrentOrganizationId();
 
   const { data, error } = await supabase
-    .from("v_child_guardians_detailed")
-    .select("*")
+    .from("child_guardians")
+    .select(`
+      id,
+      organization_id,
+      child_id,
+      guardian_id,
+      relationship_to_child,
+      notes,
+      can_pickup,
+      pickup_blocked,
+      is_primary,
+      is_active,
+      guardians (
+        id,
+        first_name,
+        middle_name,
+        last_name,
+        relationship_to_child,
+        relationship_default,
+        phone,
+        phone_extension,
+        secondary_phone,
+        secondary_phone_extension,
+        preferred_contact_method,
+        email,
+        whatsapp,
+        photo_url,
+        status
+      )
+    `)
     .eq("child_id", childId)
     .eq("organization_id", orgId);
 
   if (error) throw error;
-  return Array.isArray(data) ? data : [];
+
+  return (data ?? []).map((row) => {
+    const guardian = Array.isArray(row.guardians) ? row.guardians[0] : row.guardians;
+    return {
+      ...row,
+      ...guardian,
+      child_guardian_id: row.id,
+    };
+  });
 }
 
 export async function fetchAvailableGuardians() {
@@ -55,24 +96,7 @@ export async function fetchAvailableGuardians() {
 
   const { data, error } = await supabase
     .from("guardians")
-    .select(`
-      id,
-      organization_id,
-      first_name,
-      last_name,
-      middle_name,
-      relationship_to_child,
-      relationship_default,
-      phone,
-      phone_extension,
-      secondary_phone,
-      secondary_phone_extension,
-      preferred_contact_method,
-      email,
-      whatsapp,
-      photo_url,
-      status
-    `)
+    .select("*")
     .eq("organization_id", orgId)
     .order("first_name", { ascending: true });
 

@@ -1,198 +1,170 @@
-import {
-  clearOtherPrimaryLinks,
-  deleteChildGuardianLink,
-  fetchAvailableGuardians,
-  fetchChild,
-  fetchLinkedGuardians,
-  insertChildGuardianLink,
-  updateChildGuardianLink,
-} from "./child-guardian-link-api.js";
-import {
-  closeCreateDialog,
-  closeEditDialog,
-  findLinkedByLinkId,
-} from "./child-guardian-link-dialogs.js";
-import {
-  renderAvailable,
-  renderHero,
-  renderLinked,
-  sortLinkedRows,
-} from "./child-guardian-link-render.js";
-import {
-  getCanPickup,
-  getGuardianName,
-  getPickupBlocked,
-  toast,
-} from "./child-guardian-link-utils.js";
+import { supabase } from "../../../auth.js";
 
-export async function refreshAll({ dom, state }) {
-  await loadChild({ dom, state });
-  await loadLinked({ dom, state });
-  await loadAvailable({ dom, state });
-}
+let cachedOrganizationId = null;
 
-export async function loadChild({ dom, state }) {
-  try {
-    const data = await fetchChild(state.childId);
-    state.child = data || { id: state.childId, first_name: "Child", last_name: "" };
-    renderHero({ dom, state });
-  } catch (error) {
-    console.error("loadChild error", error);
-    state.child = { id: state.childId, first_name: "Child", last_name: "" };
-    renderHero({ dom, state });
-    toast(`Could not load child: ${error.message}`);
+async function getCurrentOrganizationId() {
+  if (cachedOrganizationId) return cachedOrganizationId;
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("No authenticated user found.");
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("organization_users")
+    .select("organization_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (membershipError) throw membershipError;
+  if (!membership?.organization_id) {
+    throw new Error("No organization found for this user.");
   }
+
+  cachedOrganizationId = membership.organization_id;
+  return cachedOrganizationId;
 }
 
-export async function loadLinked({ dom, state }) {
-  try {
-    const data = await fetchLinkedGuardians(state.childId);
-    state.linked = sortLinkedRows(data);
-    renderLinked({ dom, state });
-  } catch (error) {
-    console.error("loadLinked error", error);
-    state.linked = [];
-    renderLinked({ dom, state });
-    toast(`Could not load linked guardians: ${error.message}`);
-  }
+export async function fetchChild(childId) {
+  const orgId = await getCurrentOrganizationId();
+
+  const { data, error } = await supabase
+    .from("children")
+    .select("id, organization_id, first_name, last_name")
+    .eq("id", childId)
+    .eq("organization_id", orgId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
 }
 
-export async function loadAvailable({ dom, state }) {
-  dom.availableGuardiansList.innerHTML = `<div class="cg-empty-mini">Loading guardians...</div>`;
+export async function fetchLinkedGuardians(childId) {
+  const orgId = await getCurrentOrganizationId();
 
-  try {
-    const data = await fetchAvailableGuardians();
-    state.available = Array.isArray(data) ? data : [];
-    renderAvailable({ dom, state });
-  } catch (error) {
-    console.error("loadAvailable error", error);
-    state.available = [];
-    dom.availableGuardiansList.innerHTML = `
-      <div class="cg-empty-mini">
-        Could not load guardians.
-        <br />
-        <small>${error.message}</small>
-      </div>
-    `;
-  }
+  const { data, error } = await supabase
+    .from("child_guardians")
+    .select(`
+      id,
+      organization_id,
+      child_id,
+      guardian_id,
+      relationship_to_child,
+      notes,
+      can_pickup,
+      pickup_blocked,
+      is_primary,
+      is_active,
+      guardians (
+        id,
+        first_name,
+        middle_name,
+        last_name,
+        relationship_to_child,
+        relationship_default,
+        phone,
+        phone_extension,
+        secondary_phone,
+        secondary_phone_extension,
+        preferred_contact_method,
+        email,
+        whatsapp,
+        photo_url,
+        status
+      )
+    `)
+    .eq("child_id", childId)
+    .eq("organization_id", orgId);
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const guardian = Array.isArray(row.guardians) ? row.guardians[0] : row.guardians;
+    return {
+      ...row,
+      ...guardian,
+      child_guardian_id: row.id,
+    };
+  });
 }
 
-export async function saveEditLink({ dom, state, event }) {
-  event.preventDefault();
+export async function fetchAvailableGuardians() {
+  const orgId = await getCurrentOrganizationId();
 
-  const linkId = dom.editLinkId.value;
-  if (!linkId) return;
+  const { data, error } = await supabase
+    .from("guardians")
+    .select("*")
+    .eq("organization_id", orgId)
+    .order("first_name", { ascending: true });
 
-  const payload = {
-    relationship_to_child: dom.editRelationship.value.trim() || null,
-    notes: dom.editNotes.value.trim() || null,
-    can_pickup: dom.editCanPickup.checked,
-    pickup_blocked: dom.editPickupBlocked.checked,
-    is_active: dom.editIsActive.checked,
-    is_primary: dom.editPrimary.checked,
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+export async function clearOtherPrimaryLinks(childId, keepLinkId) {
+  const orgId = await getCurrentOrganizationId();
+
+  const { error } = await supabase
+    .from("child_guardians")
+    .update({ is_primary: false })
+    .eq("child_id", childId)
+    .eq("organization_id", orgId)
+    .neq("id", keepLinkId);
+
+  if (error) throw error;
+}
+
+export async function updateChildGuardianLink(linkId, payload) {
+  const orgId = await getCurrentOrganizationId();
+
+  const cleanPayload = { ...payload };
+  Object.keys(cleanPayload).forEach((key) => {
+    if (cleanPayload[key] === undefined) {
+      delete cleanPayload[key];
+    }
+  });
+
+  const { error } = await supabase
+    .from("child_guardians")
+    .update(cleanPayload)
+    .eq("id", linkId)
+    .eq("organization_id", orgId);
+
+  if (error) throw error;
+}
+
+export async function insertChildGuardianLink(payload) {
+  const orgId = await getCurrentOrganizationId();
+
+  const cleanPayload = {
+    ...payload,
+    organization_id: orgId,
   };
 
-  try {
-    if (payload.is_primary) {
-      await clearOtherPrimaryLinks(state.childId, linkId);
+  Object.keys(cleanPayload).forEach((key) => {
+    if (cleanPayload[key] === undefined) {
+      delete cleanPayload[key];
     }
+  });
 
-    await updateChildGuardianLink(linkId, payload);
-    closeEditDialog({ dom, state });
-    await refreshAll({ dom, state });
-    toast("Guardian link updated.");
-  } catch (error) {
-    console.error("saveEditLink error", error);
-    toast(`Could not update link: ${error.message}`);
-  }
+  const { error } = await supabase
+    .from("child_guardians")
+    .insert([cleanPayload]);
+
+  if (error) throw error;
 }
 
-export async function createLink({ dom, state, event }) {
-  event.preventDefault();
+export async function deleteChildGuardianLink(linkId) {
+  const orgId = await getCurrentOrganizationId();
 
-  const guardianId = dom.createGuardianId.value;
-  if (!guardianId) {
-    toast("Please select a guardian first.");
-    return;
-  }
+  const { error } = await supabase
+    .from("child_guardians")
+    .delete()
+    .eq("id", linkId)
+    .eq("organization_id", orgId);
 
-  const payload = {
-    child_id: state.childId,
-    guardian_id: guardianId,
-    relationship_to_child: dom.createRelationship.value.trim() || null,
-    notes: dom.createNotes.value.trim() || null,
-    can_pickup: dom.createCanPickup.checked,
-    pickup_blocked: dom.createPickupBlocked.checked,
-    is_primary: dom.createPrimary.checked,
-    is_active: dom.createIsActive.checked,
-  };
-
-  try {
-    if (payload.is_primary) {
-      await clearOtherPrimaryLinks(
-        state.childId,
-        "00000000-0000-0000-0000-000000000000"
-      );
-    }
-
-    await insertChildGuardianLink(payload);
-    closeCreateDialog({ dom, state });
-    await refreshAll({ dom, state });
-    toast("Guardian linked successfully.");
-  } catch (error) {
-    console.error("createLink error", error);
-    toast(`Could not create link: ${error.message}`);
-  }
-}
-
-export async function removeLink({ dom, state, linkId }) {
-  const row = findLinkedByLinkId(state, linkId);
-  if (!row) return;
-
-  const ok = window.confirm(`Remove ${getGuardianName(row)} from this child?`);
-  if (!ok) return;
-
-  try {
-    await deleteChildGuardianLink(linkId);
-    await refreshAll({ dom, state });
-    toast("Guardian link removed.");
-  } catch (error) {
-    console.error("removeLink error", error);
-    toast(`Could not remove link: ${error.message}`);
-  }
-}
-
-export async function toggleBlock({ dom, state, linkId }) {
-  const row = findLinkedByLinkId(state, linkId);
-  if (!row) return;
-
-  const nextBlocked = !getPickupBlocked(row);
-
-  try {
-    await updateChildGuardianLink(linkId, {
-      pickup_blocked: nextBlocked,
-      can_pickup: nextBlocked ? false : getCanPickup(row),
-    });
-
-    await refreshAll({ dom, state });
-    toast(nextBlocked ? "Pickup blocked." : "Pickup unblocked.");
-  } catch (error) {
-    console.error("toggleBlock error", error);
-    toast(`Could not update pickup block: ${error.message}`);
-  }
-}
-
-export async function makePrimary({ dom, state, linkId }) {
-  const row = findLinkedByLinkId(state, linkId);
-  if (!row) return;
-
-  try {
-    await clearOtherPrimaryLinks(state.childId, linkId);
-    await updateChildGuardianLink(linkId, { is_primary: true });
-    await refreshAll({ dom, state });
-    toast(`${getGuardianName(row)} is now the primary guardian.`);
-  } catch (error) {
-    console.error("makePrimary error", error);
-    toast(`Could not set primary guardian: ${error.message}`);
-  }
+  if (error) throw error;
 }

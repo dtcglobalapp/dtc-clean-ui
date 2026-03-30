@@ -318,7 +318,7 @@ function fillChildProfile(child) {
   }
 
   if (manageGuardiansBtn) {
-    manageGuardiansBtn.href = `../guardians/child-guardian-link.html?child_id=${encodeURIComponent(child.id)}`;
+    manageGuardiansBtn.href = `../guardians/child-guardian-link/child-guardian-link.html?child_id=${encodeURIComponent(child.id)}`;
   }
 }
 
