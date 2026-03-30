@@ -1,0 +1,146 @@
+# DTC CORE RULES
+Control Total Multilingüe Platform
+
+---
+
+## 🌍 VISIÓN
+DTC no es solo una app de daycare.  
+Es una plataforma modular global capaz de adaptarse a múltiples industrias:
+
+- DTC Daycare
+- DTC Streaming (Radio/TV)
+- DTC Barbería
+- Otros negocios futuros
+
+Todo debe construirse con esta expansión en mente.
+
+---
+
+## 🧱 1. ARQUITECTURA GENERAL
+
+- Todo módulo debe ser modular:
+  - state
+  - dom
+  - controller
+  - api
+  - events
+  - render
+- Nunca mezclar lógica de negocio con UI directamente
+- Evitar archivos gigantes sin estructura interna clara
+- Cada módulo debe poder vivir por sí solo
+
+---
+
+## 🗂️ 2. ESTRUCTURA DE CARPETAS
+
+- `/children/` → UI
+- `/guardians/` → UI
+- `/src/children/` → lógica
+- `/src/guardians/` → lógica
+- `/core/` → utilidades globales
+- `/docs/` → reglas y arquitectura
+
+Regla:
+👉 UI y lógica SIEMPRE separadas
+
+---
+
+## 🔗 3. RUTAS
+
+- Siempre usar rutas reales (no rutas viejas)
+- Evitar archivos puente innecesarios
+- Nunca duplicar páginas en raíz
+- Toda navegación debe ser consistente
+
+Ejemplo correcto:
+
+
+---
+
+## 🧠 4. BASE DE DATOS (CRÍTICO)
+
+- Toda query debe incluir:
+  - `organization_id`
+- Nunca mezclar datos entre negocios
+- Siempre usar filtros
+- Evitar traer listas completas sin paginación
+
+---
+
+## ⚡ 5. PERFORMANCE
+
+- No cargar listas grandes sin límite
+- Usar paginación o búsqueda
+- Evitar renderizar cientos de elementos a la vez
+- Minimizar llamadas innecesarias a Supabase
+
+---
+
+## 🖼️ 6. IMÁGENES
+
+- Siempre usar:
+  - recorte automático (square)
+  - compresión
+- No subir imágenes pesadas sin procesar
+- Tamaño estándar recomendado: 600px
+
+---
+
+## 📱 7. UI / UX
+
+- Mobile-first SIEMPRE
+- Interfaz simple, clara y rápida
+- Evitar sobrecargar pantallas
+- Mostrar solo lo necesario
+
+---
+
+## 🔐 8. SEGURIDAD
+
+- Separación estricta por organización
+- Validar datos antes de guardar
+- Nunca confiar en inputs directos
+
+---
+
+## 🔄 9. FLUJOS
+
+Cada acción debe:
+
+1. Guardar correctamente
+2. Refrescar UI
+3. Mostrar resultado inmediato
+
+Nunca dejar al usuario sin feedback
+
+---
+
+## 🧩 10. ESCALABILIDAD
+
+- Cada módulo debe ser independiente
+- Preparado para miles de usuarios
+- Preparado para múltiples industrias
+- Evitar dependencias cruzadas
+
+---
+
+## 🚫 11. LO QUE NO SE PERMITE
+
+- Código duplicado
+- Rutas rotas
+- Archivos huérfanos
+- Mezcla de lógica y UI
+- Consultas sin filtro
+
+---
+
+## 🧭 REGLA MAESTRA
+
+Si algo rompe escalabilidad, claridad o separación:
+👉 NO se implementa
+
+---
+
+## 🔥 FRASE CLAVE DTC
+
+“Construimos para miles desde el principio, no para arreglar después.”

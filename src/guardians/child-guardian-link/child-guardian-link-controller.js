@@ -40,6 +40,7 @@ export async function loadChild({ dom, state }) {
     console.error("loadChild error", error);
     state.child = { id: state.childId, first_name: "Child", last_name: "" };
     renderHero({ dom, state });
+    toast(`Could not load child: ${error.message}`);
   }
 }
 
@@ -50,9 +51,9 @@ export async function loadLinked({ dom, state }) {
     renderLinked({ dom, state });
   } catch (error) {
     console.error("loadLinked error", error);
-    toast(`Could not load linked guardians: ${error.message}`);
     state.linked = [];
     renderLinked({ dom, state });
+    toast(`Could not load linked guardians: ${error.message}`);
   }
 }
 
@@ -67,7 +68,11 @@ export async function loadAvailable({ dom, state }) {
     console.error("loadAvailable error", error);
     state.available = [];
     dom.availableGuardiansList.innerHTML = `
-      <div class="cg-empty-mini">Could not load guardians.<br><small>${error.message}</small></div>
+      <div class="cg-empty-mini">
+        Could not load guardians.
+        <br />
+        <small>${error.message}</small>
+      </div>
     `;
   }
 }
@@ -97,7 +102,7 @@ export async function saveEditLink({ dom, state, event }) {
     await refreshAll({ dom, state });
     toast("Guardian link updated.");
   } catch (error) {
-    console.error(error);
+    console.error("saveEditLink error", error);
     toast(`Could not update link: ${error.message}`);
   }
 }
@@ -124,7 +129,10 @@ export async function createLink({ dom, state, event }) {
 
   try {
     if (payload.is_primary) {
-      await clearOtherPrimaryLinks(state.childId, "00000000-0000-0000-0000-000000000000");
+      await clearOtherPrimaryLinks(
+        state.childId,
+        "00000000-0000-0000-0000-000000000000"
+      );
     }
 
     await insertChildGuardianLink(payload);
@@ -132,7 +140,7 @@ export async function createLink({ dom, state, event }) {
     await refreshAll({ dom, state });
     toast("Guardian linked successfully.");
   } catch (error) {
-    console.error(error);
+    console.error("createLink error", error);
     toast(`Could not create link: ${error.message}`);
   }
 }
@@ -149,7 +157,7 @@ export async function removeLink({ dom, state, linkId }) {
     await refreshAll({ dom, state });
     toast("Guardian link removed.");
   } catch (error) {
-    console.error(error);
+    console.error("removeLink error", error);
     toast(`Could not remove link: ${error.message}`);
   }
 }
@@ -169,7 +177,7 @@ export async function toggleBlock({ dom, state, linkId }) {
     await refreshAll({ dom, state });
     toast(nextBlocked ? "Pickup blocked." : "Pickup unblocked.");
   } catch (error) {
-    console.error(error);
+    console.error("toggleBlock error", error);
     toast(`Could not update pickup block: ${error.message}`);
   }
 }
@@ -184,7 +192,7 @@ export async function makePrimary({ dom, state, linkId }) {
     await refreshAll({ dom, state });
     toast(`${getGuardianName(row)} is now the primary guardian.`);
   } catch (error) {
-    console.error(error);
+    console.error("makePrimary error", error);
     toast(`Could not set primary guardian: ${error.message}`);
   }
 }
