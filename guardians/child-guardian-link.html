@@ -2,261 +2,621 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover"
-  />
-  <title>DTC — Child Guardian Link Pro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>DTC — Child Guardian Link</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --panel: #ffffff;
+      --text: #162033;
+      --muted: #697387;
+      --line: #d9e2f0;
+      --primary: #2f56d7;
+      --primary-dark: #1d3ea8;
+      --danger: #d13b3b;
+      --success: #1f8f53;
+      --warning: #a66b00;
+      --shadow: 0 16px 40px rgba(20, 34, 66, 0.08);
+      --radius: 20px;
+    }
 
-  <link rel="stylesheet" href="../core/dtc/shell.css" />
-  <link rel="stylesheet" href="../employees/employees.css" />
-  <link rel="stylesheet" href="./child-guardian-link.css" />
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f1b34, #1d2d57);
+      color: #fff;
+      border-radius: 28px;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-left {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: #1d8fff;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      flex: 0 0 auto;
+    }
+
+    .hero-copy small {
+      display: block;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2.8vw, 3rem);
+      line-height: 1.05;
+    }
+
+    .hero-copy p {
+      margin: 8px 0 0;
+      color: rgba(255,255,255,0.82);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: 160ms ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .toolbar {
+      margin-top: 18px;
+      background: linear-gradient(135deg, #162543, #21345e);
+      color: #fff;
+      border-radius: 24px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .search {
+      flex: 1 1 380px;
+      min-width: 240px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 16px;
+      outline: none;
+    }
+
+    .search::placeholder { color: rgba(255,255,255,0.58); }
+
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: rgba(255,255,255,0.9);
+      flex-wrap: wrap;
+    }
+
+    .filters label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .layout {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(135deg, #162543, #203258);
+      color: #fff;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+    }
+
+    .panel p {
+      margin: 0;
+      color: rgba(255,255,255,0.74);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .count {
+      background: #23417d;
+      color: #dfe8ff;
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .empty {
+      border: 1px dashed rgba(255,255,255,0.14);
+      border-radius: 20px;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .guardian-card,
+    .available-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .card-top {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .card-avatar,
+    .available-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.14);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .card-avatar img,
+    .available-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-name {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .meta,
+    .available-meta {
+      display: grid;
+      gap: 4px;
+      margin-top: 6px;
+      color: rgba(255,255,255,0.82);
+      font-size: 0.95rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 10px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .badge.primary { background: rgba(67, 120, 255, 0.22); color: #cfe0ff; }
+    .badge.success { background: rgba(37, 143, 84, 0.22); color: #c8f3dc; }
+    .badge.warning { background: rgba(166, 107, 0, 0.22); color: #ffe6b3; }
+    .badge.danger  { background: rgba(209, 59, 59, 0.22); color: #ffd0d0; }
+
+    .notes {
+      margin: 0 0 12px;
+      color: rgba(255,255,255,0.78);
+      font-size: 0.95rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+
+    .action-btn.primary { background: var(--primary); }
+    .action-btn.danger { background: rgba(209,59,59,0.18); color: #ffd3d3; border: 1px solid rgba(209,59,59,0.3); }
+
+    .available-card {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .available-left {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .available-copy {
+      min-width: 0;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .message.show { display: block; }
+    .message.error { background: #ffe4e4; color: #8a1f1f; }
+    .message.info { background: #e6f0ff; color: #214f9a; }
+
+    .dialog {
+      border: 0;
+      border-radius: 24px;
+      padding: 0;
+      width: min(640px, calc(100vw - 24px));
+      box-shadow: 0 24px 80px rgba(10, 20, 44, 0.35);
+    }
+
+    .dialog::backdrop { background: rgba(11, 20, 39, 0.6); }
+
+    .dialog-card {
+      padding: 22px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .dialog-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .dialog-head h3 {
+      margin: 0 0 6px;
+      font-size: 1.5rem;
+    }
+
+    .dialog-head p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      border: 0;
+      background: #eef3fb;
+      border-radius: 14px;
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field span {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field input,
+    .field textarea {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    .switches {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .switch {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #f6f9ff;
+      border: 1px solid #e2e9f8;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dialog-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .page { padding: 16px 12px 32px; }
+      .hero { padding: 18px; }
+      .hero { flex-direction: column; align-items: stretch; }
+      .hero-actions { justify-content: stretch; }
+      .hero-actions .btn { width: 100%; }
+      .panel h2 { font-size: 1.55rem; }
+      .available-card { flex-direction: column; align-items: stretch; }
+      .available-left { align-items: flex-start; }
+      .available-card .btn { width: 100%; }
+      .dialog-actions { flex-direction: column; }
+      .dialog-right { width: 100%; }
+      .dialog-right .btn { flex: 1 1 auto; }
+    }
+  </style>
 </head>
-<body class="dtc-shell">
-  <main class="dtc-page cg-page">
-    <div id="dtc-nav"></div>
-    <div id="dtc-season-banner"></div>
-
-    <section class="cg-hero">
-      <div class="cg-hero-left">
-        <div class="cg-child-avatar" id="childAvatar" aria-hidden="true">👶</div>
-        <div class="cg-hero-copy">
-          <div class="cg-kicker">Guardian Links</div>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-left">
+        <div class="avatar" id="childAvatar">👶</div>
+        <div class="hero-copy">
+          <small>Guardian Links</small>
           <h1 id="childTitle">Child Guardian Link</h1>
           <p id="childSubtitle">Manage who is linked, who can pick up, and who is primary.</p>
         </div>
       </div>
 
-      <div class="cg-hero-actions">
-        <a id="backToProfileBtn" class="cg-btn cg-btn-secondary" href="../child-profile.html">
-          ← Back to Child Profile
-        </a>
-        <button id="linkGuardianBtn" class="cg-btn cg-btn-primary" type="button">
-          + Link Guardian
-        </button>
+      <div class="hero-actions">
+        <a id="backToProfileBtn" class="btn btn-secondary" href="/children/child-profile.html">← Back to Child Profile</a>
+        <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
       </div>
     </section>
 
-    <section class="cg-toolbar">
-      <div class="cg-search-wrap">
-        <input
-          id="guardianSearchInput"
-          class="cg-search"
-          type="search"
-          placeholder="Search linked guardians..."
-          autocomplete="off"
-        />
-      </div>
+    <div id="messageBox" class="message"></div>
 
-      <div class="cg-toolbar-right">
-        <label class="cg-toggle-inline">
-          <input id="showBlockedOnly" type="checkbox" />
-          <span>Blocked pickup only</span>
-        </label>
-
-        <label class="cg-toggle-inline">
-          <input id="showPickupOnly" type="checkbox" />
-          <span>Pickup allowed only</span>
-        </label>
+    <section class="toolbar">
+      <input id="guardianSearchInput" class="search" type="search" placeholder="Search linked guardians..." />
+      <div class="filters">
+        <label><input id="showBlockedOnly" type="checkbox" /> Blocked pickup only</label>
+        <label><input id="showPickupOnly" type="checkbox" /> Pickup allowed only</label>
       </div>
     </section>
 
-    <section class="cg-layout">
-      <div class="cg-panel">
-        <div class="cg-panel-header">
+    <section class="layout">
+      <section class="panel">
+        <div class="panel-head">
           <div>
             <h2>Linked Guardians</h2>
             <p>Tap a card to manage permissions, primary status and pickup access.</p>
           </div>
-          <div class="cg-count" id="linkedCountBadge">0 linked</div>
+          <div class="count" id="linkedCountBadge">0 linked</div>
         </div>
 
-        <div id="linkedGuardianGrid" class="cg-card-grid">
-          <div class="cg-empty-state">
-            <div class="cg-empty-icon">🛡️</div>
-            <h3>No guardians linked yet</h3>
-            <p>Use the button above to connect this child with a guardian.</p>
-          </div>
+        <div id="linkedGuardianGrid" class="list">
+          <div class="empty">Loading linked guardians…</div>
         </div>
-      </div>
+      </section>
 
-      <aside class="cg-panel cg-side-panel">
-        <div class="cg-panel-header">
+      <aside class="panel">
+        <div class="panel-head">
           <div>
             <h2>Available Guardians</h2>
             <p>Select one and create a new link for this child.</p>
           </div>
         </div>
 
-        <div class="cg-side-search">
-          <input
-            id="availableGuardianSearchInput"
-            class="cg-search"
-            type="search"
-            placeholder="Search all guardians..."
-            autocomplete="off"
-          />
-        </div>
+        <input id="availableGuardianSearchInput" class="search" type="search" placeholder="Search all guardians..." style="margin-bottom:14px;" />
 
-        <div id="availableGuardiansList" class="cg-available-list">
-          <div class="cg-empty-mini">Loading guardians…</div>
+        <div id="availableGuardiansList" class="list">
+          <div class="empty">Loading guardians…</div>
         </div>
       </aside>
     </section>
   </main>
 
-  <!-- Edit Link Modal -->
-  <dialog id="editLinkDialog" class="cg-dialog">
-    <form id="editLinkForm" class="cg-dialog-card" method="dialog">
-      <div class="cg-dialog-header">
+  <dialog id="editDialog" class="dialog">
+    <form id="editForm" class="dialog-card" method="dialog">
+      <div class="dialog-head">
         <div>
           <h3>Edit Link</h3>
-          <p>Update the relationship and permissions for this guardian.</p>
+          <p>Update relationship and permissions for this guardian.</p>
         </div>
-        <button type="button" class="cg-icon-btn" id="closeEditDialogBtn" aria-label="Close">✕</button>
+        <button id="closeEditDialogBtn" class="icon-btn" type="button">✕</button>
       </div>
 
-      <input type="hidden" id="editLinkId" />
+      <input id="editLinkId" type="hidden" />
 
-      <div class="cg-form-grid">
-        <label class="cg-field">
+      <div class="form-grid">
+        <label class="field">
           <span>Relationship to child</span>
           <input id="editRelationship" type="text" placeholder="Mother, Father, Aunt, Uncle..." />
         </label>
 
-        <label class="cg-field">
+        <label class="field">
           <span>Notes</span>
-          <textarea id="editNotes" rows="4" placeholder="Special pickup notes, custody notes, restrictions..."></textarea>
+          <textarea id="editNotes" rows="4" placeholder="Optional notes..."></textarea>
         </label>
       </div>
 
-      <div class="cg-switch-grid">
-        <label class="cg-switch-card">
-          <input id="editCanPickup" type="checkbox" />
-          <div>
-            <strong>Pickup allowed</strong>
-            <small>This guardian is authorized for pickup.</small>
-          </div>
-        </label>
-
-        <label class="cg-switch-card">
-          <input id="editPickupBlocked" type="checkbox" />
-          <div>
-            <strong>Pickup blocked</strong>
-            <small>Use this when pickup must be denied.</small>
-          </div>
-        </label>
-
-        <label class="cg-switch-card">
-          <input id="editPrimary" type="checkbox" />
-          <div>
-            <strong>Primary guardian</strong>
-            <small>This becomes the main guardian for this child.</small>
-          </div>
-        </label>
-
-        <label class="cg-switch-card">
-          <input id="editIsActive" type="checkbox" checked />
-          <div>
-            <strong>Link active</strong>
-            <small>Turn off only if the relationship is no longer active.</small>
-          </div>
-        </label>
+      <div class="switches">
+        <label class="switch"><input id="editCanPickup" type="checkbox" /> Pickup allowed</label>
+        <label class="switch"><input id="editPickupBlocked" type="checkbox" /> Pickup blocked</label>
+        <label class="switch"><input id="editPrimary" type="checkbox" /> Primary guardian</label>
+        <label class="switch"><input id="editIsActive" type="checkbox" checked /> Link active</label>
       </div>
 
-      <div class="cg-dialog-actions">
-        <button id="deleteFromDialogBtn" class="cg-btn cg-btn-danger" type="button">
-          Remove Link
-        </button>
-        <div class="cg-dialog-actions-right">
-          <button id="cancelEditDialogBtn" class="cg-btn cg-btn-secondary" type="button">
-            Cancel
-          </button>
-          <button id="saveEditDialogBtn" class="cg-btn cg-btn-primary" type="submit">
-            Save Changes
-          </button>
+      <div class="dialog-actions">
+        <button id="deleteLinkBtn" class="btn" type="button" style="background:#ffe6e6;color:#9f2323;">Remove Link</button>
+        <div class="dialog-right">
+          <button id="cancelEditDialogBtn" class="btn" type="button" style="background:#eef3fb;color:#24375c;">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
         </div>
       </div>
     </form>
   </dialog>
 
-  <!-- Create Link Modal -->
-  <dialog id="createLinkDialog" class="cg-dialog">
-    <form id="createLinkForm" class="cg-dialog-card" method="dialog">
-      <div class="cg-dialog-header">
+  <dialog id="createDialog" class="dialog">
+    <form id="createForm" class="dialog-card" method="dialog">
+      <div class="dialog-head">
         <div>
-          <h3>Link Guardian</h3>
+          <h3>Create Link</h3>
           <p>Create a new link between this child and a guardian.</p>
         </div>
-        <button type="button" class="cg-icon-btn" id="closeCreateDialogBtn" aria-label="Close">✕</button>
+        <button id="closeCreateDialogBtn" class="icon-btn" type="button">✕</button>
       </div>
 
-      <input type="hidden" id="createGuardianId" />
+      <input id="createGuardianId" type="hidden" />
 
-      <div class="cg-selected-guardian" id="selectedGuardianPreview">
-        Select a guardian from the right panel first.
+      <div id="selectedGuardianPreview" style="margin-bottom:16px;font-weight:700;color:#214f9a;">
+        Select a guardian first.
       </div>
 
-      <div class="cg-form-grid">
-        <label class="cg-field">
+      <div class="form-grid">
+        <label class="field">
           <span>Relationship to child</span>
           <input id="createRelationship" type="text" placeholder="Mother, Father, Aunt, Uncle..." />
         </label>
 
-        <label class="cg-field">
+        <label class="field">
           <span>Notes</span>
-          <textarea id="createNotes" rows="4" placeholder="Optional notes for this link..."></textarea>
+          <textarea id="createNotes" rows="4" placeholder="Optional notes..."></textarea>
         </label>
       </div>
 
-      <div class="cg-switch-grid">
-        <label class="cg-switch-card">
-          <input id="createCanPickup" type="checkbox" checked />
-          <div>
-            <strong>Pickup allowed</strong>
-            <small>Authorize this guardian for pickup.</small>
-          </div>
-        </label>
-
-        <label class="cg-switch-card">
-          <input id="createPickupBlocked" type="checkbox" />
-          <div>
-            <strong>Pickup blocked</strong>
-            <small>Use only when pickup should be denied.</small>
-          </div>
-        </label>
-
-        <label class="cg-switch-card">
-          <input id="createPrimary" type="checkbox" />
-          <div>
-            <strong>Primary guardian</strong>
-            <small>Set as primary immediately after linking.</small>
-          </div>
-        </label>
-
-        <label class="cg-switch-card">
-          <input id="createIsActive" type="checkbox" checked />
-          <div>
-            <strong>Link active</strong>
-            <small>Keep enabled for normal use.</small>
-          </div>
-        </label>
+      <div class="switches">
+        <label class="switch"><input id="createCanPickup" type="checkbox" checked /> Pickup allowed</label>
+        <label class="switch"><input id="createPickupBlocked" type="checkbox" /> Pickup blocked</label>
+        <label class="switch"><input id="createPrimary" type="checkbox" /> Primary guardian</label>
+        <label class="switch"><input id="createIsActive" type="checkbox" checked /> Link active</label>
       </div>
 
-      <div class="cg-dialog-actions">
+      <div class="dialog-actions">
         <div></div>
-        <div class="cg-dialog-actions-right">
-          <button id="cancelCreateDialogBtn" class="cg-btn cg-btn-secondary" type="button">
-            Cancel
-          </button>
-          <button id="saveCreateDialogBtn" class="cg-btn cg-btn-primary" type="submit">
-            Create Link
-          </button>
+        <div class="dialog-right">
+          <button id="cancelCreateDialogBtn" class="btn" type="button" style="background:#eef3fb;color:#24375c;">Cancel</button>
+          <button class="btn btn-primary" type="submit">Create Link</button>
         </div>
       </div>
     </form>
   </dialog>
 
-  <script type="module" src="../src/child-guardian-link.js"></script>
+  <script type="module" src="./child-guardian-link.js"></script>
 </body>
 </html>
