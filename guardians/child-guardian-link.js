@@ -271,6 +271,7 @@ function renderLinked() {
   linkedGuardianGrid.innerHTML = rows.map((row) => {
     const name = fullName(row);
     const avatar = avatarValue(row);
+
     return `
       <article class="guardian-card" data-link-id="${escapeHtml(String(getLinkId(row)))}">
         <div class="card-top">
@@ -288,23 +289,23 @@ function renderLinked() {
         </div>
 
         <div class="badges">
-          ${row.is_primary ? `<span class="badge primary">Primary</span>` : ""}
-          ${row.can_pickup ? `<span class="badge success">Pickup Allowed</span>` : `<span class="badge warning">No Pickup</span>`}
-          ${row.pickup_blocked ? `<span class="badge danger">Pickup Blocked</span>` : ""}
+          ${row.is_primary ? `<span class="badge primary">⭐ Primary</span>` : ``}
+          ${row.can_pickup ? `<span class="badge success">✅ Pickup Allowed</span>` : `<span class="badge warning">⚠ No Pickup</span>`}
+          ${row.pickup_blocked ? `<span class="badge danger">🚫 Pickup Blocked</span>` : ``}
           ${row.is_active === false ? `<span class="badge warning">Inactive Link</span>` : ""}
         </div>
 
         <p class="notes">${escapeHtml(row.notes || "No notes for this link.")}</p>
 
         <div class="actions">
-          <button class="action-btn primary" type="button" data-action="edit" data-link-id="${escapeHtml(String(getLinkId(row)))}">Edit</button>
+          <button class="action-btn primary" type="button" data-action="edit" data-link-id="${escapeHtml(String(getLinkId(row)))}">✏️ Edit</button>
           <button class="action-btn" type="button" data-action="primary" data-link-id="${escapeHtml(String(getLinkId(row)))}">
-            ${row.is_primary ? "Primary ✓" : "Make Primary"}
+            ${row.is_primary ? "⭐ Primary" : "⭐ Make Primary"}
           </button>
           <button class="action-btn" type="button" data-action="block" data-link-id="${escapeHtml(String(getLinkId(row)))}">
-            ${row.pickup_blocked ? "Unblock Pickup" : "Block Pickup"}
+            ${row.pickup_blocked ? "✅ Unblock Pickup" : "🚫 Block Pickup"}
           </button>
-          <button class="action-btn danger" type="button" data-action="remove" data-link-id="${escapeHtml(String(getLinkId(row)))}">Remove</button>
+          <button class="action-btn danger" type="button" data-action="remove" data-link-id="${escapeHtml(String(getLinkId(row)))}">🗑 Remove</button>
         </div>
       </article>
     `;
@@ -322,9 +323,10 @@ function renderAvailable() {
   availableGuardiansList.innerHTML = rows.map((row) => {
     const name = fullName(row);
     const avatar = avatarValue(row);
+    const isSelected = state.selectedGuardian && String(getGuardianId(state.selectedGuardian)) === String(getGuardianId(row));
 
     return `
-      <div class="available-card">
+      <div class="available-card ${isSelected ? "selected" : ""}">
         <div class="available-left">
           <div class="available-avatar">
             ${avatar ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}" />` : escapeHtml(getInitials(name))}
@@ -337,7 +339,7 @@ function renderAvailable() {
             </div>
           </div>
         </div>
-        <button class="btn btn-primary" type="button" data-action="link" data-guardian-id="${escapeHtml(String(getGuardianId(row)))}">Link</button>
+        <button class="btn btn-primary link-now-btn" type="button" data-action="link" data-guardian-id="${escapeHtml(String(getGuardianId(row)))}">Link Now</button>
       </div>
     `;
   }).join("");
@@ -361,7 +363,7 @@ function openCreate(row) {
   createGuardianId.value = String(getGuardianId(row));
   selectedGuardianPreview.innerHTML = `
     ${escapeHtml(fullName(row))}<br />
-    <span style="font-weight:500;color:#5c6a82;">${escapeHtml(phoneValue(row) || "No phone")} · ${escapeHtml(emailValue(row) || "No email")}</span>
+    <span style="font-weight:600;color:#5c6a82;">${escapeHtml(phoneValue(row) || "No phone")} · ${escapeHtml(emailValue(row) || "No email")}</span>
   `;
   createRelationship.value = relationshipValue(row) || "";
   createNotes.value = "";
@@ -369,11 +371,13 @@ function openCreate(row) {
   createPickupBlocked.checked = false;
   createPrimary.checked = false;
   createIsActive.checked = true;
+  renderAvailable();
   createDialog.showModal();
 }
 
 function closeCreate() {
   state.selectedGuardian = null;
+  renderAvailable();
   createDialog.close();
 }
 

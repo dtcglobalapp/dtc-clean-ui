@@ -14,8 +14,15 @@
       --primary: #2f56d7;
       --primary-dark: #1d3ea8;
       --danger: #d13b3b;
+      --danger-soft: #fff0f0;
       --success: #1f8f53;
+      --success-soft: #edf9f2;
       --warning: #a66b00;
+      --warning-soft: #fff8e6;
+      --purple: #6b4dd6;
+      --purple-soft: #f2edff;
+      --card: rgba(255,255,255,0.06);
+      --card-line: rgba(255,255,255,0.08);
       --shadow: 0 16px 40px rgba(20, 34, 66, 0.08);
       --radius: 20px;
     }
@@ -30,7 +37,7 @@
     }
 
     .page {
-      max-width: 1360px;
+      max-width: 1380px;
       margin: 0 auto;
       padding: 28px 20px 40px;
     }
@@ -55,14 +62,15 @@
     }
 
     .avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 18px;
-      background: #1d8fff;
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #308fff, #4d6fff);
       display: grid;
       place-items: center;
-      font-size: 28px;
+      font-size: 30px;
       flex: 0 0 auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
     }
 
     .hero-copy small {
@@ -75,7 +83,7 @@
 
     .hero-copy h1 {
       margin: 0;
-      font-size: clamp(1.8rem, 2.8vw, 3rem);
+      font-size: clamp(1.9rem, 2.8vw, 3rem);
       line-height: 1.05;
     }
 
@@ -95,13 +103,14 @@
       border: 0;
       border-radius: 16px;
       padding: 14px 18px;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       transition: 160ms ease;
+      font-size: 0.95rem;
     }
 
     .btn:hover { transform: translateY(-1px); }
@@ -119,6 +128,16 @@
       background: rgba(255,255,255,0.08);
       color: #fff;
       border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .btn-soft {
+      background: #eef3fb;
+      color: #24375c;
+    }
+
+    .btn-danger-soft {
+      background: var(--danger-soft);
+      color: #9f2323;
     }
 
     .toolbar {
@@ -143,6 +162,7 @@
       padding: 14px 16px;
       border-radius: 16px;
       outline: none;
+      font: inherit;
     }
 
     .search::placeholder { color: rgba(255,255,255,0.58); }
@@ -166,7 +186,7 @@
     .layout {
       margin-top: 18px;
       display: grid;
-      grid-template-columns: 1.3fr 1fr;
+      grid-template-columns: 1.35fr 1fr;
       gap: 18px;
       align-items: start;
     }
@@ -205,6 +225,7 @@
       border-radius: 999px;
       font-size: 0.9rem;
       white-space: nowrap;
+      font-weight: 700;
     }
 
     .list {
@@ -225,10 +246,17 @@
 
     .guardian-card,
     .available-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--card);
+      border: 1px solid var(--card-line);
       border-radius: 22px;
       padding: 16px;
+      transition: 160ms ease;
+    }
+
+    .guardian-card:hover,
+    .available-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.14);
     }
 
     .card-top {
@@ -283,19 +311,39 @@
       padding: 6px 10px;
       border-radius: 999px;
       font-size: 0.82rem;
-      font-weight: 700;
+      font-weight: 800;
       border: 1px solid transparent;
     }
 
-    .badge.primary { background: rgba(67, 120, 255, 0.22); color: #cfe0ff; }
-    .badge.success { background: rgba(37, 143, 84, 0.22); color: #c8f3dc; }
-    .badge.warning { background: rgba(166, 107, 0, 0.22); color: #ffe6b3; }
-    .badge.danger  { background: rgba(209, 59, 59, 0.22); color: #ffd0d0; }
+    .badge.primary {
+      background: rgba(67, 120, 255, 0.26);
+      color: #d7e5ff;
+      border-color: rgba(67, 120, 255, 0.3);
+    }
+
+    .badge.success {
+      background: rgba(37, 143, 84, 0.24);
+      color: #d3f7e4;
+      border-color: rgba(37, 143, 84, 0.3);
+    }
+
+    .badge.warning {
+      background: rgba(166, 107, 0, 0.24);
+      color: #ffe9b8;
+      border-color: rgba(166, 107, 0, 0.3);
+    }
+
+    .badge.danger {
+      background: rgba(209, 59, 59, 0.24);
+      color: #ffdada;
+      border-color: rgba(209, 59, 59, 0.3);
+    }
 
     .notes {
       margin: 0 0 12px;
       color: rgba(255,255,255,0.78);
       font-size: 0.95rem;
+      line-height: 1.45;
     }
 
     .actions {
@@ -308,20 +356,33 @@
       border: 0;
       border-radius: 14px;
       padding: 10px 14px;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       background: rgba(255,255,255,0.08);
       color: #fff;
+      font-size: 0.92rem;
     }
 
-    .action-btn.primary { background: var(--primary); }
-    .action-btn.danger { background: rgba(209,59,59,0.18); color: #ffd3d3; border: 1px solid rgba(209,59,59,0.3); }
+    .action-btn.primary {
+      background: var(--primary);
+    }
+
+    .action-btn.danger {
+      background: rgba(209,59,59,0.18);
+      color: #ffd3d3;
+      border: 1px solid rgba(209,59,59,0.3);
+    }
 
     .available-card {
       display: flex;
       gap: 14px;
       align-items: center;
       justify-content: space-between;
+    }
+
+    .available-card.selected {
+      outline: 2px solid rgba(78, 132, 255, 0.85);
+      background: rgba(78, 132, 255, 0.12);
     }
 
     .available-left {
@@ -335,12 +396,17 @@
       min-width: 0;
     }
 
+    .link-now-btn {
+      min-width: 114px;
+    }
+
     .message {
       margin-top: 16px;
       padding: 14px 16px;
       border-radius: 16px;
-      font-weight: 600;
+      font-weight: 700;
       display: none;
+      box-shadow: var(--shadow);
     }
 
     .message.show { display: block; }
@@ -351,7 +417,7 @@
       border: 0;
       border-radius: 24px;
       padding: 0;
-      width: min(640px, calc(100vw - 24px));
+      width: min(680px, calc(100vw - 24px));
       box-shadow: 0 24px 80px rgba(10, 20, 44, 0.35);
     }
 
@@ -405,7 +471,7 @@
 
     .field span {
       font-size: 0.9rem;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -418,6 +484,18 @@
       padding: 12px 14px;
       font: inherit;
       outline: none;
+      width: 100%;
+    }
+
+    .selected-preview {
+      margin-bottom: 16px;
+      background: #eef4ff;
+      color: #214f9a;
+      border: 1px solid #d4e0ff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 800;
+      line-height: 1.45;
     }
 
     .switches {
@@ -434,6 +512,7 @@
       border: 1px solid #e2e9f8;
       border-radius: 14px;
       padding: 12px 14px;
+      font-weight: 600;
     }
 
     .dialog-actions {
@@ -468,6 +547,11 @@
       .dialog-actions { flex-direction: column; }
       .dialog-right { width: 100%; }
       .dialog-right .btn { flex: 1 1 auto; }
+      .actions .action-btn { flex: 1 1 calc(50% - 10px); }
+    }
+
+    @media (max-width: 480px) {
+      .actions .action-btn { flex: 1 1 100%; }
     }
   </style>
 </head>
@@ -563,9 +647,9 @@
       </div>
 
       <div class="dialog-actions">
-        <button id="deleteLinkBtn" class="btn" type="button" style="background:#ffe6e6;color:#9f2323;">Remove Link</button>
+        <button id="deleteLinkBtn" class="btn btn-danger-soft" type="button">🗑 Remove Link</button>
         <div class="dialog-right">
-          <button id="cancelEditDialogBtn" class="btn" type="button" style="background:#eef3fb;color:#24375c;">Cancel</button>
+          <button id="cancelEditDialogBtn" class="btn btn-soft" type="button">Cancel</button>
           <button class="btn btn-primary" type="submit">Save Changes</button>
         </div>
       </div>
@@ -584,7 +668,7 @@
 
       <input id="createGuardianId" type="hidden" />
 
-      <div id="selectedGuardianPreview" style="margin-bottom:16px;font-weight:700;color:#214f9a;">
+      <div id="selectedGuardianPreview" class="selected-preview">
         Select a guardian first.
       </div>
 
@@ -610,7 +694,7 @@
       <div class="dialog-actions">
         <div></div>
         <div class="dialog-right">
-          <button id="cancelCreateDialogBtn" class="btn" type="button" style="background:#eef3fb;color:#24375c;">Cancel</button>
+          <button id="cancelCreateDialogBtn" class="btn btn-soft" type="button">Cancel</button>
           <button class="btn btn-primary" type="submit">Create Link</button>
         </div>
       </div>
