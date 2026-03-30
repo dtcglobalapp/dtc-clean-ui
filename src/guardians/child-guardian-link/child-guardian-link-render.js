@@ -54,9 +54,11 @@ export function filterLinkedRows({ dom, state }) {
 
 export function filterAvailableRows({ dom, state }) {
   const search = dom.availableGuardianSearchInput.value.trim().toLowerCase();
-  const linkedGuardianIds = new Set(state.linked.map((row) => String(getGuardianId(row))));
+  const linkedGuardianIds = new Set(
+    (state.linked || []).map((row) => String(getGuardianId(row)))
+  );
 
-  return state.available.filter((row) => {
+  return (state.available || []).filter((row) => {
     const guardianId = String(getGuardianId(row));
     if (linkedGuardianIds.has(guardianId)) return false;
 
@@ -158,7 +160,11 @@ export function renderAvailable({ dom, state }) {
   const rows = filterAvailableRows({ dom, state });
 
   if (!rows.length) {
-    dom.availableGuardiansList.innerHTML = `<div class="cg-empty-mini">No available guardians found.</div>`;
+    dom.availableGuardiansList.innerHTML = `
+      <div class="cg-empty-mini">
+        No available guardians found.
+      </div>
+    `;
     return;
   }
 
