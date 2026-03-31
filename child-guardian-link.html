@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>DTC — Child Guardian Link</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --panel: #ffffff;
+      --text: #162033;
+      --muted: #697387;
+      --line: #d9e2f0;
+      --primary: #2f56d7;
+      --primary-dark: #1d3ea8;
+      --danger: #d13b3b;
+      --danger-soft: #fff0f0;
+      --success: #1f8f53;
+      --warning: #a66b00;
+      --card: rgba(255,255,255,0.06);
+      --card-line: rgba(255,255,255,0.08);
+      --shadow: 0 16px 40px rgba(20, 34, 66, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f1b34, #1d2d57);
+      color: #fff;
+      border-radius: 28px;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-left {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .hero-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #308fff, #4d6fff);
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      overflow: hidden;
+      flex: 0 0 auto;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .hero-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-copy .system-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 8px;
+    }
+
+    .hero-copy .brand-main {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .hero-copy .brand-sub {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.74);
+    }
+
+    .hero-copy small {
+      display: block;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 2.8vw, 3rem);
+      line-height: 1.05;
+    }
+
+    .hero-copy p {
+      margin: 8px 0 0;
+      color: rgba(255,255,255,0.82);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: 160ms ease;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .btn-soft {
+      background: #eef3fb;
+      color: #24375c;
+    }
+
+    .btn-danger-soft {
+      background: var(--danger-soft);
+      color: #9f2323;
+    }
+
+    .toolbar {
+      margin-top: 18px;
+      background: linear-gradient(135deg, #162543, #21345e);
+      color: #fff;
+      border-radius: 24px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .search {
+      flex: 1 1 380px;
+      min-width: 240px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 16px;
+      outline: none;
+      font: inherit;
+    }
+
+    .search::placeholder { color: rgba(255,255,255,0.58); }
+
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: rgba(255,255,255,0.9);
+      flex-wrap: wrap;
+    }
+
+    .filters label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .layout {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(135deg, #162543, #203258);
+      color: #fff;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+    }
+
+    .panel p {
+      margin: 0;
+      color: rgba(255,255,255,0.74);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .count {
+      background: #23417d;
+      color: #dfe8ff;
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .empty {
+      border: 1px dashed rgba(255,255,255,0.14);
+      border-radius: 20px;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .guardian-card,
+    .available-card {
+      background: var(--card);
+      border: 1px solid var(--card-line);
+      border-radius: 22px;
+      padding: 16px;
+      transition: 160ms ease;
+    }
+
+    .guardian-card:hover,
+    .available-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .card-top {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .card-avatar,
+    .available-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.14);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .card-avatar img,
+    .available-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-name {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .meta,
+    .available-meta {
+      display: grid;
+      gap: 4px;
+      margin-top: 6px;
+      color: rgba(255,255,255,0.82);
+      font-size: 0.95rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 10px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+
+    .badge.primary {
+      background: rgba(67, 120, 255, 0.26);
+      color: #d7e5ff;
+      border-color: rgba(67, 120, 255, 0.3);
+    }
+
+    .badge.success {
+      background: rgba(37, 143, 84, 0.24);
+      color: #d3f7e4;
+      border-color: rgba(37, 143, 84, 0.3);
+    }
+
+    .badge.warning {
+      background: rgba(166, 107, 0, 0.24);
+      color: #ffe9b8;
+      border-color: rgba(166, 107, 0, 0.3);
+    }
+
+    .badge.danger {
+      background: rgba(209, 59, 59, 0.24);
+      color: #ffdada;
+      border-color: rgba(209, 59, 59, 0.3);
+    }
+
+    .notes {
+      margin: 0 0 12px;
+      color: rgba(255,255,255,0.78);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 0.92rem;
+    }
+
+    .action-btn.primary {
+      background: var(--primary);
+    }
+
+    .action-btn.danger {
+      background: rgba(209,59,59,0.18);
+      color: #ffd3d3;
+      border: 1px solid rgba(209,59,59,0.3);
+    }
+
+    .available-card {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .available-card.selected {
+      outline: 2px solid rgba(78, 132, 255, 0.85);
+      background: rgba(78, 132, 255, 0.12);
+    }
+
+    .available-left {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .available-copy {
+      min-width: 0;
+    }
+
+    .link-now-btn {
+      min-width: 114px;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-weight: 700;
+      display: none;
+      box-shadow: var(--shadow);
+    }
+
+    .message.show { display: block; }
+    .message.error { background: #ffe4e4; color: #8a1f1f; }
+    .message.info { background: #e6f0ff; color: #214f9a; }
+
+    .dialog {
+      border: 0;
+      border-radius: 24px;
+      padding: 0;
+      width: min(680px, calc(100vw - 24px));
+      box-shadow: 0 24px 80px rgba(10, 20, 44, 0.35);
+    }
+
+    .dialog::backdrop { background: rgba(11, 20, 39, 0.6); }
+
+    .dialog-card {
+      padding: 22px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .dialog-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .dialog-head h3 {
+      margin: 0 0 6px;
+      font-size: 1.5rem;
+    }
+
+    .dialog-head p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      border: 0;
+      background: #eef3fb;
+      border-radius: 14px;
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field span {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field input,
+    .field textarea {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+      outline: none;
+      width: 100%;
+    }
+
+    .selected-preview {
+      margin-bottom: 16px;
+      background: #eef4ff;
+      color: #214f9a;
+      border: 1px solid #d4e0ff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .switches {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .switch {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #f6f9ff;
+      border: 1px solid #e2e9f8;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 600;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dialog-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .page { padding: 16px 12px 32px; }
+      .hero { padding: 18px; }
+      .hero { flex-direction: column; align-items: stretch; }
+      .hero-actions { justify-content: stretch; }
+      .hero-actions .btn { width: 100%; }
+      .panel h2 { font-size: 1.55rem; }
+      .available-card { flex-direction: column; align-items: stretch; }
+      .available-left { align-items: flex-start; }
+      .available-card .btn { width: 100%; }
+      .dialog-actions { flex-direction: column; }
+      .dialog-right { width: 100%; }
+      .dialog-right .btn { flex: 1 1 auto; }
+      .actions .action-btn { flex: 1 1 calc(50% - 10px); }
+    }
+
+    @media (max-width: 480px) {
+      .actions .action-btn { flex: 1 1 100%; }
+    }
+  </style>
+  <link rel="stylesheet" href="../dtc.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-left">
+        <div class="hero-avatar" id="childAvatar" aria-label="Child photo or initials">👶</div>
+        <div class="hero-copy">
+          <div class="system-brand">
+            <p class="brand-main" id="brandMain">DTC</p>
+            <p class="brand-sub" id="brandSub">Control Total (Daycares)</p>
+          </div>
+          <small id="businessName">Guardian Links</small>
+          <h1 id="childTitle">Child Guardian Link</h1>
+          <p id="childSubtitle">Manage who is linked, who can pick up, and who is primary.</p>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <a id="backToProfileBtn" class="btn btn-secondary" href="/children/child-profile.html">← Back to Child Profile</a>
+        <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
+      </div>
+    </section>
+
+    <div id="messageBox" class="message"></div>
+
+    <section class="toolbar">
+      <input id="guardianSearchInput" class="search" type="search" placeholder="Search linked guardians..." />
+      <div class="filters">
+        <label><input id="showBlockedOnly" type="checkbox" /> Blocked pickup only</label>
+        <label><input id="showPickupOnly" type="checkbox" /> Pickup allowed only</label>
+      </div>
+    </section>
+
+    <section class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Linked Guardians</h2>
+            <p>Tap a card to manage permissions, primary status and pickup access.</p>
+          </div>
+          <div class="count" id="linkedCountBadge">0 linked</div>
+        </div>
+
+        <div id="linkedGuardianGrid" class="list">
+          <div class="empty">Loading linked guardians…</div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Available Guardians</h2>
+            <p>Select one and create a new link for this child.</p>
+          </div>
+        </div>
+
+        <input id="availableGuardianSearchInput" class="search" type="search" placeholder="Search all guardians..." style="margin-bottom:14px;" />
+
+        <div id="availableGuardiansList" class="list">
+          <div class="empty">Loading guardians…</div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="editDialog" class="dialog">
+    <form id="editForm" class="dialog-card" method="dialog">
+      <div class="dialog-head">
+        <div>
+          <h3>Edit Link</h3>
+          <p>Update relationship and permissions for this guardian.</p>
+        </div>
+        <button id="closeEditDialogBtn" class="icon-btn" type="button">✕</button>
+      </div>
+
+      <input id="editLinkId" type="hidden" />
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Relationship to child</span>
+          <input id="editRelationship" type="text" placeholder="Mother, Father, Aunt, Uncle..." />
+        </label>
+
+        <label class="field">
+          <span>Notes</span>
+          <textarea id="editNotes" rows="4" placeholder="Optional notes..."></textarea>
+        </label>
+      </div>
+
+      <div class="switches">
+        <label class="switch"><input id="editCanPickup" type="checkbox" /> Pickup allowed</label>
+        <label class="switch"><input id="editPickupBlocked" type="checkbox" /> Pickup blocked</label>
+        <label class="switch"><input id="editPrimary" type="checkbox" /> Primary guardian</label>
+        <label class="switch"><input id="editIsActive" type="checkbox" checked /> Link active</label>
+      </div>
+
+      <div class="dialog-actions">
+        <button id="deleteLinkBtn" class="btn btn-danger-soft" type="button">🗑 Remove Link</button>
+        <div class="dialog-right">
+          <button id="cancelEditDialogBtn" class="btn btn-soft" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="createDialog" class="dialog">
+    <form id="createForm" class="dialog-card" method="dialog">
+      <div class="dialog-head">
+        <div>
+          <h3>Create Link</h3>
+          <p>Create a new link between this child and a guardian.</p>
+        </div>
+        <button id="closeCreateDialogBtn" class="icon-btn" type="button">✕</button>
+      </div>
+
+      <input id="createGuardianId" type="hidden" />
+
+      <div id="selectedGuardianPreview" class="selected-preview">
+        Select a guardian first.
+      </div>
+
+      <div class="form-grid">
+        <label class="field">
+          <span>Relationship to child</span>
+          <input id="createRelationship" type="text" placeholder="Mother, Father, Aunt, Uncle..." />
+        </label>
+
+        <label class="field">
+          <span>Notes</span>
+          <textarea id="createNotes" rows="4" placeholder="Optional notes..."></textarea>
+        </label>
+      </div>
+
+      <div class="switches">
+        <label class="switch"><input id="createCanPickup" type="checkbox" checked /> Pickup allowed</label>
+        <label class="switch"><input id="createPickupBlocked" type="checkbox" /> Pickup blocked</label>
+        <label class="switch"><input id="createPrimary" type="checkbox" /> Primary guardian</label>
+        <label class="switch"><input id="createIsActive" type="checkbox" checked /> Link active</label>
+      </div>
+
+      <div class="dialog-actions">
+        <div></div>
+        <div class="dialog-right">
+          <button id="cancelCreateDialogBtn" class="btn btn-soft" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Create Link</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./child-guardian-link.js"></script>
+</body>
+</html>

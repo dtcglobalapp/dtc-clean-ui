@@ -1,325 +1,72 @@
-import { supabase } from "../core/supabase.js";
+import { supabase } from "../auth.js";
+import { getAppConfig } from "../core/app-config.js";
 
-const url = new URL(window.location.href);
-const childId = url.searchParams.get("child_id");
+const params = new URLSearchParams(window.location.search);
+const childId = params.get("child_id");
 
-const dom = {
-  childTitle: document.getElementById("childTitle"),
-  childSubtitle: document.getElementById("childSubtitle"),
-  childAvatar: document.getElementById("childAvatar"),
-  backToProfileBtn: document.getElementById("backToProfileBtn"),
+const brandMain = document.getElementById("brandMain");
+const brandSub = document.getElementById("brandSub");
+const businessName = document.getElementById("businessName");
 
-  linkedGuardianGrid: document.getElementById("linkedGuardianGrid"),
-  linkedCountBadge: document.getElementById("linkedCountBadge"),
-  guardianSearchInput: document.getElementById("guardianSearchInput"),
-  showBlockedOnly: document.getElementById("showBlockedOnly"),
-  showPickupOnly: document.getElementById("showPickupOnly"),
+const childTitle = document.getElementById("childTitle");
+const childSubtitle = document.getElementById("childSubtitle");
+const childAvatar = document.getElementById("childAvatar");
+const backToProfileBtn = document.getElementById("backToProfileBtn");
 
-  availableGuardiansList: document.getElementById("availableGuardiansList"),
-  availableGuardianSearchInput: document.getElementById("availableGuardianSearchInput"),
-  linkGuardianBtn: document.getElementById("linkGuardianBtn"),
+const guardianSearchInput = document.getElementById("guardianSearchInput");
+const availableGuardianSearchInput = document.getElementById("availableGuardianSearchInput");
+const showBlockedOnly = document.getElementById("showBlockedOnly");
+const showPickupOnly = document.getElementById("showPickupOnly");
+const refreshBtn = document.getElementById("refreshBtn");
+const linkedCountBadge = document.getElementById("linkedCountBadge");
+const linkedGuardianGrid = document.getElementById("linkedGuardianGrid");
+const availableGuardiansList = document.getElementById("availableGuardiansList");
+const messageBox = document.getElementById("messageBox");
 
-  editLinkDialog: document.getElementById("editLinkDialog"),
-  editLinkForm: document.getElementById("editLinkForm"),
-  editLinkId: document.getElementById("editLinkId"),
-  editRelationship: document.getElementById("editRelationship"),
-  editNotes: document.getElementById("editNotes"),
-  editCanPickup: document.getElementById("editCanPickup"),
-  editPickupBlocked: document.getElementById("editPickupBlocked"),
-  editPrimary: document.getElementById("editPrimary"),
-  editIsActive: document.getElementById("editIsActive"),
-  closeEditDialogBtn: document.getElementById("closeEditDialogBtn"),
-  cancelEditDialogBtn: document.getElementById("cancelEditDialogBtn"),
-  deleteFromDialogBtn: document.getElementById("deleteFromDialogBtn"),
+const editDialog = document.getElementById("editDialog");
+const editForm = document.getElementById("editForm");
+const editLinkId = document.getElementById("editLinkId");
+const editRelationship = document.getElementById("editRelationship");
+const editNotes = document.getElementById("editNotes");
+const editCanPickup = document.getElementById("editCanPickup");
+const editPickupBlocked = document.getElementById("editPickupBlocked");
+const editPrimary = document.getElementById("editPrimary");
+const editIsActive = document.getElementById("editIsActive");
+const closeEditDialogBtn = document.getElementById("closeEditDialogBtn");
+const cancelEditDialogBtn = document.getElementById("cancelEditDialogBtn");
+const deleteLinkBtn = document.getElementById("deleteLinkBtn");
 
-  createLinkDialog: document.getElementById("createLinkDialog"),
-  createLinkForm: document.getElementById("createLinkForm"),
-  createGuardianId: document.getElementById("createGuardianId"),
-  createRelationship: document.getElementById("createRelationship"),
-  createNotes: document.getElementById("createNotes"),
-  createCanPickup: document.getElementById("createCanPickup"),
-  createPickupBlocked: document.getElementById("createPickupBlocked"),
-  createPrimary: document.getElementById("createPrimary"),
-  createIsActive: document.getElementById("createIsActive"),
-  selectedGuardianPreview: document.getElementById("selectedGuardianPreview"),
-  closeCreateDialogBtn: document.getElementById("closeCreateDialogBtn"),
-  cancelCreateDialogBtn: document.getElementById("cancelCreateDialogBtn"),
-};
+const createDialog = document.getElementById("createDialog");
+const createForm = document.getElementById("createForm");
+const createGuardianId = document.getElementById("createGuardianId");
+const createRelationship = document.getElementById("createRelationship");
+const createNotes = document.getElementById("createNotes");
+const createCanPickup = document.getElementById("createCanPickup");
+const createPickupBlocked = document.getElementById("createPickupBlocked");
+const createPrimary = document.getElementById("createPrimary");
+const createIsActive = document.getElementById("createIsActive");
+const selectedGuardianPreview = document.getElementById("selectedGuardianPreview");
+const closeCreateDialogBtn = document.getElementById("closeCreateDialogBtn");
+const cancelCreateDialogBtn = document.getElementById("cancelCreateDialogBtn");
 
 const state = {
+  organizationId: null,
+  organization: null,
   child: null,
   linked: [],
   available: [],
+  editing: null,
   selectedGuardian: null,
-  editingLink: null,
 };
 
-function toast(message) {
-  window.alert(message);
+function showMessage(text, type = "info") {
+  messageBox.textContent = text;
+  messageBox.className = `message show ${type}`;
 }
 
-function getInitials(name = "") {
-  return String(name)
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "G";
-}
-
-function safeText(value, fallback = "—") {
-  if (value === null || value === undefined || value === "") return fallback;
-  return String(value);
-}
-
-function getRowValue(row, keys = [], fallback = null) {
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(row, key) && row[key] !== undefined) {
-      return row[key];
-    }
-  }
-  return fallback;
-}
-
-function getGuardianName(row) {
-  return (
-    getRowValue(row, ["guardian_name", "display_name", "full_name", "name"]) ||
-    [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||
-    "Guardian"
-  );
-}
-
-function getGuardianPhone(row) {
-  return getRowValue(row, ["guardian_phone", "phone", "mobile_phone", "cell_phone"], "");
-}
-
-function getGuardianEmail(row) {
-  return getRowValue(row, ["guardian_email", "email"], "");
-}
-
-function getRelationship(row) {
-  return getRowValue(
-    row,
-    ["relationship_to_child", "relationship", "relation_to_child", "relation"],
-    ""
-  );
-}
-
-function getNotes(row) {
-  return getRowValue(row, ["notes", "link_notes", "pickup_notes"], "");
-}
-
-function getAvatarUrl(row) {
-  return getRowValue(row, ["photo_url", "avatar_url", "image_url"], "");
-}
-
-function getCanPickup(row) {
-  return !!getRowValue(row, ["can_pickup", "pickup_allowed", "pickup_authorized"], false);
-}
-
-function getPickupBlocked(row) {
-  return !!getRowValue(row, ["pickup_blocked", "is_pickup_blocked", "blocked_pickup"], false);
-}
-
-function getIsPrimary(row) {
-  return !!getRowValue(row, ["is_primary", "primary_guardian"], false);
-}
-
-function getIsActive(row) {
-  const val = getRowValue(row, ["is_active", "active"], true);
-  return val !== false;
-}
-
-function getGuardianId(row) {
-  return getRowValue(row, ["guardian_id", "id"]);
-}
-
-function getLinkId(row) {
-  return getRowValue(row, ["child_guardian_id", "id", "link_id"]);
-}
-
-function childDisplayName(child) {
-  return (
-    getRowValue(child, ["full_name", "display_name", "name"]) ||
-    [child?.first_name, child?.last_name].filter(Boolean).join(" ").trim() ||
-    "Child"
-  );
-}
-
-function childAvatarChar(child) {
-  const name = childDisplayName(child);
-  return getInitials(name);
-}
-
-function filterLinkedRows(rows) {
-  const search = dom.guardianSearchInput.value.trim().toLowerCase();
-  const blockedOnly = dom.showBlockedOnly.checked;
-  const pickupOnly = dom.showPickupOnly.checked;
-
-  return rows.filter((row) => {
-    const name = getGuardianName(row).toLowerCase();
-    const relationship = getRelationship(row).toLowerCase();
-    const phone = getGuardianPhone(row).toLowerCase();
-    const email = getGuardianEmail(row).toLowerCase();
-    const blocked = getPickupBlocked(row);
-    const canPickup = getCanPickup(row);
-
-    const matchesSearch =
-      !search ||
-      name.includes(search) ||
-      relationship.includes(search) ||
-      phone.includes(search) ||
-      email.includes(search);
-
-    if (!matchesSearch) return false;
-    if (blockedOnly && !blocked) return false;
-    if (pickupOnly && !canPickup) return false;
-
-    return true;
-  });
-}
-
-function filterAvailableRows(rows) {
-  const search = dom.availableGuardianSearchInput.value.trim().toLowerCase();
-  const linkedGuardianIds = new Set(state.linked.map((row) => String(getGuardianId(row))));
-
-  return rows.filter((row) => {
-    const guardianId = String(getGuardianId(row));
-    if (linkedGuardianIds.has(guardianId)) return false;
-
-    const name = getGuardianName(row).toLowerCase();
-    const phone = getGuardianPhone(row).toLowerCase();
-    const email = getGuardianEmail(row).toLowerCase();
-
-    return !search || name.includes(search) || phone.includes(search) || email.includes(search);
-  });
-}
-
-function setHero() {
-  if (!state.child) return;
-  const name = childDisplayName(state.child);
-
-  dom.childTitle.textContent = name;
-  dom.childSubtitle.textContent = `Manage links, pickup permissions and primary guardian for ${name}.`;
-  dom.childAvatar.textContent = childAvatarChar(state.child);
-  dom.backToProfileBtn.href = `../child-profile.html?id=${encodeURIComponent(childId)}`;
-}
-
-function renderLinked() {
-  const rows = filterLinkedRows(state.linked);
-  dom.linkedCountBadge.textContent = `${state.linked.length} linked`;
-
-  if (!rows.length) {
-    dom.linkedGuardianGrid.innerHTML = `
-      <div class="cg-empty-state">
-        <div class="cg-empty-icon">🧩</div>
-        <h3>No matching guardian links</h3>
-        <p>Try another search or create a new link.</p>
-      </div>
-    `;
-    return;
-  }
-
-  dom.linkedGuardianGrid.innerHTML = rows
-    .map((row) => {
-      const linkId = getLinkId(row);
-      const guardianId = getGuardianId(row);
-      const name = getGuardianName(row);
-      const phone = getGuardianPhone(row);
-      const email = getGuardianEmail(row);
-      const relationship = getRelationship(row) || "Relationship not set";
-      const notes = getNotes(row);
-      const canPickup = getCanPickup(row);
-      const pickupBlocked = getPickupBlocked(row);
-      const isPrimary = getIsPrimary(row);
-      const isActive = getIsActive(row);
-      const avatarUrl = getAvatarUrl(row);
-
-      return `
-        <article class="cg-card" data-link-id="${linkId}" data-guardian-id="${guardianId}">
-          <div class="cg-card-top">
-            ${
-              avatarUrl
-                ? `<img class="cg-avatar" src="${avatarUrl}" alt="${name}" />`
-                : `<div class="cg-avatar">${getInitials(name)}</div>`
-            }
-
-            <div class="cg-card-head">
-              <h3 class="cg-card-name">${name}</h3>
-              <div class="cg-card-meta">
-                <div>${relationship}</div>
-                <div>${phone ? `📞 ${phone}` : "📞 No phone"}</div>
-                <div>${email ? `✉️ ${email}` : "✉️ No email"}</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="cg-badges">
-            ${isPrimary ? `<span class="cg-badge cg-badge-primary">Primary</span>` : ``}
-            ${canPickup ? `<span class="cg-badge cg-badge-success">Pickup Allowed</span>` : `<span class="cg-badge cg-badge-warning">No Pickup</span>`}
-            ${pickupBlocked ? `<span class="cg-badge cg-badge-danger">Pickup Blocked</span>` : ``}
-            ${isActive ? `` : `<span class="cg-badge cg-badge-warning">Inactive Link</span>`}
-          </div>
-
-          <div class="cg-notes">${notes ? escapeHtml(notes) : "No notes for this link."}</div>
-
-          <div class="cg-actions">
-            <button class="cg-action-btn primary" type="button" data-action="edit" data-link-id="${linkId}">
-              Edit
-            </button>
-            <button class="cg-action-btn" type="button" data-action="toggle-primary" data-link-id="${linkId}">
-              ${isPrimary ? "Primary ✓" : "Make Primary"}
-            </button>
-            <button class="cg-action-btn" type="button" data-action="toggle-block" data-link-id="${linkId}">
-              ${pickupBlocked ? "Unblock Pickup" : "Block Pickup"}
-            </button>
-            <button class="cg-action-btn danger" type="button" data-action="remove" data-link-id="${linkId}">
-              Remove
-            </button>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-function renderAvailable() {
-  const rows = filterAvailableRows(state.available);
-
-  if (!rows.length) {
-    dom.availableGuardiansList.innerHTML = `<div class="cg-empty-mini">No available guardians found.</div>`;
-    return;
-  }
-
-  dom.availableGuardiansList.innerHTML = rows
-    .map((row) => {
-      const id = getGuardianId(row);
-      const name = getGuardianName(row);
-      const phone = getGuardianPhone(row);
-      const email = getGuardianEmail(row);
-      const avatarUrl = getAvatarUrl(row);
-
-      return `
-        <div class="cg-available-item">
-          ${
-            avatarUrl
-              ? `<img class="cg-avatar" src="${avatarUrl}" alt="${name}" />`
-              : `<div class="cg-avatar">${getInitials(name)}</div>`
-          }
-
-          <div class="cg-available-copy">
-            <strong>${name}</strong>
-            <span>${phone ? `📞 ${phone}` : "📞 No phone"}</span>
-            <span>${email ? `✉️ ${email}` : "✉️ No email"}</span>
-          </div>
-
-          <button class="cg-link-btn" type="button" data-action="prepare-link" data-guardian-id="${id}">
-            Link
-          </button>
-        </div>
-      `;
-    })
-    .join("");
+function hideMessage() {
+  messageBox.textContent = "";
+  messageBox.className = "message";
 }
 
 function escapeHtml(value = "") {
@@ -331,414 +78,613 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
-async function loadChild() {
-  if (!childId) {
-    toast("Missing child_id in URL.");
+function getInitials(name = "") {
+  return String(name)
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "G";
+}
+
+function fullName(row) {
+  return (
+    row.display_name ||
+    row.guardian_name ||
+    row.full_name ||
+    [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||
+    "Guardian"
+  );
+}
+
+function phoneValue(row) {
+  return row.phone || row.guardian_phone || "";
+}
+
+function emailValue(row) {
+  return row.email || row.guardian_email || "";
+}
+
+function avatarValue(row) {
+  return row.photo_url || row.avatar_url || "";
+}
+
+function relationshipValue(row) {
+  return row.relationship_to_child || row.relationship_default || "";
+}
+
+function getLinkId(row) {
+  return row.child_guardian_id || row.id;
+}
+
+function getGuardianId(row) {
+  return row.guardian_id || row.id;
+}
+
+function childName(row) {
+  return [row?.first_name, row?.last_name].filter(Boolean).join(" ").trim() || "Child";
+}
+
+function setChildHeroAvatar(child) {
+  const name = childName(child);
+  const photoUrl = child?.photo_url || "";
+
+  if (photoUrl) {
+    childAvatar.innerHTML = `<img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(name)}" />`;
     return;
   }
 
-  let child = null;
+  childAvatar.textContent = getInitials(name);
+}
 
-  try {
-    const { data, error } = await supabase
-      .from("children")
-      .select("*")
-      .eq("id", childId)
-      .maybeSingle();
+async function getOrganizationId() {
+  if (state.organizationId) return state.organizationId;
 
-    if (!error && data) child = data;
-  } catch (err) {
-    console.error("loadChild error", err);
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("No authenticated user found.");
+
+  const { data, error } = await supabase
+    .from("organization_users")
+    .select("organization_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) throw error;
+  if (!data?.organization_id) throw new Error("No organization found for this user.");
+
+  state.organizationId = data.organization_id;
+  return state.organizationId;
+}
+
+async function loadBrandingAndOrganization() {
+  const config = await getAppConfig();
+  if (brandMain) brandMain.textContent = config.platform_name || "DTC";
+  if (brandSub) brandSub.textContent = config.vertical_name || "Control Total (Daycares)";
+
+  const orgId = await getOrganizationId();
+
+  const { data, error } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", orgId)
+    .maybeSingle();
+
+  if (!error && data?.name) {
+    state.organization = data;
+    businessName.textContent = data.name;
+    return;
   }
 
-  if (!child && state.linked.length) {
-    const row = state.linked[0];
-    child = {
-      id: childId,
-      full_name:
-        getRowValue(row, ["child_name", "child_full_name", "child_display_name"], "Child"),
-    };
-  }
+  businessName.textContent = "Guardian Links";
+}
 
-  state.child = child || { id: childId, full_name: "Child" };
-  setHero();
+async function loadChild() {
+  const orgId = await getOrganizationId();
+
+  const { data, error } = await supabase
+    .from("children")
+    .select("id, first_name, last_name, photo_url, organization_id")
+    .eq("id", childId)
+    .eq("organization_id", orgId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("Child not found.");
+
+  state.child = data;
+  const name = childName(data);
+  childTitle.textContent = name;
+  setChildHeroAvatar(data);
+  childSubtitle.textContent = "Manage who is linked, who can pick up, and who is primary.";
+  backToProfileBtn.href = `/children/child-profile.html?id=${encodeURIComponent(childId)}`;
 }
 
 async function loadLinked() {
+  const orgId = await getOrganizationId();
+
   const { data, error } = await supabase
-    .from("v_child_guardians_detailed")
-    .select("*")
-    .eq("child_id", childId);
+    .from("child_guardians")
+    .select(`
+      id,
+      child_id,
+      guardian_id,
+      relationship_to_child,
+      notes,
+      can_pickup,
+      pickup_blocked,
+      is_primary,
+      is_active,
+      organization_id,
+      guardians (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        photo_url,
+        relationship_default
+      )
+    `)
+    .eq("child_id", childId)
+    .eq("organization_id", orgId);
 
-  if (error) {
-    console.error(error);
-    toast(`Could not load linked guardians: ${error.message}`);
-    state.linked = [];
-    renderLinked();
-    return;
-  }
+  if (error) throw error;
 
-  state.linked = Array.isArray(data) ? sortLinkedRows(data) : [];
-  renderLinked();
-}
-
-function sortLinkedRows(rows) {
-  return [...rows].sort((a, b) => {
-    const primaryDiff = Number(getIsPrimary(b)) - Number(getIsPrimary(a));
-    if (primaryDiff !== 0) return primaryDiff;
-
-    const blockedDiff = Number(getPickupBlocked(a)) - Number(getPickupBlocked(b));
-    if (blockedDiff !== 0) return blockedDiff;
-
-    return getGuardianName(a).localeCompare(getGuardianName(b));
+  state.linked = (data || []).map((row) => {
+    const guardian = Array.isArray(row.guardians) ? row.guardians[0] : row.guardians;
+    return {
+      ...row,
+      ...guardian,
+      child_guardian_id: row.id,
+    };
   });
 }
 
 async function loadAvailable() {
+  const orgId = await getOrganizationId();
+
   const { data, error } = await supabase
     .from("guardians")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("id, first_name, last_name, email, phone, photo_url, relationship_default, organization_id")
+    .eq("organization_id", orgId)
+    .order("first_name", { ascending: true });
 
-  if (error) {
-    console.error(error);
-    dom.availableGuardiansList.innerHTML = `<div class="cg-empty-mini">Could not load guardians.</div>`;
+  if (error) throw error;
+  state.available = data || [];
+}
+
+function filterLinked() {
+  const search = guardianSearchInput.value.trim().toLowerCase();
+  const blockedOnly = showBlockedOnly.checked;
+  const pickupOnly = showPickupOnly.checked;
+
+  return state.linked.filter((row) => {
+    const name = fullName(row).toLowerCase();
+    const relationship = relationshipValue(row).toLowerCase();
+    const phone = phoneValue(row).toLowerCase();
+    const email = emailValue(row).toLowerCase();
+
+    const matches =
+      !search ||
+      name.includes(search) ||
+      relationship.includes(search) ||
+      phone.includes(search) ||
+      email.includes(search);
+
+    if (!matches) return false;
+    if (blockedOnly && !row.pickup_blocked) return false;
+    if (pickupOnly && !row.can_pickup) return false;
+    return true;
+  });
+}
+
+function filterAvailable() {
+  const search = availableGuardianSearchInput.value.trim().toLowerCase();
+  const linkedIds = new Set(state.linked.map((row) => String(getGuardianId(row))));
+
+  return state.available.filter((row) => {
+    const id = String(getGuardianId(row));
+    if (linkedIds.has(id)) return false;
+
+    const name = fullName(row).toLowerCase();
+    const phone = phoneValue(row).toLowerCase();
+    const email = emailValue(row).toLowerCase();
+
+    return !search || name.includes(search) || phone.includes(search) || email.includes(search);
+  });
+}
+
+function renderLinked() {
+  const rows = filterLinked();
+  linkedCountBadge.textContent = `${state.linked.length} linked`;
+
+  if (!rows.length) {
+    linkedGuardianGrid.innerHTML = `<div class="empty">No guardians linked yet.</div>`;
     return;
   }
 
-  state.available = Array.isArray(data) ? data : [];
+  linkedGuardianGrid.innerHTML = rows.map((row) => {
+    const name = fullName(row);
+    const avatar = avatarValue(row);
+
+    return `
+      <article class="guardian-card" data-link-id="${escapeHtml(String(getLinkId(row)))}">
+        <div class="card-top">
+          <div class="card-avatar">
+            ${avatar ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}" />` : escapeHtml(getInitials(name))}
+          </div>
+          <div>
+            <h3 class="card-name">${escapeHtml(name)}</h3>
+            <div class="meta">
+              <div>${escapeHtml(relationshipValue(row) || "Relationship not set")}</div>
+              <div>${phoneValue(row) ? `📞 ${escapeHtml(phoneValue(row))}` : "📞 No phone"}</div>
+              <div>${emailValue(row) ? `✉️ ${escapeHtml(emailValue(row))}` : "✉️ No email"}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="badges">
+          ${row.is_primary ? `<span class="badge primary">⭐ Primary</span>` : ``}
+          ${row.can_pickup ? `<span class="badge success">✅ Pickup Allowed</span>` : `<span class="badge warning">⚠ No Pickup</span>`}
+          ${row.pickup_blocked ? `<span class="badge danger">🚫 Pickup Blocked</span>` : ``}
+          ${row.is_active === false ? `<span class="badge warning">Inactive Link</span>` : ""}
+        </div>
+
+        <p class="notes">${escapeHtml(row.notes || "No notes for this link.")}</p>
+
+        <div class="actions">
+          <button class="action-btn primary" type="button" data-action="edit" data-link-id="${escapeHtml(String(getLinkId(row)))}">✏️ Edit</button>
+          <button class="action-btn" type="button" data-action="primary" data-link-id="${escapeHtml(String(getLinkId(row)))}">
+            ${row.is_primary ? "⭐ Primary" : "⭐ Make Primary"}
+          </button>
+          <button class="action-btn" type="button" data-action="block" data-link-id="${escapeHtml(String(getLinkId(row)))}">
+            ${row.pickup_blocked ? "✅ Unblock Pickup" : "🚫 Block Pickup"}
+          </button>
+          <button class="action-btn danger" type="button" data-action="remove" data-link-id="${escapeHtml(String(getLinkId(row)))}">🗑 Remove</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderAvailable() {
+  const rows = filterAvailable();
+
+  if (!rows.length) {
+    availableGuardiansList.innerHTML = `<div class="empty">No available guardians found.</div>`;
+    return;
+  }
+
+  availableGuardiansList.innerHTML = rows.map((row) => {
+    const name = fullName(row);
+    const avatar = avatarValue(row);
+    const isSelected = state.selectedGuardian && String(getGuardianId(state.selectedGuardian)) === String(getGuardianId(row));
+
+    return `
+      <div class="available-card ${isSelected ? "selected" : ""}">
+        <div class="available-left">
+          <div class="available-avatar">
+            ${avatar ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}" />` : escapeHtml(getInitials(name))}
+          </div>
+          <div class="available-copy">
+            <strong>${escapeHtml(name)}</strong>
+            <div class="available-meta">
+              <span>${phoneValue(row) ? `📞 ${escapeHtml(phoneValue(row))}` : "📞 No phone"}</span>
+              <span>${emailValue(row) ? `✉️ ${escapeHtml(emailValue(row))}` : "✉️ No email"}</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary link-now-btn" type="button" data-action="link" data-guardian-id="${escapeHtml(String(getGuardianId(row)))}">Link Now</button>
+      </div>
+    `;
+  }).join("");
+}
+
+async function refreshAll() {
+  hideMessage();
+  linkedGuardianGrid.innerHTML = `<div class="empty">Loading linked guardians…</div>`;
+  availableGuardiansList.innerHTML = `<div class="empty">Loading guardians…</div>`;
+
+  await loadBrandingAndOrganization();
+  await loadChild();
+  await loadLinked();
+  await loadAvailable();
+
+  renderLinked();
   renderAvailable();
 }
 
-function findLinkedByLinkId(linkId) {
-  return state.linked.find((row) => String(getLinkId(row)) === String(linkId)) || null;
-}
-
-function findAvailableGuardianById(guardianId) {
-  return state.available.find((row) => String(getGuardianId(row)) === String(guardianId)) || null;
-}
-
-function openEditDialog(linkRow) {
-  if (!linkRow) return;
-
-  state.editingLink = linkRow;
-  dom.editLinkId.value = getLinkId(linkRow);
-  dom.editRelationship.value = getRelationship(linkRow) || "";
-  dom.editNotes.value = getNotes(linkRow) || "";
-  dom.editCanPickup.checked = getCanPickup(linkRow);
-  dom.editPickupBlocked.checked = getPickupBlocked(linkRow);
-  dom.editPrimary.checked = getIsPrimary(linkRow);
-  dom.editIsActive.checked = getIsActive(linkRow);
-
-  dom.editLinkDialog.showModal();
-}
-
-function closeEditDialog() {
-  state.editingLink = null;
-  dom.editLinkDialog.close();
-}
-
-function openCreateDialog(guardianRow) {
-  if (!guardianRow) return;
-
-  state.selectedGuardian = guardianRow;
-  dom.createGuardianId.value = getGuardianId(guardianRow);
-  dom.selectedGuardianPreview.innerHTML = `
-    <strong>${escapeHtml(getGuardianName(guardianRow))}</strong><br>
-    <span>${escapeHtml(getGuardianPhone(guardianRow) || "No phone")} · ${escapeHtml(getGuardianEmail(guardianRow) || "No email")}</span>
+function openCreate(row) {
+  state.selectedGuardian = row;
+  createGuardianId.value = String(getGuardianId(row));
+  selectedGuardianPreview.innerHTML = `
+    ${escapeHtml(fullName(row))}<br />
+    <span style="font-weight:600;color:#5c6a82;">${escapeHtml(phoneValue(row) || "No phone")} · ${escapeHtml(emailValue(row) || "No email")}</span>
   `;
-  dom.createRelationship.value = "";
-  dom.createNotes.value = "";
-  dom.createCanPickup.checked = true;
-  dom.createPickupBlocked.checked = false;
-  dom.createPrimary.checked = false;
-  dom.createIsActive.checked = true;
-
-  dom.createLinkDialog.showModal();
+  createRelationship.value = relationshipValue(row) || "";
+  createNotes.value = "";
+  createCanPickup.checked = true;
+  createPickupBlocked.checked = false;
+  createPrimary.checked = false;
+  createIsActive.checked = true;
+  renderAvailable();
+  createDialog.showModal();
 }
 
-function closeCreateDialog() {
+function closeCreate() {
   state.selectedGuardian = null;
-  dom.createLinkDialog.close();
+  renderAvailable();
+  createDialog.close();
 }
 
-async function clearOtherPrimaryLinks(childIdToUpdate, keepLinkId) {
+function openEdit(row) {
+  state.editing = row;
+  editLinkId.value = String(getLinkId(row));
+  editRelationship.value = relationshipValue(row) || "";
+  editNotes.value = row.notes || "";
+  editCanPickup.checked = !!row.can_pickup;
+  editPickupBlocked.checked = !!row.pickup_blocked;
+  editPrimary.checked = !!row.is_primary;
+  editIsActive.checked = row.is_active !== false;
+  editDialog.showModal();
+}
+
+function closeEdit() {
+  state.editing = null;
+  editDialog.close();
+}
+
+async function clearOtherPrimary(keepId) {
+  const orgId = await getOrganizationId();
   const { error } = await supabase
     .from("child_guardians")
     .update({ is_primary: false })
-    .eq("child_id", childIdToUpdate)
-    .neq("id", keepLinkId);
+    .eq("child_id", childId)
+    .eq("organization_id", orgId)
+    .neq("id", keepId);
 
-  if (error) {
-    throw error;
-  }
-}
-
-async function saveEditLink(event) {
-  event.preventDefault();
-
-  const linkId = dom.editLinkId.value;
-  if (!linkId) return;
-
-  const canPickup = dom.editCanPickup.checked;
-  const pickupBlocked = dom.editPickupBlocked.checked;
-  const isPrimary = dom.editPrimary.checked;
-  const isActive = dom.editIsActive.checked;
-
-  const payload = {
-    relationship_to_child: dom.editRelationship.value.trim() || null,
-    notes: dom.editNotes.value.trim() || null,
-    can_pickup: canPickup,
-    pickup_blocked: pickupBlocked,
-    is_active: isActive,
-  };
-
-  try {
-    if (isPrimary) {
-      await clearOtherPrimaryLinks(childId, linkId);
-      payload.is_primary = true;
-    } else {
-      payload.is_primary = false;
-    }
-
-    const { error } = await supabase
-      .from("child_guardians")
-      .update(payload)
-      .eq("id", linkId);
-
-    if (error) throw error;
-
-    closeEditDialog();
-    await refreshAll();
-    toast("Guardian link updated.");
-  } catch (error) {
-    console.error(error);
-    toast(`Could not update link: ${error.message}`);
-  }
+  if (error) throw error;
 }
 
 async function createLink(event) {
   event.preventDefault();
 
-  const guardianId = dom.createGuardianId.value;
+  const guardianId = createGuardianId.value;
   if (!guardianId) {
-    toast("Please select a guardian first.");
+    showMessage("Please select a guardian first.", "error");
     return;
   }
 
-  const payload = {
-    child_id: childId,
-    guardian_id: guardianId,
-    relationship_to_child: dom.createRelationship.value.trim() || null,
-    notes: dom.createNotes.value.trim() || null,
-    can_pickup: dom.createCanPickup.checked,
-    pickup_blocked: dom.createPickupBlocked.checked,
-    is_primary: dom.createPrimary.checked,
-    is_active: dom.createIsActive.checked,
-  };
+  const orgId = await getOrganizationId();
 
   try {
-    if (payload.is_primary) {
-      await clearOtherPrimaryLinks(childId, "00000000-0000-0000-0000-000000000000");
+    if (createPrimary.checked) {
+      await clearOtherPrimary("00000000-0000-0000-0000-000000000000");
     }
+
+    const payload = {
+      organization_id: orgId,
+      child_id: childId,
+      guardian_id: guardianId,
+      relationship_to_child: createRelationship.value.trim() || null,
+      notes: createNotes.value.trim() || null,
+      can_pickup: createCanPickup.checked,
+      pickup_blocked: createPickupBlocked.checked,
+      is_primary: createPrimary.checked,
+      is_active: createIsActive.checked,
+    };
+
+    const { error } = await supabase.from("child_guardians").insert([payload]);
+    if (error) throw error;
+
+    closeCreate();
+    await refreshAll();
+    showMessage("Guardian linked successfully.", "info");
+  } catch (error) {
+    console.error(error);
+    showMessage(error.message || "Could not create link.", "error");
+  }
+}
+
+async function saveEdit(event) {
+  event.preventDefault();
+
+  const linkId = editLinkId.value;
+  if (!linkId) return;
+
+  try {
+    if (editPrimary.checked) {
+      await clearOtherPrimary(linkId);
+    }
+
+    const payload = {
+      relationship_to_child: editRelationship.value.trim() || null,
+      notes: editNotes.value.trim() || null,
+      can_pickup: editCanPickup.checked,
+      pickup_blocked: editPickupBlocked.checked,
+      is_primary: editPrimary.checked,
+      is_active: editIsActive.checked,
+    };
+
+    const orgId = await getOrganizationId();
 
     const { error } = await supabase
       .from("child_guardians")
-      .insert(payload);
+      .update(payload)
+      .eq("id", linkId)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
 
-    closeCreateDialog();
+    closeEdit();
     await refreshAll();
-    toast("Guardian linked successfully.");
+    showMessage("Guardian link updated.", "info");
   } catch (error) {
     console.error(error);
-    toast(`Could not create link: ${error.message}`);
+    showMessage(error.message || "Could not update link.", "error");
   }
 }
 
 async function removeLink(linkId) {
-  const row = findLinkedByLinkId(linkId);
-  if (!row) return;
-
-  const name = getGuardianName(row);
-  const ok = window.confirm(`Remove ${name} from this child?`);
+  const ok = window.confirm("Remove this guardian link?");
   if (!ok) return;
 
   try {
+    const orgId = await getOrganizationId();
     const { error } = await supabase
       .from("child_guardians")
       .delete()
-      .eq("id", linkId);
+      .eq("id", linkId)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
 
     await refreshAll();
-    toast("Guardian link removed.");
+    showMessage("Guardian link removed.", "info");
   } catch (error) {
     console.error(error);
-    toast(`Could not remove link: ${error.message}`);
+    showMessage(error.message || "Could not remove link.", "error");
   }
 }
 
 async function toggleBlock(linkId) {
-  const row = findLinkedByLinkId(linkId);
+  const row = state.linked.find((item) => String(getLinkId(item)) === String(linkId));
   if (!row) return;
 
-  const nextBlocked = !getPickupBlocked(row);
-
   try {
+    const orgId = await getOrganizationId();
+    const nextBlocked = !row.pickup_blocked;
+
     const { error } = await supabase
       .from("child_guardians")
       .update({
         pickup_blocked: nextBlocked,
-        can_pickup: nextBlocked ? false : getCanPickup(row),
+        can_pickup: nextBlocked ? false : !!row.can_pickup,
       })
-      .eq("id", linkId);
+      .eq("id", linkId)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
 
     await refreshAll();
-    toast(nextBlocked ? "Pickup blocked." : "Pickup unblocked.");
+    showMessage(nextBlocked ? "Pickup blocked." : "Pickup unblocked.", "info");
   } catch (error) {
     console.error(error);
-    toast(`Could not update pickup block: ${error.message}`);
+    showMessage(error.message || "Could not update pickup block.", "error");
   }
 }
 
 async function makePrimary(linkId) {
-  const row = findLinkedByLinkId(linkId);
-  if (!row) return;
-
   try {
-    await clearOtherPrimaryLinks(childId, linkId);
+    await clearOtherPrimary(linkId);
+    const orgId = await getOrganizationId();
 
     const { error } = await supabase
       .from("child_guardians")
       .update({ is_primary: true })
-      .eq("id", linkId);
+      .eq("id", linkId)
+      .eq("organization_id", orgId);
 
     if (error) throw error;
 
     await refreshAll();
-    toast(`${getGuardianName(row)} is now the primary guardian.`);
+    showMessage("Primary guardian updated.", "info");
   } catch (error) {
     console.error(error);
-    toast(`Could not set primary guardian: ${error.message}`);
+    showMessage(error.message || "Could not update primary guardian.", "error");
   }
 }
 
-async function refreshAll() {
-  await loadLinked();
-  await loadAvailable();
-  await loadChild();
-}
+linkedGuardianGrid.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
 
-function wireCardActions() {
-  dom.linkedGuardianGrid.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-action]");
-    if (!button) return;
+  const action = button.dataset.action;
+  const linkId = button.dataset.linkId;
 
-    const action = button.dataset.action;
-    const linkId = button.dataset.linkId;
-
-    if (!linkId) return;
-
-    if (action === "edit") {
-      const row = findLinkedByLinkId(linkId);
-      openEditDialog(row);
-      return;
-    }
-
-    if (action === "toggle-primary") {
-      await makePrimary(linkId);
-      return;
-    }
-
-    if (action === "toggle-block") {
-      await toggleBlock(linkId);
-      return;
-    }
-
-    if (action === "remove") {
-      await removeLink(linkId);
-    }
-  });
-
-  dom.availableGuardiansList.addEventListener("click", (event) => {
-    const button = event.target.closest('[data-action="prepare-link"]');
-    if (!button) return;
-
-    const guardianId = button.dataset.guardianId;
-    const row = findAvailableGuardianById(guardianId);
-    openCreateDialog(row);
-  });
-}
-
-function wireInputs() {
-  dom.guardianSearchInput.addEventListener("input", renderLinked);
-  dom.showBlockedOnly.addEventListener("change", renderLinked);
-  dom.showPickupOnly.addEventListener("change", renderLinked);
-  dom.availableGuardianSearchInput.addEventListener("input", renderAvailable);
-
-  dom.linkGuardianBtn.addEventListener("click", () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  });
-
-  dom.editLinkForm.addEventListener("submit", saveEditLink);
-  dom.createLinkForm.addEventListener("submit", createLink);
-
-  dom.closeEditDialogBtn.addEventListener("click", closeEditDialog);
-  dom.cancelEditDialogBtn.addEventListener("click", closeEditDialog);
-
-  dom.closeCreateDialogBtn.addEventListener("click", closeCreateDialog);
-  dom.cancelCreateDialogBtn.addEventListener("click", closeCreateDialog);
-
-  dom.deleteFromDialogBtn.addEventListener("click", async () => {
-    const linkId = dom.editLinkId.value;
-    closeEditDialog();
-    await removeLink(linkId);
-  });
-
-  dom.editCanPickup.addEventListener("change", () => {
-    if (dom.editCanPickup.checked) {
-      dom.editPickupBlocked.checked = false;
-    }
-  });
-
-  dom.editPickupBlocked.addEventListener("change", () => {
-    if (dom.editPickupBlocked.checked) {
-      dom.editCanPickup.checked = false;
-    }
-  });
-
-  dom.createCanPickup.addEventListener("change", () => {
-    if (dom.createCanPickup.checked) {
-      dom.createPickupBlocked.checked = false;
-    }
-  });
-
-  dom.createPickupBlocked.addEventListener("change", () => {
-    if (dom.createPickupBlocked.checked) {
-      dom.createCanPickup.checked = false;
-    }
-  });
-}
-
-async function init() {
-  if (!childId) {
-    document.body.innerHTML = `
-      <main style="padding:24px;color:white;font-family:system-ui;background:#0f172a;min-height:100vh;">
-        Missing <strong>child_id</strong> in the URL.
-      </main>
-    `;
+  if (action === "edit") {
+    const row = state.linked.find((item) => String(getLinkId(item)) === String(linkId));
+    if (row) openEdit(row);
     return;
   }
 
-  wireCardActions();
-  wireInputs();
+  if (action === "remove") {
+    await removeLink(linkId);
+    return;
+  }
 
-  await refreshAll();
+  if (action === "block") {
+    await toggleBlock(linkId);
+    return;
+  }
+
+  if (action === "primary") {
+    await makePrimary(linkId);
+  }
+});
+
+availableGuardiansList.addEventListener("click", (event) => {
+  const button = event.target.closest('[data-action="link"]');
+  if (!button) return;
+
+  const row = state.available.find((item) => String(getGuardianId(item)) === String(button.dataset.guardianId));
+  if (row) openCreate(row);
+});
+
+guardianSearchInput.addEventListener("input", renderLinked);
+availableGuardianSearchInput.addEventListener("input", renderAvailable);
+showBlockedOnly.addEventListener("change", renderLinked);
+showPickupOnly.addEventListener("change", renderLinked);
+refreshBtn.addEventListener("click", refreshAll);
+
+createForm.addEventListener("submit", createLink);
+editForm.addEventListener("submit", saveEdit);
+
+closeCreateDialogBtn.addEventListener("click", closeCreate);
+cancelCreateDialogBtn.addEventListener("click", closeCreate);
+closeEditDialogBtn.addEventListener("click", closeEdit);
+cancelEditDialogBtn.addEventListener("click", closeEdit);
+
+deleteLinkBtn.addEventListener("click", async () => {
+  const linkId = editLinkId.value;
+  closeEdit();
+  await removeLink(linkId);
+});
+
+editCanPickup.addEventListener("change", () => {
+  if (editCanPickup.checked) editPickupBlocked.checked = false;
+});
+editPickupBlocked.addEventListener("change", () => {
+  if (editPickupBlocked.checked) editCanPickup.checked = false;
+});
+createCanPickup.addEventListener("change", () => {
+  if (createCanPickup.checked) createPickupBlocked.checked = false;
+});
+createPickupBlocked.addEventListener("change", () => {
+  if (createPickupBlocked.checked) createCanPickup.checked = false;
+});
+
+async function init() {
+  if (!childId) {
+    showMessage("Missing child_id in URL.", "error");
+    linkedGuardianGrid.innerHTML = `<div class="empty">Missing child_id in URL.</div>`;
+    availableGuardiansList.innerHTML = `<div class="empty">Missing child_id in URL.</div>`;
+    return;
+  }
+
+  try {
+    await refreshAll();
+  } catch (error) {
+    console.error(error);
+    showMessage(error.message || "Could not load guardian links.", "error");
+    linkedGuardianGrid.innerHTML = `<div class="empty">Could not load linked guardians.</div>`;
+    availableGuardiansList.innerHTML = `<div class="empty">Could not load guardians.</div>`;
+  }
 }
 
 init();

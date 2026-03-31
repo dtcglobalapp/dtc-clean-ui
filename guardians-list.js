@@ -1,36 +1,57 @@
-import { requireAuth, supabase } from "../auth.js";
-import { getAppConfig } from "../core/app-config.js";
-
-const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
+import { requireAuth } from "../auth.js";
+import { getChildren } from "./children-api.js";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
-const guardiansGrid = document.getElementById("guardiansGrid");
+const childrenGrid = document.getElementById("childrenGrid");
 const loadingState = document.getElementById("loadingState");
 const emptyState = document.getElementById("emptyState");
 const messageBox = document.getElementById("messageBox");
-const brandMain = document.getElementById("brandMain");
-const brandSub = document.getElementById("brandSub");
 
-let allGuardians = [];
+let allChildren = [];
 let hasBooted = false;
-let isLoadingGuardians = false;
+let isLoadingChildren = false;
 let lastLoadAt = 0;
 
 const AUTO_REFRESH_COOLDOWN_MS = 1200;
 
 function showMessage(text, type = "info") {
-  messageBox.textContent = text;
-  messageBox.className = `message ${type}`;
+  if (!messageBox) return;
+
+  messageBox.textContent = text || "";
+
+  if (!text) {
+    messageBox.className = "dtc-feedback hidden";
+    return;
+  }
+
+  if (type === "error") {
+    messageBox.className = "dtc-feedback";
+    return;
+  }
+
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function hideMessage() {
+  if (!messageBox) return;
   messageBox.textContent = "";
-  messageBox.className = "message hidden";
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function showLoading(isLoading) {
+  if (!loadingState) return;
   loadingState.classList.toggle("hidden", !isLoading);
+}
+
+function showEmpty(isVisible) {
+  if (!emptyState) return;
+  emptyState.classList.toggle("hidden", !isVisible);
+}
+
+function showGrid(isVisible) {
+  if (!childrenGrid) return;
+  childrenGrid.classList.toggle("hidden", !isVisible);
 }
 
 function escapeHtml(value = "") {
@@ -42,121 +63,92 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
-function formatStatus(status = "") {
-  return String(status || "inactive").toLowerCase();
-}
-
-function formatPhone(value = "") {
-  if (!value) return "No phone";
-
-  const digits = String(value).replace(/\D/g, "");
-
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-
-  if (digits.length === 11 && digits.startsWith("1")) {
-    const d = digits.slice(1);
-    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
-  }
-
-  return value;
-}
-
-function getGuardianPhoto(guardian) {
-  return guardian.photo_url || "https://placehold.co/320x320?text=Guardian";
-}
-
-function getDisplayName(guardian) {
-  if (guardian.display_name && guardian.display_name.trim()) {
-    return guardian.display_name.trim();
-  }
-
-  return [guardian.first_name, guardian.middle_name, guardian.last_name]
+function fullName(child) {
+  return [child?.first_name, child?.middle_name, child?.last_name]
     .filter(Boolean)
     .join(" ")
-    .trim() || "Unnamed Guardian";
+    .trim() || "Unnamed Child";
 }
 
-function guardianCard(guardian) {
-  const status = formatStatus(guardian.status);
-  const relationship = guardian.relationship_default || "Guardian";
-  const email = guardian.email || "No email";
-  const phone = formatPhone(guardian.phone);
-  const whatsapp = guardian.whatsapp ? formatPhone(guardian.whatsapp) : "No WhatsApp";
-  const pinLabel = guardian.pin ? `PIN ${escapeHtml(guardian.pin)}` : "No PIN";
+function getPhotoUrl(child) {
+  if (child?.photo_url && String(child.photo_url).trim()) {
+    return String(child.photo_url).trim();
+  }
+  return "https://placehold.co/320x320?text=Child";
+}
+
+function getStatusBadgeClass(status = "") {
+  const s = String(status).toLowerCase();
+
+  if (s === "active") return "dtc-badge dtc-badge-success";
+  if (s === "pending") return "dtc-badge dtc-badge-warning";
+  return "dtc-badge dtc-badge-neutral";
+}
+
+function childCard(child) {
+  const name = escapeHtml(fullName(child));
+  const classroom = child.classroom || "No classroom";
+  const status = child.status || "inactive";
 
   return `
-    <article class="guardian-card">
-      <div class="guardian-photo-wrap">
-        <img class="guardian-photo" src="${escapeHtml(getGuardianPhoto(guardian))}" alt="${escapeHtml(getDisplayName(guardian))}" />
-        <span class="badge ${escapeHtml(status)}">${escapeHtml(status)}</span>
+    <article class="dtc-record-card">
+
+      <img
+        class="dtc-card-photo"
+        src="${escapeHtml(getPhotoUrl(child))}"
+        alt="${name}"
+      />
+
+      <h3 class="dtc-card-name">${name}</h3>
+      <p class="dtc-card-subtitle">${escapeHtml(classroom)}</p>
+
+      <div class="dtc-inline-meta">
+        <span class="${getStatusBadgeClass(status)}">
+          ${escapeHtml(status)}
+        </span>
       </div>
 
-      <div class="guardian-body">
-        <h3 class="guardian-name">${escapeHtml(getDisplayName(guardian))}</h3>
-        <p class="guardian-subtitle">${escapeHtml(relationship)}</p>
-
-        <div class="guardian-meta">
-          <div class="meta-row">
-            <span class="meta-label">Email</span>
-            <span class="meta-value">${escapeHtml(email)}</span>
-          </div>
-
-          <div class="meta-row">
-            <span class="meta-label">Phone</span>
-            <span class="meta-value">${escapeHtml(phone)}</span>
-          </div>
-
-          <div class="meta-row">
-            <span class="meta-label">WhatsApp</span>
-            <span class="meta-value">${escapeHtml(whatsapp)}</span>
-          </div>
-
-          <div class="meta-row">
-            <span class="meta-label">Access</span>
-            <span class="meta-value">${pinLabel}</span>
-          </div>
-        </div>
-
-        <div class="guardian-actions">
-          <a class="btn btn-secondary btn-small" href="./guardian-profile.html?id=${encodeURIComponent(guardian.id)}">Profile</a>
-          <a class="btn btn-secondary btn-small" href="./guardian-form.html?id=${encodeURIComponent(guardian.id)}">Edit</a>
-        </div>
+      <div class="dtc-card-footer">
+        <a
+          class="dtc-btn dtc-btn-primary dtc-btn-sm"
+          href="./child-profile.html?id=${encodeURIComponent(child.id)}"
+        >
+          Profile
+        </a>
       </div>
+
     </article>
   `;
 }
 
-function renderGuardians(rows) {
+function renderChildren(rows) {
+  if (!childrenGrid) return;
+
   if (!rows.length) {
-    guardiansGrid.innerHTML = "";
-    emptyState.classList.remove("hidden");
-    guardiansGrid.classList.add("hidden");
+    childrenGrid.innerHTML = "";
+    showEmpty(true);
+    showGrid(false);
     return;
   }
 
-  emptyState.classList.add("hidden");
-  guardiansGrid.classList.remove("hidden");
-  guardiansGrid.innerHTML = rows.map(guardianCard).join("");
+  showEmpty(false);
+  showGrid(true);
+  childrenGrid.innerHTML = rows.map(childCard).join("");
 }
 
-function filterGuardians(query) {
+function filterChildren(query) {
   const q = query.trim().toLowerCase();
 
-  if (!q) return [...allGuardians];
+  if (!q) return [...allChildren];
 
-  return allGuardians.filter((guardian) => {
+  return allChildren.filter((child) => {
     const haystack = [
-      guardian.display_name,
-      guardian.first_name,
-      guardian.middle_name,
-      guardian.last_name,
-      guardian.relationship_default,
-      guardian.email,
-      guardian.phone,
-      guardian.whatsapp,
-      guardian.status,
+      child.first_name,
+      child.middle_name,
+      child.last_name,
+      child.classroom,
+      child.status,
+      child.gender,
     ]
       .filter(Boolean)
       .join(" ")
@@ -166,10 +158,14 @@ function filterGuardians(query) {
   });
 }
 
-async function loadGuardians({ silent = false } = {}) {
-  if (isLoadingGuardians) return;
+function rerenderCurrentView() {
+  renderChildren(filterChildren(searchInput?.value || ""));
+}
 
-  isLoadingGuardians = true;
+async function loadChildren({ silent = false } = {}) {
+  if (isLoadingChildren) return;
+
+  isLoadingChildren = true;
 
   if (!silent) {
     showLoading(true);
@@ -177,65 +173,48 @@ async function loadGuardians({ silent = false } = {}) {
   }
 
   try {
-    const { data, error } = await supabase
-      .from("guardians")
-      .select("*")
-      .eq("organization_id", ORGANIZATION_ID)
-      .order("created_at", { ascending: false });
+    allChildren = await getChildren();
 
-    if (error) throw error;
-
-    allGuardians = data ?? [];
-    renderGuardians(filterGuardians(searchInput.value));
+    rerenderCurrentView();
     lastLoadAt = Date.now();
 
-    if (!allGuardians.length) {
-      showMessage("No guardians found yet for this organization.", "info");
-    } else if (!silent) {
+    if (!allChildren.length) {
       hideMessage();
     }
   } catch (error) {
-    console.error("Load guardians error:", error);
-    showMessage(`Could not load guardians: ${error.message}`, "error");
-    guardiansGrid.innerHTML = "";
-    emptyState.classList.remove("hidden");
-    guardiansGrid.classList.add("hidden");
+    console.error("Load children error:", error);
+
+    showMessage(`Could not load children: ${error.message}`, "error");
+
+    if (childrenGrid) childrenGrid.innerHTML = "";
+
+    showEmpty(true);
+    showGrid(false);
   } finally {
     if (!silent) {
       showLoading(false);
     }
-    isLoadingGuardians = false;
+
+    isLoadingChildren = false;
   }
 }
 
 async function maybeAutoRefresh() {
   if (!hasBooted) return;
-  if (isLoadingGuardians) return;
+  if (isLoadingChildren) return;
 
   const now = Date.now();
   if (now - lastLoadAt < AUTO_REFRESH_COOLDOWN_MS) return;
 
-  await loadGuardians({ silent: true });
-}
-
-async function boot() {
-  const user = await requireAuth();
-  if (!user) return;
-
-  const config = await getAppConfig();
-  brandMain.textContent = config.platform_name;
-  brandSub.textContent = config.vertical_name;
-
-  hasBooted = true;
-  await loadGuardians();
+  await loadChildren({ silent: true });
 }
 
 searchInput?.addEventListener("input", () => {
-  renderGuardians(filterGuardians(searchInput.value));
+  rerenderCurrentView();
 });
 
 refreshBtn?.addEventListener("click", () => {
-  loadGuardians();
+  loadChildren();
 });
 
 window.addEventListener("pageshow", () => {
@@ -251,5 +230,13 @@ document.addEventListener("visibilitychange", () => {
     maybeAutoRefresh();
   }
 });
+
+async function boot() {
+  const user = await requireAuth();
+  if (!user) return;
+
+  hasBooted = true;
+  await loadChildren();
+}
 
 boot();

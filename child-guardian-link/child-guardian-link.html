@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>DTC — Redirecting…</title>
+  <script>
+    (function () {
+      const url = new URL(window.location.href);
+      const childId = url.searchParams.get("child_id") || "";
+      const target = new URL("../child-guardian-link.html", window.location.href);
+      if (childId) target.searchParams.set("child_id", childId);
+      window.location.replace(target.toString());
+    })();
+  </script>
+  <link rel="stylesheet" href="../../dtc.css" />
+</head>
+<body></body>
+</html>
