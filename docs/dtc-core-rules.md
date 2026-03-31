@@ -177,7 +177,11 @@ Biometría en DTC
 5. Registro biométrico ocurre en perfil del usuario
 6. Rostro no reconocido → lobby/demo
 
-dtc.css          ← maestro global de toda la app
-guardians.css    ← solo detalles de guardians
-employees.css    ← solo detalles de employees
-kiosk.css        ← solo detalles del kiosko, si de verdad hacen falta
+En esta etapa de desarrollo, DTC usará un solo archivo de estilos global: dtc.css.
+
+No se permiten CSS separados por módulo mientras el sistema siga en construcción activa.
+La prioridad es consistencia visual, velocidad de desarrollo y evitar conflictos entre estilos.
+
+DTC tiene UN SOLO CSS: dtc.css
+
+Ningún módulo puede tener estilos propios fuera del sistema global.
