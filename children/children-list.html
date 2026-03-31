@@ -21,19 +21,20 @@
       </div>
 
       <div class="dtc-head-actions">
-        <a class="dtc-btn dtc-btn-ghost" href="../dashboard.html">← Back</a>
-        <a class="dtc-btn dtc-btn-primary" href="./child-form.html">+ Add Child</a>
+        <a class="dtc-btn dtc-btn-ghost dtc-action-back" href="../dashboard.html">← Back</a>
+        <a class="dtc-btn dtc-btn-primary dtc-action-primary" href="./child-form.html">+ Add Child</a>
       </div>
     </section>
 
     <section class="dtc-card">
+
       <div class="dtc-toolbar">
         <div class="dtc-toolbar-left">
-          <div class="dtc-field">
-            <label class="dtc-label" for="searchInput">Search</label>
+          <div class="dtc-search-wrap">
+            <label class="dtc-search-label" for="searchInput">Search</label>
             <input
               id="searchInput"
-              class="dtc-input"
+              class="dtc-search"
               type="search"
               placeholder="Search by child name or classroom..."
               autocomplete="off"
@@ -42,7 +43,7 @@
         </div>
 
         <div class="dtc-toolbar-right">
-          <button id="refreshBtn" class="dtc-btn dtc-btn-secondary" type="button">
+          <button id="refreshBtn" class="dtc-btn dtc-btn-secondary dtc-action-secondary" type="button">
             Refresh
           </button>
         </div>
@@ -57,7 +58,7 @@
       <div id="emptyState" class="dtc-empty-state hidden">
         <h3>No children found</h3>
         <p>There are no matching child records yet for this organization.</p>
-        <a class="dtc-btn dtc-btn-primary" href="./child-form.html">Create first child</a>
+        <a class="dtc-btn dtc-btn-primary dtc-action-primary" href="./child-form.html">Create first child</a>
       </div>
 
       <div id="childrenGrid" class="dtc-grid-cards"></div>
