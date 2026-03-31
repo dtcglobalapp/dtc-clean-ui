@@ -10,7 +10,6 @@
 <body class="dtc-shell">
   <main class="dtc-page">
 
-    <!-- HEADER -->
     <section class="dtc-page-head">
       <div class="dtc-title-group">
         <p class="dtc-eyebrow">Staff / Employees</p>
@@ -21,51 +20,48 @@
       </div>
 
       <div class="dtc-head-actions">
-        <a class="dtc-btn dtc-btn-ghost" href="../dashboard.html">← Back</a>
-        <a class="dtc-btn dtc-btn-primary" href="./employee-form.html">+ Add Employee</a>
+        <a class="dtc-btn dtc-btn-ghost dtc-action-back" href="../dashboard.html">← Back</a>
+        <a class="dtc-btn dtc-btn-primary dtc-action-primary" href="./employee-form.html">+ Add Employee</a>
       </div>
     </section>
 
-    <!-- PANEL -->
     <section class="dtc-card">
 
-      <!-- TOOLBAR -->
       <div class="dtc-toolbar">
         <div class="dtc-toolbar-left">
-          <div class="dtc-field">
-            <label class="dtc-label" for="searchInput">Search</label>
+          <div class="dtc-search-wrap">
+            <label class="dtc-search-label" for="searchInput">Search</label>
             <input
               id="searchInput"
-              class="dtc-input"
+              class="dtc-search"
               type="search"
               placeholder="Name, role, email, phone..."
+              autocomplete="off"
             />
           </div>
         </div>
 
         <div class="dtc-toolbar-right">
-          <button id="refreshBtn" class="dtc-btn dtc-btn-secondary">Refresh</button>
+          <button id="refreshBtn" class="dtc-btn dtc-btn-secondary dtc-action-secondary" type="button">
+            Refresh
+          </button>
         </div>
       </div>
 
-      <!-- FEEDBACK -->
       <div id="messageBox" class="dtc-feedback hidden"></div>
 
-      <!-- LOADING -->
       <div id="loadingState" class="dtc-loading hidden">
         Loading employees...
       </div>
 
-      <!-- EMPTY -->
       <div id="emptyState" class="dtc-empty-state hidden">
         <h3>No employees found</h3>
         <p>Start by creating your first staff member.</p>
-        <a class="dtc-btn dtc-btn-primary" href="./employee-form.html">
+        <a class="dtc-btn dtc-btn-primary dtc-action-primary" href="./employee-form.html">
           Create Employee
         </a>
       </div>
 
-      <!-- GRID -->
       <div id="employeesGrid" class="dtc-grid-cards"></div>
 
     </section>

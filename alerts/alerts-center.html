@@ -1,93 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="apple-mobile-web-app-title" content="DTC" />
   <title>DTC — Alert Center</title>
-  <style>
-    .brand-lockup {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .brand-main {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #2563eb;
-    }
-
-    .brand-sub {
-      margin: 0;
-      font-size: 14px;
-      color: #64748b;
-      font-weight: 600;
-      line-height: 1.35;
-    }
-  </style>
   <link rel="stylesheet" href="../dtc.css" />
 </head>
-<body class="dtc-alerts-page">
-  <main class="alerts-shell">
-    <header class="alerts-header">
-      <div class="brand-lockup">
-        <p class="brand-main" data-brand>DTC</p>
-        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
-        <h1 data-page-title>Alert Center</h1>
-        <p class="subtitle">
+
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Alerts / Decision Center</p>
+        <h1 class="dtc-page-title">Alert Center</h1>
+        <p class="dtc-page-subtitle">
           Review important alerts, approve suggested actions, and contact families with control.
         </p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
-        <button id="refreshBtn" class="btn btn-primary" type="button">Refresh</button>
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost dtc-action-back" href="../dashboard.html">← Back</a>
+        <button id="refreshBtn" class="dtc-btn dtc-btn-primary dtc-action-primary" type="button">Refresh</button>
       </div>
-    </header>
+    </section>
 
-    <section class="alerts-layout">
-      <section class="panel">
-        <div class="panel-top">
-          <div class="search-wrap">
-            <label class="sr-only" for="searchInput">Search alerts</label>
-            <input
-              id="searchInput"
-              type="search"
-              placeholder="Search by child, title, type, status..."
-              autocomplete="off"
-            />
+    <section class="dtc-split">
+
+      <section class="dtc-card">
+        <div class="dtc-toolbar">
+          <div class="dtc-toolbar-left">
+            <div class="dtc-search-wrap">
+              <label class="dtc-search-label" for="searchInput">Search</label>
+              <input
+                id="searchInput"
+                class="dtc-search"
+                type="search"
+                placeholder="Search by child, title, type, status..."
+                autocomplete="off"
+              />
+            </div>
           </div>
         </div>
 
-        <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+        <div id="messageBox" class="dtc-feedback hidden" role="status" aria-live="polite"></div>
 
-        <div id="loadingState" class="state-box hidden">
-          <p>Loading alerts...</p>
+        <div id="loadingState" class="dtc-loading hidden">
+          Loading alerts...
         </div>
 
-        <div id="emptyState" class="state-box hidden">
-          <h2>No alerts found</h2>
-          <p>DTC has no active alerts to review right now.</p>
+        <div id="emptyState" class="dtc-empty-state hidden">
+          <div class="dtc-stack-sm" style="justify-items:center;">
+            <h3>No alerts found</h3>
+            <p>DTC has no active alerts to review right now.</p>
+          </div>
         </div>
 
         <div id="alertsList" class="alerts-list"></div>
       </section>
 
-      <aside class="panel decision-panel">
-        <div class="decision-header">
-          <h2>Decision Center</h2>
-          <p class="subtitle small">
-            Select an alert to review the suggested message and choose how to contact the guardian.
-          </p>
+      <aside class="dtc-card decision-panel">
+        <div class="dtc-section-head">
+          <div class="dtc-section-title-wrap">
+            <h2 class="dtc-section-title">Decision Center</h2>
+            <p class="dtc-section-subtitle">
+              Select an alert to review the suggested message and choose how to contact the guardian.
+            </p>
+          </div>
         </div>
 
-        <div id="decisionEmpty" class="state-box">
-          <h2>Select an alert</h2>
-          <p>Choose one alert from the list to view contact recommendations and actions.</p>
+        <div id="decisionEmpty" class="dtc-empty-state">
+          <div class="dtc-stack-sm" style="justify-items:center;">
+            <h3>Select an alert</h3>
+            <p>Choose one alert from the list to view contact recommendations and actions.</p>
+          </div>
         </div>
 
         <div id="decisionContent" class="decision-content hidden">
@@ -136,31 +123,34 @@
               <p class="subtitle small">Every contact attempt and decision will appear here.</p>
             </div>
 
-            <div id="historyLoading" class="state-box hidden">
-              <p>Loading history...</p>
+            <div id="historyLoading" class="dtc-loading hidden">
+              Loading history...
             </div>
 
-            <div id="historyEmpty" class="state-box">
-              <h2>No actions yet</h2>
-              <p>This alert has no saved action history yet.</p>
+            <div id="historyEmpty" class="dtc-empty-state">
+              <div class="dtc-stack-sm" style="justify-items:center;">
+                <h3>No actions yet</h3>
+                <p>This alert has no saved action history yet.</p>
+              </div>
             </div>
 
             <div id="historyList" class="history-list hidden"></div>
           </section>
 
           <div class="decision-footer">
-            <button id="dismissBtn" class="btn btn-secondary" type="button">Dismiss Alert</button>
-            <button id="completeBtn" class="btn btn-primary" type="button">Mark Completed</button>
+            <button id="dismissBtn" class="dtc-btn dtc-btn-secondary" type="button">Dismiss Alert</button>
+            <button id="completeBtn" class="dtc-btn dtc-btn-primary" type="button">Mark Completed</button>
           </div>
         </div>
       </aside>
+
     </section>
+
   </main>
 
   <script type="module">
     import "./alerts-center.js";
     import { applyBranding } from "../core/brand.js";
-
     applyBranding();
   </script>
 </body>
