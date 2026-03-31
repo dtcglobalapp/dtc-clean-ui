@@ -1,129 +1,103 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="apple-mobile-web-app-title" content="DTC" />
   <title>DTC — Add Child</title>
-  <style>
-    .brand-lockup {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .brand-main {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--primary);
-    }
-
-    .brand-sub {
-      margin: 0;
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-      line-height: 1.35;
-    }
-  </style>
   <link rel="stylesheet" href="../dtc.css" />
 </head>
-<body class="dtc-page">
 
-  <main class="page-content">
-    <header class="page-header">
-      <div class="brand-lockup">
-        <p class="brand-main" data-brand>DTC</p>
-        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
-        <h1 data-page-title>Add Child</h1>
-        <p class="subtitle">Create a new child record for your organization.</p>
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Children / Form</p>
+        <h1 class="dtc-page-title">Add Child</h1>
+        <p class="dtc-page-subtitle">Create a new child record for your organization.</p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="./children-list.html">Back</a>
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost" href="./children-list.html">← Back</a>
       </div>
-    </header>
+    </section>
 
-    <section class="panel">
-      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+    <section class="dtc-card">
+      <div id="messageBox" class="dtc-feedback hidden" role="status" aria-live="polite"></div>
 
       <form id="childForm" class="form-grid">
-        <div class="form-field">
-          <label for="first_name">First Name</label>
-          <input type="text" id="first_name" required />
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" required />
+          </div>
+
+          <div class="form-field">
+            <label for="middle_name">Middle Name</label>
+            <input type="text" id="middle_name" />
+          </div>
+
+          <div class="form-field">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" required />
+          </div>
+
+          <div class="form-field">
+            <label for="date_of_birth">Date of Birth</label>
+            <input type="date" id="date_of_birth" />
+          </div>
+
+          <div class="form-field">
+            <label for="gender">Gender</label>
+            <select id="gender">
+              <option value="">Select gender</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="enrollment_date">Enrollment Date</label>
+            <input type="date" id="enrollment_date" />
+          </div>
+
+          <div class="form-field">
+            <label for="classroom">Classroom</label>
+            <select id="classroom">
+              <option value="">Select classroom</option>
+              <option value="Infants">Infants (under 2 years)</option>
+              <option value="Toddlers">Toddlers (2 to under 3 years)</option>
+              <option value="Preschool">Preschool (3 to under 5 years)</option>
+              <option value="School Age">School Age (5+ years)</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="waitlist">Waitlist</option>
+              <option value="graduated">Graduated</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-field">
-          <label for="middle_name">Middle Name</label>
-          <input type="text" id="middle_name" />
-        </div>
-
-        <div class="form-field">
-          <label for="last_name">Last Name</label>
-          <input type="text" id="last_name" required />
-        </div>
-
-        <div class="form-field">
-          <label for="date_of_birth">Date of Birth</label>
-          <input type="date" id="date_of_birth" />
-        </div>
-
-        <div class="form-field">
-          <label for="gender">Gender</label>
-          <select id="gender">
-            <option value="">Select gender</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="enrollment_date">Enrollment Date</label>
-          <input type="date" id="enrollment_date" />
-        </div>
-
-        <div class="form-field">
-          <label for="classroom">Classroom</label>
-          <select id="classroom">
-            <option value="">Select classroom</option>
-            <option value="Infants">Infants (under 2 years)</option>
-            <option value="Toddlers">Toddlers (2 to under 3 years)</option>
-            <option value="Preschool">Preschool (3 to under 5 years)</option>
-            <option value="School Age">School Age (5+ years)</option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="status">Status</label>
-          <select id="status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="waitlist">Waitlist</option>
-            <option value="graduated">Graduated</option>
-          </select>
-        </div>
-
-        <div class="form-field form-field-full">
           <label for="notes">Notes</label>
           <textarea id="notes" rows="5" placeholder="Write notes here..."></textarea>
         </div>
 
-        <div class="form-actions form-field-full">
-          <button type="submit" class="btn btn-primary">Save Child</button>
-          <a href="./children-list.html" class="btn btn-secondary">Cancel</a>
+        <div class="form-actions">
+          <button type="submit" class="dtc-btn dtc-btn-primary">Save Child</button>
+          <a href="./children-list.html" class="dtc-btn dtc-btn-secondary">Cancel</a>
         </div>
       </form>
     </section>
+
   </main>
 
-  <script type="module">
-    import "./child-form.js";
-    import { applyBranding } from "../core/brand.js";
-
-    applyBranding();
-  </script>
+  <script type="module" src="./child-form.js"></script>
 </body>
 </html>

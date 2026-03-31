@@ -1,194 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="apple-mobile-web-app-title" content="DTC" />
   <title>DTC — Child Profile</title>
-  <style>
-    .brand-lockup {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .brand-main {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--primary);
-    }
-
-    .brand-sub {
-      margin: 0;
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-      line-height: 1.35;
-    }
-  </style>
   <link rel="stylesheet" href="../dtc.css" />
 </head>
-<body class="dtc-page">
 
-  <main class="page-content">
-    <header class="page-header">
-      <div class="brand-lockup">
-        <p class="brand-main" data-brand>DTC</p>
-        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
-        <h1 data-page-title>Child Profile</h1>
-        <p class="subtitle">Complete record overview for this child.</p>
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Children / Profile</p>
+        <h1 class="dtc-page-title">Child Profile</h1>
+        <p class="dtc-page-subtitle">
+          Complete child record, documents, guardians and delivery history in one place.
+        </p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="./children-list.html">Back</a>
-        <a id="editChildBtn" class="btn btn-primary" href="#">Edit Child</a>
-      </div>
-    </header>
-
-    <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
-
-    <section id="loadingState" class="panel">
-      <div class="state-box">
-        <p>Loading child profile...</p>
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost" href="./children-list.html">← Back</a>
+        <a id="editChildBtn" class="dtc-btn dtc-btn-primary" href="#">Edit Child</a>
       </div>
     </section>
 
-    <section id="profileContent" class="profile-layout hidden">
-      <aside class="panel profile-side">
-        <div class="profile-photo-wrap">
-          <img
-            id="childPhoto"
-            class="profile-photo"
-            src=""
-            alt="Child photo"
-          />
-        </div>
+    <div id="messageBox" class="dtc-feedback hidden" role="status" aria-live="polite"></div>
 
-        <div class="profile-photo-actions">
-          <label class="btn btn-secondary photo-file-btn" for="profilePhotoInput">Change Photo</label>
-          <input type="file" id="profilePhotoInput" accept="image/*" class="hidden-file-input" />
-          <button id="savePhotoBtn" class="btn btn-primary" type="button">Save Photo</button>
-          <div id="profilePhotoFileName" class="photo-file-name">No new photo selected.</div>
-        </div>
+    <div id="loadingState" class="dtc-loading">
+      Loading child profile...
+    </div>
 
-        <div class="profile-name-block">
-          <h2 id="profileName">—</h2>
-          <p id="profileClassroom" class="profile-muted">—</p>
-          <span id="profileStatus" class="badge active">active</span>
-        </div>
+    <section id="profileContent" class="dtc-two-column hidden">
 
-        <div class="profile-stats">
-          <div class="stat-card">
-            <span class="stat-label">Age</span>
-            <strong id="profileAge">—</strong>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Gender</span>
-            <strong id="profileGender">—</strong>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">DOB</span>
-            <strong id="profileDob">—</strong>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Enrollment</span>
-            <strong id="profileEnrollment">—</strong>
-          </div>
-        </div>
+      <aside class="dtc-stack-lg">
 
-        <div class="profile-actions">
-          <a id="documentsBtn" class="btn btn-secondary" href="#">Documents</a>
-          <button id="uploadDocumentBtn" class="btn btn-secondary" type="button">Upload Document</button>
-        </div>
+        <section class="dtc-card">
+          <div class="dtc-stack-md">
+
+            <div class="dtc-media-frame">
+              <img
+                id="childPhoto"
+                class="dtc-child-photo"
+                src="https://placehold.co/600x600?text=Child"
+                alt="Child photo"
+              />
+            </div>
+
+            <div class="dtc-stack-sm">
+              <label class="dtc-btn dtc-btn-secondary" for="profilePhotoInput">Choose Photo</label>
+              <input type="file" id="profilePhotoInput" accept="image/*" class="hidden-file-input" />
+              <button id="savePhotoBtn" class="dtc-btn dtc-btn-primary" type="button">Save Photo</button>
+              <div id="profilePhotoFileName" class="dtc-person-meta">No new photo selected.</div>
+            </div>
+
+            <div class="dtc-stack-sm">
+              <h2 id="profileName" class="dtc-profile-name">—</h2>
+              <p id="profileClassroom" class="dtc-profile-role">—</p>
+
+              <div class="dtc-inline-meta">
+                <span id="profileStatus" class="dtc-badge dtc-badge-neutral">inactive</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <div class="dtc-section-title-wrap">
+              <h2 class="dtc-section-title">Quick Stats</h2>
+              <p class="dtc-section-subtitle">Essential child information.</p>
+            </div>
+          </div>
+
+          <div class="dtc-info-grid">
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Age</span>
+              <strong id="profileAge" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Gender</span>
+              <strong id="profileGender" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">DOB</span>
+              <strong id="profileDob" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Enrollment</span>
+              <strong id="profileEnrollment" class="dtc-info-value">—</strong>
+            </article>
+          </div>
+
+          <div class="dtc-card-footer" style="justify-content:flex-start; margin-top:14px;">
+            <a id="documentsBtn" class="dtc-btn dtc-btn-secondary dtc-btn-sm" href="#">Documents</a>
+            <button id="uploadDocumentBtn" class="dtc-btn dtc-btn-ghost dtc-btn-sm" type="button">Upload Document</button>
+          </div>
+        </section>
+
       </aside>
 
-      <section class="profile-main">
-        <div class="panel">
-          <div class="section-heading">
-            <div>
-              <h2>Overview</h2>
-              <p class="subtitle small">Basic child information and internal notes.</p>
+      <section class="dtc-stack-lg">
+
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <div class="dtc-section-title-wrap">
+              <h2 class="dtc-section-title">Overview</h2>
+              <p class="dtc-section-subtitle">Basic child information and internal notes.</p>
             </div>
           </div>
 
-          <div class="overview-grid">
-            <div class="overview-item">
-              <span class="overview-label">First Name</span>
-              <strong id="overviewFirstName">—</strong>
+          <div class="dtc-info-grid">
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">First Name</span>
+              <strong id="overviewFirstName" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Middle Name</span>
+              <strong id="overviewMiddleName" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Last Name</span>
+              <strong id="overviewLastName" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Classroom</span>
+              <strong id="overviewClassroom" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Status</span>
+              <strong id="overviewStatus" class="dtc-info-value">—</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Agreement Signed</span>
+              <strong id="overviewAgreement" class="dtc-info-value">—</strong>
+            </article>
+          </div>
+
+          <div class="dtc-stack-sm" style="margin-top:14px;">
+            <span class="dtc-info-label">Notes</span>
+            <div id="overviewNotes" class="dtc-notes-box">—</div>
+          </div>
+        </section>
+
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <div class="dtc-section-title-wrap">
+              <h2 class="dtc-section-title">Guardians</h2>
+              <p class="dtc-section-subtitle">Authorized guardians linked to this child.</p>
             </div>
 
-            <div class="overview-item">
-              <span class="overview-label">Middle Name</span>
-              <strong id="overviewMiddleName">—</strong>
-            </div>
-
-            <div class="overview-item">
-              <span class="overview-label">Last Name</span>
-              <strong id="overviewLastName">—</strong>
-            </div>
-
-            <div class="overview-item">
-              <span class="overview-label">Classroom</span>
-              <strong id="overviewClassroom">—</strong>
-            </div>
-
-            <div class="overview-item">
-              <span class="overview-label">Status</span>
-              <strong id="overviewStatus">—</strong>
-            </div>
-
-            <div class="overview-item">
-              <span class="overview-label">Agreement Signed</span>
-              <strong id="overviewAgreement">—</strong>
+            <div class="dtc-section-actions">
+              <a id="manageGuardiansBtn" class="dtc-btn dtc-btn-primary dtc-btn-sm" href="#">Manage Guardians</a>
             </div>
           </div>
 
-          <div class="profile-notes-block">
-            <span class="overview-label">Notes</span>
-            <div id="overviewNotes" class="notes-box">—</div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="section-heading">
-            <div>
-              <h2>Guardians</h2>
-              <p class="subtitle small">Authorized guardians linked to this child.</p>
-            </div>
-
-            <div class="header-actions">
-              <a id="manageGuardiansBtn" class="btn btn-primary" href="#">Manage Guardians</a>
-            </div>
+          <div id="guardiansEmpty" class="dtc-empty-inline">
+            No guardians linked yet.
           </div>
 
-          <div id="guardiansEmpty" class="state-box">
-            <p>No guardians linked yet.</p>
-          </div>
+          <div id="guardiansList" class="dtc-grid-cards hidden"></div>
+        </section>
 
-          <div id="guardiansList" class="guardian-list hidden"></div>
-        </div>
-
-        <div class="panel">
-          <div class="section-heading">
-            <div>
-              <h2>Documents</h2>
-              <p class="subtitle small">Manage, send, and track documents for this child.</p>
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <div class="dtc-section-title-wrap">
+              <h2 class="dtc-section-title">Documents</h2>
+              <p class="dtc-section-subtitle">Manage, send and track documents for this child.</p>
             </div>
 
-            <div class="header-actions">
-              <button id="sendToAgencyBtn" class="btn btn-primary" type="button">Send to Agency</button>
+            <div class="dtc-section-actions">
+              <button id="sendToAgencyBtn" class="dtc-btn dtc-btn-primary dtc-btn-sm" type="button">Send to Agency</button>
             </div>
           </div>
 
-          <div id="documentsEmpty" class="state-box">
-            <p>No documents uploaded yet for this child.</p>
+          <div id="documentsEmpty" class="dtc-empty-inline">
+            No documents uploaded yet for this child.
           </div>
 
-          <div id="documentsTableWrap" class="table-wrap hidden">
-            <table class="data-table">
+          <div id="documentsTableWrap" class="dtc-table-wrap hidden">
+            <table class="dtc-table">
               <thead>
                 <tr>
                   <th>Title</th>
@@ -196,28 +196,28 @@
                   <th>Status</th>
                   <th>Issue Date</th>
                   <th>Expires</th>
-                  <th>Actions</th>
+                  <th class="dtc-col-actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="documentsTableBody"></tbody>
             </table>
           </div>
-        </div>
+        </section>
 
-        <div class="panel">
-          <div class="section-heading">
-            <div>
-              <h2>Delivery History</h2>
-              <p class="subtitle small">Proof of documents sent to agencies and contacts.</p>
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <div class="dtc-section-title-wrap">
+              <h2 class="dtc-section-title">Delivery History</h2>
+              <p class="dtc-section-subtitle">Proof of documents sent to agencies and contacts.</p>
             </div>
           </div>
 
-          <div id="deliveryEmpty" class="state-box">
-            <p>No delivery records yet.</p>
+          <div id="deliveryEmpty" class="dtc-empty-inline">
+            No delivery records yet.
           </div>
 
-          <div id="deliveryTableWrap" class="table-wrap hidden">
-            <table class="data-table">
+          <div id="deliveryTableWrap" class="dtc-table-wrap hidden">
+            <table class="dtc-table">
               <thead>
                 <tr>
                   <th>Document</th>
@@ -230,16 +230,16 @@
               <tbody id="deliveryTableBody"></tbody>
             </table>
           </div>
-        </div>
+        </section>
 
       </section>
+
     </section>
   </main>
 
   <script type="module">
     import "./child-profile.js";
     import { applyBranding } from "../core/brand.js";
-
     applyBranding();
   </script>
 </body>

@@ -12,19 +12,41 @@ let allChildren = [];
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
-  messageBox.textContent = text;
-  messageBox.className = `message ${type}`;
+
+  messageBox.textContent = text || "";
+
+  if (!text) {
+    messageBox.className = "dtc-feedback hidden";
+    return;
+  }
+
+  if (type === "error") {
+    messageBox.className = "dtc-feedback";
+    return;
+  }
+
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function hideMessage() {
   if (!messageBox) return;
   messageBox.textContent = "";
-  messageBox.className = "message hidden";
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function showLoading(isLoading) {
   if (!loadingState) return;
   loadingState.classList.toggle("hidden", !isLoading);
+}
+
+function showEmpty(isVisible) {
+  if (!emptyState) return;
+  emptyState.classList.toggle("hidden", !isVisible);
+}
+
+function showGrid(isVisible) {
+  if (!childrenGrid) return;
+  childrenGrid.classList.toggle("hidden", !isVisible);
 }
 
 function escapeHtml(value = "") {
@@ -37,61 +59,76 @@ function escapeHtml(value = "") {
 }
 
 function fullName(child) {
-  return [child.first_name ?? "", child.middle_name ?? "", child.last_name ?? ""]
+  return [child?.first_name, child?.middle_name, child?.last_name]
+    .filter(Boolean)
     .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function statusBadge(status = "") {
-  const safe = String(status).toLowerCase();
-  return `<span class="badge ${escapeHtml(safe)}">${escapeHtml(status || "unknown")}</span>`;
+    .trim() || "Unnamed Child";
 }
 
 function getPhotoUrl(child) {
-  if (child.photo_url && String(child.photo_url).trim()) {
+  if (child?.photo_url && String(child.photo_url).trim()) {
     return String(child.photo_url).trim();
   }
-  return "";
+  return "https://placehold.co/320x320?text=Child";
 }
 
-function childTile(child) {
-  const name = fullName(child) || "Unnamed Child";
+function getStatusBadgeClass(status = "") {
+  const s = String(status).toLowerCase();
+
+  if (s === "active") return "dtc-badge dtc-badge-success";
+  if (s === "pending") return "dtc-badge dtc-badge-warning";
+  return "dtc-badge dtc-badge-neutral";
+}
+
+function childCard(child) {
+  const name = escapeHtml(fullName(child));
   const classroom = child.classroom || "No classroom";
-  const photoUrl = getPhotoUrl(child);
-  const profileHref = `./child-profile.html?id=${encodeURIComponent(child.id)}`;
+  const status = child.status || "inactive";
 
   return `
-    <a class="child-tile" href="${profileHref}">
-      <div class="child-photo-wrap">
-        ${
-          photoUrl
-            ? `<img class="child-photo" src="${escapeHtml(photoUrl)}" alt="${escapeHtml(name)}" />`
-            : `<div class="child-photo-placeholder" aria-hidden="true">👶</div>`
-        }
+    <article class="dtc-record-card">
+
+      <img
+        class="dtc-card-photo"
+        src="${escapeHtml(getPhotoUrl(child))}"
+        alt="${name}"
+      />
+
+      <h3 class="dtc-card-name">${name}</h3>
+      <p class="dtc-card-subtitle">${escapeHtml(classroom)}</p>
+
+      <div class="dtc-inline-meta">
+        <span class="${getStatusBadgeClass(status)}">
+          ${escapeHtml(status)}
+        </span>
       </div>
 
-      <p class="child-name">${escapeHtml(name)}</p>
-      <p class="child-classroom">${escapeHtml(classroom)}</p>
-
-      <div class="child-status">
-        ${statusBadge(child.status)}
+      <div class="dtc-card-footer">
+        <a
+          class="dtc-btn dtc-btn-primary dtc-btn-sm"
+          href="./child-profile.html?id=${encodeURIComponent(child.id)}"
+        >
+          Profile
+        </a>
       </div>
-    </a>
+
+    </article>
   `;
 }
 
 function renderChildren(rows) {
-  if (!childrenGrid || !emptyState) return;
+  if (!childrenGrid) return;
 
   if (!rows.length) {
     childrenGrid.innerHTML = "";
-    emptyState.classList.remove("hidden");
+    showEmpty(true);
+    showGrid(false);
     return;
   }
 
-  emptyState.classList.add("hidden");
-  childrenGrid.innerHTML = rows.map(childTile).join("");
+  showEmpty(false);
+  showGrid(true);
+  childrenGrid.innerHTML = rows.map(childCard).join("");
 }
 
 function filterChildren(query) {
@@ -117,8 +154,7 @@ function filterChildren(query) {
 }
 
 function rerenderCurrentView() {
-  const filtered = filterChildren(searchInput?.value || "");
-  renderChildren(filtered);
+  renderChildren(filterChildren(searchInput?.value || ""));
 }
 
 async function loadChildren() {
@@ -130,13 +166,17 @@ async function loadChildren() {
     rerenderCurrentView();
 
     if (!allChildren.length) {
-      showMessage("No children found yet for this organization.", "info");
+      hideMessage();
     }
   } catch (error) {
     console.error("Load children error:", error);
+
     showMessage(`Could not load children: ${error.message}`, "error");
+
     if (childrenGrid) childrenGrid.innerHTML = "";
-    if (emptyState) emptyState.classList.remove("hidden");
+
+    showEmpty(true);
+    showGrid(false);
   } finally {
     showLoading(false);
   }
@@ -153,6 +193,7 @@ refreshBtn?.addEventListener("click", () => {
 async function boot() {
   const user = await requireAuth();
   if (!user) return;
+
   await loadChildren();
 }
 

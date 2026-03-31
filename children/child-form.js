@@ -25,14 +25,23 @@ async function init() {
 }
 
 function showMessage(msg, type = "info") {
+  if (!messageBox) return;
+
   messageBox.classList.remove("hidden");
-  messageBox.textContent = msg;
-  messageBox.className = `message ${type}`;
+  messageBox.textContent = msg || "";
+
+  if (type === "error") {
+    messageBox.className = "dtc-feedback";
+    return;
+  }
+
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function hideMessage() {
+  if (!messageBox) return;
   messageBox.textContent = "";
-  messageBox.className = "message hidden";
+  messageBox.className = "dtc-feedback hidden";
 }
 
 dobInput?.addEventListener("change", () => {

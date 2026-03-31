@@ -7,110 +7,105 @@
   <link rel="stylesheet" href="../dtc.css" />
 </head>
 
-<body class="dtc-page">
-  <main class="page-content">
+<body class="dtc-shell">
+  <main class="dtc-page">
 
-    <header class="page-header">
-      <div class="brand-lockup">
-        <p class="brand-main" id="brandMain">DTC</p>
-        <p class="brand-sub" id="brandSub">—</p>
-
-        <h1 id="pageTitle">Employee</h1>
-        <p id="pageSubtitle" class="subtitle">—</p>
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Employees / Form</p>
+        <h1 id="pageTitle" class="dtc-page-title">Employee</h1>
+        <p id="pageSubtitle" class="dtc-page-subtitle">Manage employee details and access.</p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="./employees-list.html" id="backBtn">Back</a>
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost" href="./employees-list.html" id="backBtn">← Back</a>
       </div>
-    </header>
+    </section>
 
-    <section class="panel form-panel">
+    <section class="dtc-card form-panel">
+      <div class="guardian-form-grid">
 
-      <div class="form-group photo-group">
-        <label>Photo</label>
-        <div style="display:grid; gap:12px;">
-          <div style="width:140px; height:140px; border-radius:20px; overflow:hidden; border:1px solid var(--border); background:#eef2f7; display:flex; align-items:center; justify-content:center;">
-            <img
-              id="photoPreview"
-              src="https://placehold.co/300x300?text=Employee"
-              alt="Employee Preview"
-              style="width:100%; height:100%; object-fit:cover;"
-            />
+        <div class="guardian-form-main">
+          <div class="form-group photo-group">
+            <label>Photo</label>
+            <div class="dtc-stack-md">
+              <div class="dtc-media-frame" style="max-width:220px;">
+                <img
+                  id="photoPreview"
+                  src="https://placehold.co/300x300?text=Employee"
+                  alt="Employee Preview"
+                />
+              </div>
+              <input type="file" id="photoInput" accept="image/*" />
+            </div>
           </div>
-          <input type="file" id="photoInput" accept="image/*" />
-        </div>
-      </div>
 
-      <div class="form-grid">
-        <div class="form-group">
-          <label>First Name</label>
-          <input type="text" id="firstName" placeholder="John" />
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" id="firstName" placeholder="John" />
+            </div>
+
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" id="lastName" placeholder="Doe" />
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="email" placeholder="email@example.com" />
+            </div>
+
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="phone" placeholder="(000) 000-0000" />
+            </div>
+
+            <div class="form-group">
+              <label>Role</label>
+              <select id="role">
+                <option value="employee">Employee</option>
+                <option value="assistant">Assistant</option>
+                <option value="director">Director</option>
+                <option value="admin">Admin</option>
+                <option value="owner">Owner</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Status</label>
+              <select id="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>PIN</label>
+              <input type="text" id="pin" placeholder="4-8 digits" maxlength="8" />
+            </div>
+
+            <div class="form-group toggles">
+              <label class="toggle-row">
+                <input type="checkbox" id="pinEnabled" checked />
+                <span>Enable PIN</span>
+              </label>
+
+              <label class="toggle-row">
+                <input type="checkbox" id="faceEnabled" />
+                <span>Enable Face Scan</span>
+              </label>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Last Name</label>
-          <input type="text" id="lastName" placeholder="Doe" />
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="email" placeholder="email@example.com" />
-        </div>
-
-        <div class="form-group">
-          <label>Phone</label>
-          <input type="text" id="phone" placeholder="(000) 000-0000" />
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Role</label>
-          <select id="role">
-            <option value="employee">Employee</option>
-            <option value="assistant">Assistant</option>
-            <option value="director">Director</option>
-            <option value="admin">Admin</option>
-            <option value="owner">Owner</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Status</label>
-          <select id="status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>PIN</label>
-          <input type="text" id="pin" placeholder="4-8 digits" maxlength="8" />
-        </div>
-
-        <div class="form-group toggles" style="display:grid; gap:10px; align-content:end;">
-          <label>
-            <input type="checkbox" id="pinEnabled" checked />
-            Enable PIN
-          </label>
-
-          <label>
-            <input type="checkbox" id="faceEnabled" />
-            Enable Face Scan
-          </label>
-        </div>
       </div>
 
       <div class="form-actions">
-        <button class="btn btn-primary" id="saveBtn" type="button">Save</button>
-        <a class="btn btn-secondary" href="./employees-list.html">Cancel</a>
+        <button class="dtc-btn dtc-btn-primary" id="saveBtn" type="button">Save</button>
+        <a class="dtc-btn dtc-btn-secondary" href="./employees-list.html">Cancel</a>
       </div>
-
     </section>
 
   </main>

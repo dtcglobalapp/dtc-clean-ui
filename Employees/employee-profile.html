@@ -2,126 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>DTC — Employee Profile</title>
   <link rel="stylesheet" href="../dtc.css" />
 </head>
 
-<body class="dtc-page">
-  <main class="page-content">
+<body class="dtc-shell">
+  <main class="dtc-page">
 
-    <header class="page-header">
-      <div class="brand-lockup">
-        <p class="brand-main">DTC</p>
-        <p class="brand-sub">Daycare Control</p>
-
-        <h1 id="employeeName">Employee</h1>
-        <p class="subtitle">Smart employee profile</p>
+    <!-- HEADER -->
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Staff / Profile</p>
+        <h1 class="dtc-page-title">Employee Profile</h1>
+        <p class="dtc-page-subtitle">
+          Employee information, activity and work sessions.
+        </p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="./employees-list.html">Back</a>
-        <a id="editBtn" class="btn btn-primary">Edit</a>
-      </div>
-    </header>
-
-    <section class="panel profile-main">
-      <div class="profile-top">
-        <div class="profile-top-photo-wrap">
-          <img id="employeePhoto" class="profile-photo" src="" alt="Employee photo" />
-        </div>
-
-        <div class="profile-top-content">
-          <h2 id="employeeNameTop">—</h2>
-          <p id="employeeRole" class="muted">—</p>
-          <div id="employeeStatus" class="badge">—</div>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-box">
-          <label>Hours Worked</label>
-          <p id="totalHours">0h</p>
-        </div>
-
-        <div class="stat-box">
-          <label>Sessions</label>
-          <p id="totalSessions">0</p>
-        </div>
-
-        <div class="stat-box">
-          <label>Earned</label>
-          <p id="earned">$0</p>
-        </div>
-
-        <div class="stat-box">
-          <label>Pending</label>
-          <p id="pending">$0</p>
-        </div>
+      <div class="dtc-head-actions">
+        <a href="./employees-list.html" class="dtc-btn dtc-btn-ghost">← Back</a>
       </div>
     </section>
 
-    <section class="panel">
-      <h3>Access & Security</h3>
+    <!-- LOADING -->
+    <div id="loadingState" class="dtc-loading">
+      Loading employee...
+    </div>
 
-      <div class="info-grid">
-        <div class="info-box">
-          <label>PIN</label>
-          <p id="employeePin">—</p>
-        </div>
+    <!-- CONTENT -->
+    <section id="profileContent" class="dtc-two-column hidden">
 
-        <div class="info-box">
-          <label>PIN Enabled</label>
-          <p id="pinEnabled">—</p>
-        </div>
+      <!-- LEFT -->
+      <aside class="dtc-stack-lg">
 
-        <div class="info-box">
-          <label>Face Scan</label>
-          <p id="faceEnabled">—</p>
-        </div>
+        <section class="dtc-card">
+          <div class="dtc-stack-md">
 
-        <div class="info-box">
-          <label>Allowed Radius</label>
-          <p id="radius">—</p>
-        </div>
-      </div>
-    </section>
+            <div class="dtc-media-frame">
+              <img id="employeePhoto" class="dtc-card-photo" src="" />
+            </div>
 
-    <section class="panel">
-      <h3>Contact Info</h3>
+            <div>
+              <h2 id="employeeName" class="dtc-profile-name">—</h2>
+              <p id="employeeRole" class="dtc-profile-role">—</p>
 
-      <div class="info-grid">
-        <div class="info-box">
-          <label>Email</label>
-          <p id="employeeEmail">—</p>
-        </div>
+              <div class="dtc-inline-meta">
+                <span id="employeeStatus" class="dtc-badge dtc-badge-neutral">inactive</span>
+              </div>
+            </div>
 
-        <div class="info-box">
-          <label>Phone</label>
-          <p id="employeePhone">—</p>
-        </div>
-      </div>
-    </section>
+          </div>
+        </section>
 
-    <section class="panel">
-      <h3>Recent Work Sessions</h3>
-      <div id="sessionsList" class="list"></div>
-    </section>
+        <!-- STATS -->
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <h2 class="dtc-section-title">Work Stats</h2>
+          </div>
 
-    <section class="panel">
-      <h3>Payments</h3>
+          <div class="dtc-info-grid">
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Total Hours</span>
+              <strong id="totalHours" class="dtc-info-value">0h</strong>
+            </article>
 
-      <div class="stats-grid">
-        <div class="stat-box">
-          <label>Total Paid</label>
-          <p id="paid">$0</p>
-        </div>
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Sessions</span>
+              <strong id="totalSessions" class="dtc-info-value">0</strong>
+            </article>
 
-        <div class="stat-box">
-          <label>Pending</label>
-          <p id="pending2">$0</p>
-        </div>
-      </div>
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Earned</span>
+              <strong id="earned" class="dtc-info-value">$0</strong>
+            </article>
+
+            <article class="dtc-info-item">
+              <span class="dtc-info-label">Pending</span>
+              <strong id="pending" class="dtc-info-value">$0</strong>
+            </article>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- RIGHT -->
+      <section class="dtc-stack-lg">
+
+        <section class="dtc-card">
+          <div class="dtc-section-head">
+            <h2 class="dtc-section-title">Recent Sessions</h2>
+          </div>
+
+          <div id="sessionsEmpty" class="dtc-empty-inline">
+            No sessions found.
+          </div>
+
+          <div id="sessionsList" class="dtc-grid-cards hidden"></div>
+        </section>
+
+      </section>
+
     </section>
 
   </main>

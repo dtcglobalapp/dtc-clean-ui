@@ -24,8 +24,6 @@ const saveBtn = el("saveBtn");
 const photoInput = el("photoInput");
 const photoPreview = el("photoPreview");
 
-const brandMain = el("brandMain");
-const brandSub = el("brandSub");
 const pageTitle = el("pageTitle");
 const pageSubtitle = el("pageSubtitle");
 
@@ -174,11 +172,7 @@ async function saveEmployee() {
 
 async function boot() {
   await requireAuth();
-
-  const config = await getAppConfig();
-
-  brandMain.textContent = config.platform_name;
-  brandSub.textContent = config.vertical_name;
+  await getAppConfig();
 
   if (employeeId) {
     pageTitle.textContent = t("employeeForm.editTitle");

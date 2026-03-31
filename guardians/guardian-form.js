@@ -10,8 +10,6 @@ const guardianId = params.get("id");
 
 const el = (id) => document.getElementById(id);
 
-const brandMain = el("brandMain");
-const brandSub = el("brandSub");
 const pageTitle = el("pageTitle");
 
 const firstName = el("firstName");
@@ -185,13 +183,9 @@ async function saveGuardian() {
 
 async function boot() {
   await requireAuth();
-
-  const config = await getAppConfig();
-  brandMain.textContent = config.platform_name;
-  brandSub.textContent = config.vertical_name;
+  await getAppConfig();
 
   pageTitle.textContent = guardianId ? "Edit Guardian" : "Add Guardian";
-
   await loadGuardian();
 }
 

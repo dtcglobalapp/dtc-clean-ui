@@ -1,33 +1,23 @@
 import { requireAuth, supabase } from "../auth.js";
-import { getAppConfig } from "../core/app-config.js";
 
 const params = new URLSearchParams(window.location.search);
 const employeeId = params.get("id");
 
-if (!employeeId || employeeId.length < 10) {
-  document.body.innerHTML = "<h2>Invalid employee ID</h2>";
-  throw new Error("Invalid ID");
-}
+const employeeName = document.getElementById("employeeName");
+const employeeRole = document.getElementById("employeeRole");
+const employeeStatus = document.getElementById("employeeStatus");
+const employeePhoto = document.getElementById("employeePhoto");
 
-const el = (id) => document.getElementById(id);
+const totalHours = document.getElementById("totalHours");
+const totalSessions = document.getElementById("totalSessions");
+const earned = document.getElementById("earned");
+const pending = document.getElementById("pending");
 
-// ELEMENTS
-const employeeName = el("employeeName");
-const employeeNameTop = el("employeeNameTop");
-const employeeRole = el("employeeRole");
-const employeeStatus = el("employeeStatus");
-const employeePhoto = el("employeePhoto");
+const sessionsList = document.getElementById("sessionsList");
+const sessionsEmpty = document.getElementById("sessionsEmpty");
 
-const totalHours = el("totalHours");
-const totalSessions = el("totalSessions");
-const earned = el("earned");
-const pending = el("pending");
-
-const sessionsList = el("sessionsList");
-
-// BRAND
-const brandMain = document.querySelector(".brand-main");
-const brandSub = document.querySelector(".brand-sub");
+const loadingState = document.getElementById("loadingState");
+const profileContent = document.getElementById("profileContent");
 
 // HELPERS
 function formatMoney(v) {
@@ -36,6 +26,14 @@ function formatMoney(v) {
 
 function formatDate(d) {
   return new Date(d).toLocaleString();
+}
+
+function getBadge(status) {
+  const s = String(status).toLowerCase();
+
+  if (s === "active") return "dtc-badge dtc-badge-success";
+  if (s === "pending") return "dtc-badge dtc-badge-warning";
+  return "dtc-badge dtc-badge-neutral";
 }
 
 // LOAD EMPLOYEE
@@ -79,7 +77,6 @@ function processSessions(sessions) {
   totalHours.textContent = `${hours.toFixed(2)}h`;
   totalSessions.textContent = sessions.length;
 
-  // ⚠️ temporal (luego va a DB)
   const hourlyRate = 15;
   const totalEarned = hours * hourlyRate;
 
@@ -88,47 +85,51 @@ function processSessions(sessions) {
 }
 
 // RENDER SESSIONS
-function renderSessions(sessions) {
-  sessionsList.innerHTML = "";
-
-  sessions.slice(0, 5).forEach((s) => {
-    const div = document.createElement("div");
-    div.className = "list-item";
-
-    div.innerHTML = `
-      <div>
-        <strong>${formatDate(s.check_in_at)}</strong><br/>
+function sessionCard(s) {
+  return `
+    <article class="dtc-record-card">
+      <h3 class="dtc-card-name">${formatDate(s.check_in_at)}</h3>
+      <p class="dtc-card-subtitle">
         ${s.check_out_at ? formatDate(s.check_out_at) : "Open session"}
-      </div>
-    `;
+      </p>
+    </article>
+  `;
+}
 
-    sessionsList.appendChild(div);
-  });
+function renderSessions(sessions) {
+  if (!sessions.length) {
+    sessionsEmpty.classList.remove("hidden");
+    sessionsList.classList.add("hidden");
+    return;
+  }
+
+  sessionsEmpty.classList.add("hidden");
+  sessionsList.classList.remove("hidden");
+
+  sessionsList.innerHTML = sessions.slice(0, 5).map(sessionCard).join("");
 }
 
 // BOOT
 async function boot() {
   await requireAuth();
 
-  // 🔥 NUEVO: cargar config global
-  const config = await getAppConfig();
-
-  brandMain.textContent = config.platform_name;
-  brandSub.textContent = config.vertical_name;
-
   const employee = await loadEmployee();
   const sessions = await loadSessions();
 
   employeeName.textContent = employee.display_name;
-  employeeNameTop.textContent = employee.display_name;
   employeeRole.textContent = employee.role;
+
+  employeeStatus.className = getBadge(employee.status);
   employeeStatus.textContent = employee.status;
 
   employeePhoto.src =
-    employee.photo_url || "https://placehold.co/200x200";
+    employee.photo_url || "https://placehold.co/320x320?text=Employee";
 
   processSessions(sessions);
   renderSessions(sessions);
+
+  loadingState.classList.add("hidden");
+  profileContent.classList.remove("hidden");
 }
 
 boot();

@@ -6,33 +6,29 @@
   <title>DTC — Guardian</title>
   <link rel="stylesheet" href="../dtc.css" />
 </head>
-<body class="dtc-page">
-  <main class="page-content">
 
-    <header class="page-header">
-      <div class="brand-lockup">
-        <div class="brand-line">
-          <p class="brand-main" id="brandMain">DTC</p>
-          <p class="brand-sub" id="brandSub">Daycare Control</p>
-        </div>
+<body class="dtc-shell">
+  <main class="dtc-page">
 
-        <h1 id="pageTitle">Add Guardian</h1>
-        <p id="pageSubtitle" class="subtitle">
-          Create or update guardian access, pickup permissions, and contact details.
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Guardians / Form</p>
+        <h1 id="pageTitle" class="dtc-page-title">Add Guardian</h1>
+        <p class="dtc-page-subtitle">
+          Create or update guardian access, pickup permissions and contact details.
         </p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="./guardians-list.html">Back</a>
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost" href="./guardians-list.html">← Back</a>
       </div>
-    </header>
+    </section>
 
-    <section class="panel guardian-form-panel">
-
+    <section class="dtc-card guardian-form-panel">
       <div class="guardian-form-grid">
 
         <div class="guardian-form-main">
-          <div class="form-grid">
+          <div class="form-grid-2">
             <div class="form-group">
               <label for="firstName">First Name</label>
               <input id="firstName" type="text" placeholder="Carmeli" />
@@ -63,9 +59,7 @@
                 <option value="Other">Other</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-grid">
             <div class="form-group">
               <label for="email">Email</label>
               <input id="email" type="email" placeholder="guardian@example.com" />
@@ -89,9 +83,7 @@
                 <option value="blocked">Blocked</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-grid">
             <div class="form-group">
               <label for="pin">PIN</label>
               <input id="pin" type="text" maxlength="8" placeholder="4-8 digits" />
@@ -112,9 +104,7 @@
               <label for="governmentIdLast4">Government ID Last 4</label>
               <input id="governmentIdLast4" type="text" maxlength="4" placeholder="1234" />
             </div>
-          </div>
 
-          <div class="form-grid">
             <div class="form-group guardian-toggle-group">
               <label class="toggle-row">
                 <input id="pinEnabled" type="checkbox" />
@@ -146,7 +136,7 @@
             </div>
 
             <div class="photo-actions">
-              <label class="btn btn-secondary photo-btn" for="photoInput">Choose Photo</label>
+              <label class="dtc-btn dtc-btn-secondary" for="photoInput">Choose Photo</label>
               <input id="photoInput" type="file" accept="image/*" hidden />
               <p class="photo-help">Upload a clear guardian photo for pickup safety and identification.</p>
             </div>
@@ -156,10 +146,9 @@
       </div>
 
       <div class="form-actions">
-        <button id="saveBtn" class="btn btn-primary" type="button">Save Guardian</button>
-        <a class="btn btn-secondary" href="./guardians-list.html">Cancel</a>
+        <button id="saveBtn" class="dtc-btn dtc-btn-primary" type="button">Save Guardian</button>
+        <a class="dtc-btn dtc-btn-secondary" href="./guardians-list.html">Cancel</a>
       </div>
-
     </section>
 
   </main>

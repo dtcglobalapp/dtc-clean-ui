@@ -1,100 +1,318 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="apple-mobile-web-app-title" content="DTC" />
-  <title>DTC — Guardians</title>
-  <link rel="stylesheet" href="../dtc.css" />
-</head>
-<body class="dtc-page">
-  <main class="page-content">
+import { requireAuth, supabase } from "../auth.js";
+import { getAppConfig } from "../core/app-config.js";
 
-    <header class="page-header">
-      <div class="brand-lockup">
-        <p class="brand-main" data-brand>DTC</p>
-        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
+const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
 
-        <h1 id="pageTitle" data-page-title>Guardians</h1>
-        <p id="pageSubtitle" class="subtitle">
-          Manage parents, pickup contacts, emergency contacts, and future remote signature access.
-        </p>
+const searchInput = document.getElementById("searchInput");
+const refreshBtn = document.getElementById("refreshBtn");
+const guardiansGrid = document.getElementById("guardiansGrid");
+const loadingState = document.getElementById("loadingState");
+const emptyState = document.getElementById("emptyState");
+const messageBox = document.getElementById("messageBox");
+const pageTitle = document.getElementById("pageTitle");
+const pageSubtitle = document.getElementById("pageSubtitle");
+
+let allGuardians = [];
+let hasBooted = false;
+let isLoadingGuardians = false;
+let lastLoadAt = 0;
+
+const AUTO_REFRESH_COOLDOWN_MS = 1200;
+
+function showMessage(text, type = "info") {
+  if (!messageBox) return;
+
+  messageBox.textContent = text || "";
+
+  if (!text) {
+    messageBox.className = "dtc-feedback hidden";
+    return;
+  }
+
+  if (type === "error") {
+    messageBox.className = "dtc-feedback";
+    return;
+  }
+
+  messageBox.className = "dtc-feedback hidden";
+}
+
+function hideMessage() {
+  if (!messageBox) return;
+  messageBox.textContent = "";
+  messageBox.className = "dtc-feedback hidden";
+}
+
+function showLoading(isLoading) {
+  if (!loadingState) return;
+  loadingState.classList.toggle("hidden", !isLoading);
+}
+
+function showEmpty(isVisible) {
+  if (!emptyState) return;
+  emptyState.classList.toggle("hidden", !isVisible);
+}
+
+function showGrid(isVisible) {
+  if (!guardiansGrid) return;
+  guardiansGrid.classList.toggle("hidden", !isVisible);
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatStatus(status = "") {
+  return String(status || "inactive").trim().toLowerCase();
+}
+
+function formatPhone(value = "") {
+  if (!value) return "No phone";
+
+  const digits = String(value).replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    const d = digits.slice(1);
+    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+  }
+
+  return value;
+}
+
+function getGuardianPhoto(guardian) {
+  return guardian?.photo_url || "https://placehold.co/320x320?text=Guardian";
+}
+
+function getDisplayName(guardian) {
+  if (guardian?.display_name && guardian.display_name.trim()) {
+    return guardian.display_name.trim();
+  }
+
+  return [guardian?.first_name, guardian?.middle_name, guardian?.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || "Unnamed Guardian";
+}
+
+function getStatusBadgeClass(status) {
+  switch (status) {
+    case "active":
+      return "dtc-badge dtc-badge-success";
+    case "pending":
+      return "dtc-badge dtc-badge-warning";
+    default:
+      return "dtc-badge dtc-badge-neutral";
+  }
+}
+
+function guardianCard(guardian) {
+  const status = formatStatus(guardian.status);
+  const relationship = guardian.relationship_default || "Guardian";
+  const email = guardian.email || "No email";
+  const phone = formatPhone(guardian.phone);
+  const whatsapp = guardian.whatsapp ? formatPhone(guardian.whatsapp) : "No WhatsApp";
+  const pinLabel = guardian.pin ? `PIN ${escapeHtml(guardian.pin)}` : "No PIN";
+  const displayName = escapeHtml(getDisplayName(guardian));
+  const statusBadgeClass = getStatusBadgeClass(status);
+
+  return `
+    <article class="dtc-record-card">
+      <img
+        class="dtc-card-photo"
+        src="${escapeHtml(getGuardianPhoto(guardian))}"
+        alt="${displayName}"
+      />
+
+      <h3 class="dtc-card-name">${displayName}</h3>
+      <p class="dtc-card-subtitle">${escapeHtml(relationship)}</p>
+
+      <div class="dtc-inline-meta">
+        <span class="${statusBadgeClass}">${escapeHtml(status)}</span>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
-        <a class="btn btn-primary" href="./guardian-form.html">Add Guardian</a>
-      </div>
-    </header>
-
-    <section class="panel">
-      <div class="panel-toolbar">
-        <div class="search-wrap">
-          <label class="sr-only" for="searchInput">Search guardians</label>
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Search by guardian name, relationship, email, phone..."
-            autocomplete="off"
-          />
+      <div class="dtc-stack-sm">
+        <div class="dtc-person-meta">
+          <strong>Email:</strong> ${escapeHtml(email)}
         </div>
 
-        <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
+        <div class="dtc-person-meta">
+          <strong>Phone:</strong> ${escapeHtml(phone)}
+        </div>
+
+        <div class="dtc-person-meta">
+          <strong>WhatsApp:</strong> ${escapeHtml(whatsapp)}
+        </div>
+
+        <div class="dtc-person-meta">
+          <strong>Access:</strong> ${pinLabel}
+        </div>
       </div>
 
-      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
+      <div class="dtc-card-footer">
+        <a
+          class="dtc-btn dtc-btn-secondary dtc-btn-sm"
+          href="./guardian-profile.html?id=${encodeURIComponent(guardian.id)}"
+        >
+          Profile
+        </a>
 
-      <div id="loadingState" class="state-box hidden">
-        <p>Loading guardians...</p>
+        <a
+          class="dtc-btn dtc-btn-ghost dtc-btn-sm"
+          href="./guardian-form.html?id=${encodeURIComponent(guardian.id)}"
+        >
+          Edit
+        </a>
       </div>
+    </article>
+  `;
+}
 
-      <div id="emptyState" class="state-box hidden">
-        <h2>No guardians found</h2>
-        <p>There are no guardian records yet for this organization.</p>
-        <a class="btn btn-primary" href="./guardian-form.html">Create first guardian</a>
-      </div>
+function renderGuardians(rows) {
+  if (!guardiansGrid) return;
 
-      <div id="guardiansGrid" class="guardian-grid"></div>
-    </section>
+  if (!rows.length) {
+    guardiansGrid.innerHTML = "";
+    showEmpty(true);
+    showGrid(false);
+    return;
+  }
 
-  </main>
+  showEmpty(false);
+  showGrid(true);
+  guardiansGrid.innerHTML = rows.map(guardianCard).join("");
+}
 
-  <script type="module">
-    import "./guardians-list.js";
-    import { applyBranding } from "../core/brand.js";
+function filterGuardians(query) {
+  const q = query.trim().toLowerCase();
 
-    applyBranding();
-  </script>
+  if (!q) return [...allGuardians];
 
-  <script>
-    (function () {
-      let lastAutoRefreshAt = 0;
+  return allGuardians.filter((guardian) => {
+    const haystack = [
+      guardian.display_name,
+      guardian.first_name,
+      guardian.middle_name,
+      guardian.last_name,
+      guardian.relationship_default,
+      guardian.email,
+      guardian.phone,
+      guardian.whatsapp,
+      guardian.status,
+      guardian.pin,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-      function triggerRefresh() {
-        const now = Date.now();
-        if (now - lastAutoRefreshAt < 1200) return;
-        lastAutoRefreshAt = now;
+    return haystack.includes(q);
+  });
+}
 
-        const refreshBtn = document.getElementById("refreshBtn");
-        if (refreshBtn) {
-          refreshBtn.click();
-        }
-      }
+async function loadGuardians({ silent = false } = {}) {
+  if (isLoadingGuardians) return;
 
-      window.addEventListener("pageshow", () => {
-        setTimeout(triggerRefresh, 250);
-      });
+  isLoadingGuardians = true;
 
-      window.addEventListener("focus", () => {
-        setTimeout(triggerRefresh, 250);
-      });
+  if (!silent) {
+    showLoading(true);
+    hideMessage();
+  }
 
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-          setTimeout(triggerRefresh, 250);
-        }
-      });
-    })();
-  </script>
-</body>
-</html>
+  try {
+    const { data, error } = await supabase
+      .from("guardians")
+      .select("*")
+      .eq("organization_id", ORGANIZATION_ID)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    allGuardians = data ?? [];
+    renderGuardians(filterGuardians(searchInput?.value || ""));
+    lastLoadAt = Date.now();
+
+    if (!allGuardians.length) {
+      hideMessage();
+    } else if (!silent) {
+      hideMessage();
+    }
+  } catch (error) {
+    console.error("Load guardians error:", error);
+    showMessage(`Could not load guardians: ${error.message}`, "error");
+
+    if (guardiansGrid) {
+      guardiansGrid.innerHTML = "";
+    }
+
+    showEmpty(true);
+    showGrid(false);
+  } finally {
+    if (!silent) {
+      showLoading(false);
+    }
+
+    isLoadingGuardians = false;
+  }
+}
+
+async function maybeAutoRefresh() {
+  if (!hasBooted) return;
+  if (isLoadingGuardians) return;
+
+  const now = Date.now();
+  if (now - lastLoadAt < AUTO_REFRESH_COOLDOWN_MS) return;
+
+  await loadGuardians({ silent: true });
+}
+
+async function boot() {
+  const user = await requireAuth();
+  if (!user) return;
+
+  const config = await getAppConfig();
+
+  if (pageTitle && config?.platform_name) {
+    pageTitle.textContent = "Guardians";
+  }
+
+  if (pageSubtitle && config?.vertical_name) {
+    pageSubtitle.textContent =
+      "Manage parents, pickup contacts, emergency contacts and remote authorization.";
+  }
+
+  hasBooted = true;
+  await loadGuardians();
+}
+
+searchInput?.addEventListener("input", () => {
+  renderGuardians(filterGuardians(searchInput.value));
+});
+
+refreshBtn?.addEventListener("click", () => {
+  loadGuardians();
+});
+
+window.addEventListener("pageshow", () => {
+  maybeAutoRefresh();
+});
+
+window.addEventListener("focus", () => {
+  maybeAutoRefresh();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    maybeAutoRefresh();
+  }
+});
+
+boot();

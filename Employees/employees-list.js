@@ -12,19 +12,41 @@ let allEmployees = [];
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
-  messageBox.textContent = text;
-  messageBox.className = `message ${type}`;
+
+  messageBox.textContent = text || "";
+
+  if (!text) {
+    messageBox.className = "dtc-feedback hidden";
+    return;
+  }
+
+  if (type === "error") {
+    messageBox.className = "dtc-feedback";
+    return;
+  }
+
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function hideMessage() {
   if (!messageBox) return;
   messageBox.textContent = "";
-  messageBox.className = "message hidden";
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function showLoading(isLoading) {
   if (!loadingState) return;
   loadingState.classList.toggle("hidden", !isLoading);
+}
+
+function showEmpty(isVisible) {
+  if (!emptyState) return;
+  emptyState.classList.toggle("hidden", !isVisible);
+}
+
+function showGrid(isVisible) {
+  if (!employeesGrid) return;
+  employeesGrid.classList.toggle("hidden", !isVisible);
 }
 
 function escapeHtml(value = "") {
@@ -37,83 +59,88 @@ function escapeHtml(value = "") {
 }
 
 function fullName(employee) {
-  if (employee.display_name && String(employee.display_name).trim()) {
-    return String(employee.display_name).trim();
-  }
+  if (employee.display_name) return employee.display_name;
 
-  return [employee.first_name ?? "", employee.middle_name ?? "", employee.last_name ?? ""]
+  return [employee.first_name, employee.middle_name, employee.last_name]
+    .filter(Boolean)
     .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .trim() || "Unnamed Employee";
 }
 
-function getPhotoUrl(employee) {
-  if (employee.photo_url && String(employee.photo_url).trim()) {
-    return String(employee.photo_url).trim();
-  }
-  return "";
+function getPhoto(employee) {
+  return employee.photo_url || "https://placehold.co/320x320?text=Employee";
 }
 
-function badgeHtml(text, className) {
-  return `<span class="badge ${escapeHtml(className)}">${escapeHtml(text)}</span>`;
+function getBadge(status) {
+  const s = String(status).toLowerCase();
+
+  if (s === "active") return "dtc-badge dtc-badge-success";
+  if (s === "pending") return "dtc-badge dtc-badge-warning";
+  return "dtc-badge dtc-badge-neutral";
 }
 
-function employeeTile(employee) {
-  const name = fullName(employee) || "Unnamed Employee";
-  const role = employee.role || "employee";
-  const status = employee.status || "inactive";
-  const photoUrl = getPhotoUrl(employee);
+function employeeCard(employee) {
+  const name = escapeHtml(fullName(employee));
+  const role = employee.role || "Employee";
   const email = employee.email || "No email";
-  const pinText = employee.pin ? `PIN ${employee.pin}` : "No PIN";
+  const status = employee.status || "inactive";
+  const pin = employee.pin ? `PIN ${employee.pin}` : "No PIN";
 
   return `
-    <article class="employee-tile">
-      <div class="employee-photo-wrap">
-        <div class="employee-role-chip">
-          ${badgeHtml(role, role)}
-        </div>
+    <article class="dtc-record-card">
 
-        ${
-          photoUrl
-            ? `<img class="employee-photo" src="${escapeHtml(photoUrl)}" alt="${escapeHtml(name)}" />`
-            : `<div class="employee-photo-placeholder" aria-hidden="true">🧑‍💼</div>`
-        }
+      <img
+        class="dtc-card-photo"
+        src="${escapeHtml(getPhoto(employee))}"
+        alt="${name}"
+      />
+
+      <h3 class="dtc-card-name">${name}</h3>
+      <p class="dtc-card-subtitle">${escapeHtml(role)}</p>
+
+      <div class="dtc-inline-meta">
+        <span class="${getBadge(status)}">${escapeHtml(status)}</span>
       </div>
 
-      <p class="employee-name">${escapeHtml(name)}</p>
-      <p class="employee-sub">${escapeHtml(email)}</p>
-
-      <div class="employee-meta">
-        <div class="employee-meta-row">
-          <span class="employee-meta-label">Status</span>
-          <span>${badgeHtml(status, status)}</span>
+      <div class="dtc-stack-sm">
+        <div class="dtc-person-meta">
+          <strong>Email:</strong> ${escapeHtml(email)}
         </div>
 
-        <div class="employee-meta-row">
-          <span class="employee-meta-label">Access</span>
-          <strong>${escapeHtml(pinText)}</strong>
+        <div class="dtc-person-meta">
+          <strong>Access:</strong> ${escapeHtml(pin)}
         </div>
       </div>
 
-      <div class="employee-actions">
-        <a class="link-btn" href="./employee-profile.html?id=${encodeURIComponent(employee.id)}">Profile</a>
-        <a class="link-btn" href="./employee-form.html?id=${encodeURIComponent(employee.id)}">Edit</a>
+      <div class="dtc-card-footer">
+        <a class="dtc-btn dtc-btn-secondary dtc-btn-sm"
+           href="./employee-profile.html?id=${encodeURIComponent(employee.id)}">
+           Profile
+        </a>
+
+        <a class="dtc-btn dtc-btn-ghost dtc-btn-sm"
+           href="./employee-form.html?id=${encodeURIComponent(employee.id)}">
+           Edit
+        </a>
       </div>
+
     </article>
   `;
 }
 
 function renderEmployees(rows) {
-  if (!employeesGrid || !emptyState) return;
+  if (!employeesGrid) return;
 
   if (!rows.length) {
     employeesGrid.innerHTML = "";
-    emptyState.classList.remove("hidden");
+    showEmpty(true);
+    showGrid(false);
     return;
   }
 
-  emptyState.classList.add("hidden");
-  employeesGrid.innerHTML = rows.map(employeeTile).join("");
+  showEmpty(false);
+  showGrid(true);
+  employeesGrid.innerHTML = rows.map(employeeCard).join("");
 }
 
 function filterEmployees(query) {
@@ -132,7 +159,6 @@ function filterEmployees(query) {
       employee.email,
       employee.phone,
       employee.pin,
-      employee.primary_location_label,
     ]
       .filter(Boolean)
       .join(" ")
@@ -142,9 +168,8 @@ function filterEmployees(query) {
   });
 }
 
-function rerenderCurrentView() {
-  const filtered = filterEmployees(searchInput?.value || "");
-  renderEmployees(filtered);
+function rerender() {
+  renderEmployees(filterEmployees(searchInput?.value || ""));
 }
 
 async function loadEmployees() {
@@ -153,32 +178,23 @@ async function loadEmployees() {
 
   try {
     allEmployees = await getEmployees();
-    rerenderCurrentView();
-
-    if (!allEmployees.length) {
-      showMessage("No employees found yet for this organization.", "info");
-    }
+    rerender();
   } catch (error) {
-    console.error("Load employees error:", error);
-    showMessage(`Could not load employees: ${error.message}`, "error");
-    if (employeesGrid) employeesGrid.innerHTML = "";
-    if (emptyState) emptyState.classList.remove("hidden");
+    console.error(error);
+    showMessage(error.message, "error");
+    showEmpty(true);
   } finally {
     showLoading(false);
   }
 }
 
-searchInput?.addEventListener("input", () => {
-  rerenderCurrentView();
-});
-
-refreshBtn?.addEventListener("click", () => {
-  loadEmployees();
-});
+searchInput?.addEventListener("input", rerender);
+refreshBtn?.addEventListener("click", loadEmployees);
 
 async function boot() {
   const user = await requireAuth();
   if (!user) return;
+
   await loadEmployees();
 }
 

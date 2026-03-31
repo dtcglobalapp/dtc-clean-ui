@@ -54,14 +54,26 @@ let currentDocuments = [];
 
 function showMessage(text, type = "error") {
   if (!messageBox) return;
-  messageBox.textContent = text;
-  messageBox.className = `message ${type}`;
+
+  messageBox.textContent = text || "";
+
+  if (!text) {
+    messageBox.className = "dtc-feedback hidden";
+    return;
+  }
+
+  if (type === "error") {
+    messageBox.className = "dtc-feedback";
+    return;
+  }
+
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function hideMessage() {
   if (!messageBox) return;
   messageBox.textContent = "";
-  messageBox.className = "message hidden";
+  messageBox.className = "dtc-feedback hidden";
 }
 
 function escapeHtml(value = "") {
@@ -148,38 +160,17 @@ function normalizePhoneForLink(value = "") {
   return digits;
 }
 
-function buildPhoneLine(phone, extension) {
-  const formatted = formatPhoneNumber(phone);
-  if (formatted === "—") return "—";
-  if (extension && String(extension).trim()) {
-    return `${formatted} ext. ${String(extension).trim()}`;
-  }
-  return formatted;
-}
+function getStatusBadgeClass(status = "") {
+  const safe = String(status).toLowerCase();
 
-function buildActionLinks(phone, email) {
-  const normalizedPhone = normalizePhoneForLink(phone);
-  const safeEmail = email ? String(email).trim() : "";
-
-  const callLink = normalizedPhone
-    ? `<a class="link-btn" href="tel:+${normalizedPhone}">Call</a>`
-    : "";
-  const textLink = normalizedPhone
-    ? `<a class="link-btn" href="sms:+${normalizedPhone}">Text</a>`
-    : "";
-  const whatsappLink = normalizedPhone
-    ? `<a class="link-btn" href="https://wa.me/${normalizedPhone}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`
-    : "";
-  const emailLink = safeEmail
-    ? `<a class="link-btn" href="mailto:${escapeHtml(safeEmail)}">Email</a>`
-    : "";
-
-  return [callLink, textLink, whatsappLink, emailLink].filter(Boolean).join("");
+  if (safe === "active" || safe === "approved") return "dtc-badge dtc-badge-success";
+  if (safe === "pending" || safe === "pending_review") return "dtc-badge dtc-badge-warning";
+  return "dtc-badge dtc-badge-neutral";
 }
 
 function statusBadge(status = "active") {
   if (!profileStatus) return;
-  profileStatus.className = `badge ${String(status).toLowerCase()}`;
+  profileStatus.className = getStatusBadgeClass(status);
   profileStatus.textContent = status || "unknown";
 }
 
@@ -224,8 +215,7 @@ function prettyReviewStatus(value = "") {
 }
 
 function documentStatusBadge(status = "") {
-  const safe = String(status).toLowerCase();
-  return `<span class="badge ${escapeHtml(safe)}">${escapeHtml(prettyReviewStatus(status))}</span>`;
+  return `<span class="${getStatusBadgeClass(status)}">${escapeHtml(prettyReviewStatus(status))}</span>`;
 }
 
 function documentRow(doc) {
@@ -238,12 +228,12 @@ function documentRow(doc) {
       <td>${documentStatusBadge(doc.review_status)}</td>
       <td>${escapeHtml(formatDate(doc.issue_date))}</td>
       <td>${escapeHtml(formatDate(doc.expires_at))}</td>
-      <td>
-        <div class="row-actions">
+      <td class="dtc-col-actions">
+        <div class="dtc-inline-actions">
           ${
             doc.file_url
-              ? `<a class="link-btn" href="${safeFileUrl}" target="_blank" rel="noopener noreferrer">Open</a>`
-              : `<span class="link-btn disabled">No File</span>`
+              ? `<a class="dtc-btn dtc-btn-ghost dtc-btn-sm" href="${safeFileUrl}" target="_blank" rel="noopener noreferrer">Open</a>`
+              : `<span class="dtc-btn dtc-btn-ghost dtc-btn-sm">No File</span>`
           }
         </div>
       </td>
@@ -252,33 +242,51 @@ function documentRow(doc) {
 }
 
 function guardianCard(guardian) {
-  const relationship = guardian.relationship_to_child || guardian.relationship_default || "Guardian";
-  const primaryPhone = buildPhoneLine(guardian.phone, guardian.phone_extension);
-  const secondaryPhone = buildPhoneLine(guardian.secondary_phone, guardian.secondary_phone_extension);
+  const relationship =
+    guardian.relationship_to_child ||
+    guardian.relationship_default ||
+    "Guardian";
+
+  const name = `${guardian.first_name || ""} ${guardian.last_name || ""}`.trim() || "Unnamed Guardian";
+  const phone = formatPhoneNumber(guardian.phone);
   const email = guardian.email || "—";
-  const preferred = guardian.preferred_contact_method || "—";
-  const actions = buildActionLinks(guardian.phone, guardian.email);
+  const photo = guardian.photo_url || "https://placehold.co/320x320?text=Guardian";
 
   return `
-    <article class="guardian-card">
-      <div class="guardian-card-body">
-        <div class="guardian-card-top">
-          <h3>${escapeHtml(`${guardian.first_name || ""} ${guardian.last_name || ""}`.trim() || "Unnamed Guardian")}</h3>
-          <div class="guardian-badges">
-            ${guardian.is_primary ? `<span class="badge active">primary</span>` : ""}
-            ${guardian.pickup_allowed ? `<span class="badge active">pickup ok</span>` : `<span class="badge inactive">no pickup</span>`}
-            ${guardian.emergency_contact ? `<span class="badge inactive">emergency</span>` : ""}
-            ${guardian.remote_signature_allowed ? `<span class="badge active">remote sign</span>` : ""}
-          </div>
+    <article class="dtc-record-card">
+      <img
+        class="dtc-card-photo"
+        src="${escapeHtml(photo)}"
+        alt="${escapeHtml(name)}"
+      />
+
+      <h3 class="dtc-card-name">${escapeHtml(name)}</h3>
+      <p class="dtc-card-subtitle">${escapeHtml(relationship)}</p>
+
+      <div class="dtc-inline-meta">
+        ${guardian.is_primary ? `<span class="dtc-badge dtc-badge-success">Primary</span>` : ""}
+        ${guardian.pickup_allowed ? `<span class="dtc-badge dtc-badge-success">Pickup OK</span>` : ""}
+        ${guardian.emergency_contact ? `<span class="dtc-badge dtc-badge-warning">Emergency</span>` : ""}
+        ${guardian.remote_signature_allowed ? `<span class="dtc-badge dtc-badge-neutral">Remote Sign</span>` : ""}
+      </div>
+
+      <div class="dtc-stack-sm">
+        <div class="dtc-person-meta">
+          <strong>Phone:</strong> ${escapeHtml(phone)}
         </div>
-        <p><strong>Relationship:</strong> ${escapeHtml(relationship)}</p>
-        <p><strong>Phone:</strong> ${escapeHtml(primaryPhone)}</p>
-        ${secondaryPhone !== "—" ? `<p><strong>Secondary:</strong> ${escapeHtml(secondaryPhone)}</p>` : ""}
-        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-        ${preferred !== "—" ? `<p><strong>Preferred Contact:</strong> ${escapeHtml(preferred)}</p>` : ""}
-        <div class="row-actions guardian-actions-row">
-          ${actions}
+
+        <div class="dtc-person-meta">
+          <strong>Email:</strong> ${escapeHtml(email)}
         </div>
+      </div>
+
+      <div class="dtc-card-footer">
+        <a
+          class="dtc-btn dtc-btn-secondary dtc-btn-sm"
+          href="../guardians/guardian-profile.html?id=${encodeURIComponent(guardian.id)}"
+        >
+          Profile
+        </a>
       </div>
     </article>
   `;
@@ -418,13 +426,16 @@ async function loadDocuments(childIdValue) {
 
 function deliveryRow(row) {
   const recipients = Array.isArray(row.recipients)
-    ? row.recipients.map((item) => {
-        if (typeof item === "string") return item;
-        if (item?.email) return item.email;
-        if (item?.name && item?.email) return `${item.name} (${item.email})`;
-        if (item?.name) return item.name;
-        return "";
-      }).filter(Boolean).join(", ")
+    ? row.recipients
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (item?.email && item?.name) return `${item.name} (${item.email})`;
+          if (item?.email) return item.email;
+          if (item?.name) return item.name;
+          return "";
+        })
+        .filter(Boolean)
+        .join(", ")
     : "";
 
   return `
@@ -554,12 +565,12 @@ function getLatestDocumentForDelivery() {
 }
 
 function buildMailtoUrl({ to, cc = "", subject = "", body = "" }) {
-  const params = new URLSearchParams();
-  if (cc) params.set("cc", cc);
-  if (subject) params.set("subject", subject);
-  if (body) params.set("body", body);
+  const query = new URLSearchParams();
+  if (cc) query.set("cc", cc);
+  if (subject) query.set("subject", subject);
+  if (body) query.set("body", body);
 
-  return `mailto:${encodeURIComponent(to)}?${params.toString()}`;
+  return `mailto:${encodeURIComponent(to)}?${query.toString()}`;
 }
 
 async function sendToAgency() {
@@ -574,7 +585,8 @@ async function sendToAgency() {
 
   const testPrimaryEmail = "miriamgroupdaycare@gmail.com";
   const testCcEmail = "";
-  const childName = [currentChild.first_name, currentChild.last_name].filter(Boolean).join(" ").trim() || "Child";
+  const childName =
+    [currentChild.first_name, currentChild.last_name].filter(Boolean).join(" ").trim() || "Child";
   const documentName = latestDoc.title || "Child Document";
 
   const subject = `DTC Test Delivery — ${childName} — ${documentName}`;
@@ -609,7 +621,7 @@ async function sendToAgency() {
           sent_to: "Delivery Test",
           recipients: [
             { name: "Test Primary", email: testPrimaryEmail },
-            ...(testCcEmail ? [{ name: "Test CC", email: testCcEmail }] : [])
+            ...(testCcEmail ? [{ name: "Test CC", email: testCcEmail }] : []),
           ],
           delivery_type: "email",
           sent_by_user_id: null,
@@ -618,9 +630,9 @@ async function sendToAgency() {
           notes: "Test delivery opened with mailto from Child Profile.",
           metadata: {
             file_url: latestDoc.file_url || null,
-            subject
-          }
-        }
+            subject,
+          },
+        },
       ]);
 
     if (error) throw error;
@@ -629,7 +641,7 @@ async function sendToAgency() {
       to: testPrimaryEmail,
       cc: testCcEmail,
       subject,
-      body
+      body,
     });
 
     window.location.href = mailtoUrl;
@@ -682,6 +694,11 @@ savePhotoBtn?.addEventListener("click", async () => {
 
 sendToAgencyBtn?.addEventListener("click", async () => {
   await sendToAgency();
+});
+
+uploadDocumentBtn?.addEventListener("click", () => {
+  if (!currentChild?.id) return;
+  window.location.href = `../agreements/documents-upload.html?child_id=${encodeURIComponent(currentChild.id)}`;
 });
 
 async function boot() {

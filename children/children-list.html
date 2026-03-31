@@ -2,208 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
-  <meta name="theme-color" content="#1d4ed8" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="apple-mobile-web-app-title" content="DTC" />
   <title>DTC — Children</title>
-  <style>
-    .brand-lockup {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .brand-main {
-      margin: 0;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--primary);
-    }
-
-    .brand-sub {
-      margin: 0;
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-      line-height: 1.35;
-    }
-
-    .children-gallery-panel {
-      padding: 18px;
-    }
-
-    .children-gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 18px;
-    }
-
-    .child-tile {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-      text-decoration: none;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      background: #fbfcfe;
-      padding: 14px;
-      box-shadow: var(--shadow);
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-
-    .child-tile:hover {
-      transform: translateY(-2px);
-      background: #ffffff;
-    }
-
-    .child-photo-wrap {
-      width: 100%;
-      aspect-ratio: 1;
-      border-radius: 20px;
-      overflow: hidden;
-      background: #eef2f7;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .child-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .child-photo-placeholder {
-      font-size: 40px;
-      opacity: 0.7;
-    }
-
-    .child-name {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 800;
-      text-align: center;
-      line-height: 1.25;
-    }
-
-    .child-classroom {
-      margin: 0;
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.3;
-      min-height: 34px;
-    }
-
-    .child-status {
-      margin-top: auto;
-    }
-
-    .children-empty-action {
-      margin-top: 14px;
-    }
-
-    @media (max-width: 760px) {
-      .children-gallery-panel {
-        padding: 14px;
-      }
-
-      .children-gallery-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .child-tile {
-        padding: 12px;
-        border-radius: 20px;
-      }
-
-      .child-name {
-        font-size: 14px;
-      }
-
-      .child-classroom {
-        font-size: 12px;
-        min-height: 30px;
-      }
-    }
-
-    @media (max-width: 420px) {
-      .children-gallery-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-  </style>
   <link rel="stylesheet" href="../dtc.css" />
 </head>
-<body class="dtc-page">
-  <main class="page-content">
-    <header class="page-header children-header">
-      <div class="brand-lockup">
-        <p class="brand-main" data-brand>DTC</p>
-        <p class="brand-sub" data-brand-vertical>Control Total (Daycares)</p>
-        <h1 data-page-title>Children</h1>
-        <p class="subtitle">
-          The children are the heart of DTC. Tap a photo to open the child profile quickly.
+
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Children / Directory</p>
+        <h1 class="dtc-page-title">Children</h1>
+        <p class="dtc-page-subtitle">
+          The children are the heart of DTC. Open profiles quickly and keep records organized.
         </p>
       </div>
 
-      <div class="header-actions">
-        <a class="btn btn-secondary" href="../dashboard.html">Back</a>
-        <a class="btn btn-primary" href="./child-form.html">Add Child</a>
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost" href="../dashboard.html">← Back</a>
+        <a class="dtc-btn dtc-btn-primary" href="./child-form.html">+ Add Child</a>
       </div>
-    </header>
-
-    <section class="panel children-gallery-panel">
-      <div class="panel-toolbar children-toolbar">
-        <div class="search-wrap">
-          <label class="sr-only" for="searchInput">Search children</label>
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Search by child name or classroom..."
-            autocomplete="off"
-          />
-        </div>
-
-        <button id="refreshBtn" class="btn btn-secondary" type="button">
-          Refresh
-        </button>
-      </div>
-
-      <div id="messageBox" class="message hidden" role="status" aria-live="polite"></div>
-
-      <div id="loadingState" class="state-box hidden">
-        <p>Loading children records...</p>
-      </div>
-
-      <div id="emptyState" class="state-box hidden">
-        <h2>No children found</h2>
-        <p>There are no matching child records yet for this organization.</p>
-        <div class="children-empty-action">
-          <a class="btn btn-primary" href="./child-form.html">Create first child</a>
-        </div>
-      </div>
-
-      <div id="childrenGrid" class="children-gallery-grid"></div>
     </section>
+
+    <section class="dtc-card">
+      <div class="dtc-toolbar">
+        <div class="dtc-toolbar-left">
+          <div class="dtc-field">
+            <label class="dtc-label" for="searchInput">Search</label>
+            <input
+              id="searchInput"
+              class="dtc-input"
+              type="search"
+              placeholder="Search by child name or classroom..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="dtc-toolbar-right">
+          <button id="refreshBtn" class="dtc-btn dtc-btn-secondary" type="button">
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div id="messageBox" class="dtc-feedback hidden" role="status" aria-live="polite"></div>
+
+      <div id="loadingState" class="dtc-loading hidden">
+        Loading children records...
+      </div>
+
+      <div id="emptyState" class="dtc-empty-state hidden">
+        <h3>No children found</h3>
+        <p>There are no matching child records yet for this organization.</p>
+        <a class="dtc-btn dtc-btn-primary" href="./child-form.html">Create first child</a>
+      </div>
+
+      <div id="childrenGrid" class="dtc-grid-cards"></div>
+    </section>
+
   </main>
 
   <script type="module">
     import "./children-list.js";
     import { applyBranding } from "../core/brand.js";
-
     applyBranding();
   </script>
 </body>

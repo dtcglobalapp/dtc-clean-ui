@@ -185,3 +185,5 @@ La prioridad es consistencia visual, velocidad de desarrollo y evitar conflictos
 DTC tiene UN SOLO CSS: dtc.css
 
 Ningún módulo puede tener estilos propios fuera del sistema global.
+
+/* DTC CONSOLIDATED MODULE STYLES */ no se escribe nada nuevo. Ese bloque queda congelado como zona vieja. La base viva del sistema es la parte de arriba.
