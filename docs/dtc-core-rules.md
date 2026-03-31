@@ -176,3 +176,8 @@ Biometría en DTC
 4. El kiosko solo reconoce y enruta
 5. Registro biométrico ocurre en perfil del usuario
 6. Rostro no reconocido → lobby/demo
+
+dtc.css          ← maestro global de toda la app
+guardians.css    ← solo detalles de guardians
+employees.css    ← solo detalles de employees
+kiosk.css        ← solo detalles del kiosko, si de verdad hacen falta
