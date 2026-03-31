@@ -7,12 +7,12 @@ function shell({ title, subtitle = "", body = "", backLabel = "← Back", showBa
             <button id="routerBackBtn" type="button" class="kiosk-back-btn">
               ${backLabel}
             </button>
-          ` : ``}
+          ` : ""}
 
           <div class="kiosk-head">
             <div class="kiosk-eyebrow">DTC SMART KIOSK</div>
             <h1 class="kiosk-title">${title}</h1>
-            ${subtitle ? `<p class="kiosk-subtitle">${subtitle}</p>` : ``}
+            ${subtitle ? `<p class="kiosk-subtitle">${subtitle}</p>` : ""}
           </div>
 
           <div class="kiosk-body">
