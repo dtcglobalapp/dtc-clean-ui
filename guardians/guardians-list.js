@@ -1,19 +1,21 @@
-import { requireAuth } from "../auth.js";
-import { getChildren } from "./children-api.js";
+import { requireAuth, supabase } from "../auth.js";
+import { getAppConfig } from "../core/app-config.js";
+import { setupAutoRefresh } from "../core/auto-refresh.js";
+
+const ORGANIZATION_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
-const childrenGrid = document.getElementById("childrenGrid");
+const guardiansGrid = document.getElementById("guardiansGrid");
 const loadingState = document.getElementById("loadingState");
 const emptyState = document.getElementById("emptyState");
 const messageBox = document.getElementById("messageBox");
+const brandMain = document.getElementById("brandMain");
+const brandSub = document.getElementById("brandSub");
 
-let allChildren = [];
+let allGuardians = [];
 let hasBooted = false;
-let isLoadingChildren = false;
-let lastLoadAt = 0;
-
-const AUTO_REFRESH_COOLDOWN_MS = 1200;
+let isLoadingGuardians = false;
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
@@ -50,8 +52,8 @@ function showEmpty(isVisible) {
 }
 
 function showGrid(isVisible) {
-  if (!childrenGrid) return;
-  childrenGrid.classList.toggle("hidden", !isVisible);
+  if (!guardiansGrid) return;
+  guardiansGrid.classList.toggle("hidden", !isVisible);
 }
 
 function escapeHtml(value = "") {
@@ -63,69 +65,120 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
-function fullName(child) {
-  return [child?.first_name, child?.middle_name, child?.last_name]
+function formatStatus(status = "") {
+  return String(status || "inactive").trim().toLowerCase();
+}
+
+function formatPhone(value = "") {
+  if (!value) return "No phone";
+
+  const digits = String(value).replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    const d = digits.slice(1);
+    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+  }
+
+  return value;
+}
+
+function getGuardianPhoto(guardian) {
+  return guardian?.photo_url || "https://placehold.co/320x320?text=Guardian";
+}
+
+function getDisplayName(guardian) {
+  if (guardian?.display_name && guardian.display_name.trim()) {
+    return guardian.display_name.trim();
+  }
+
+  return [guardian?.first_name, guardian?.middle_name, guardian?.last_name]
     .filter(Boolean)
     .join(" ")
-    .trim() || "Unnamed Child";
+    .trim() || "Unnamed Guardian";
 }
 
-function getPhotoUrl(child) {
-  if (child?.photo_url && String(child.photo_url).trim()) {
-    return String(child.photo_url).trim();
+function getStatusBadgeClass(status) {
+  switch (status) {
+    case "active":
+      return "dtc-badge dtc-badge-success";
+    case "pending":
+      return "dtc-badge dtc-badge-warning";
+    default:
+      return "dtc-badge dtc-badge-neutral";
   }
-  return "https://placehold.co/320x320?text=Child";
 }
 
-function getStatusBadgeClass(status = "") {
-  const s = String(status).toLowerCase();
-
-  if (s === "active") return "dtc-badge dtc-badge-success";
-  if (s === "pending") return "dtc-badge dtc-badge-warning";
-  return "dtc-badge dtc-badge-neutral";
-}
-
-function childCard(child) {
-  const name = escapeHtml(fullName(child));
-  const classroom = child.classroom || "No classroom";
-  const status = child.status || "inactive";
+function guardianCard(guardian) {
+  const status = formatStatus(guardian.status);
+  const relationship = guardian.relationship_default || "Guardian";
+  const email = guardian.email || "No email";
+  const phone = formatPhone(guardian.phone);
+  const whatsapp = guardian.whatsapp ? formatPhone(guardian.whatsapp) : "No WhatsApp";
+  const pinLabel = guardian.pin ? `PIN ${escapeHtml(guardian.pin)}` : "No PIN";
+  const displayName = escapeHtml(getDisplayName(guardian));
+  const statusBadgeClass = getStatusBadgeClass(status);
 
   return `
     <article class="dtc-record-card">
-
       <img
         class="dtc-card-photo"
-        src="${escapeHtml(getPhotoUrl(child))}"
-        alt="${name}"
+        src="${escapeHtml(getGuardianPhoto(guardian))}"
+        alt="${displayName}"
       />
 
-      <h3 class="dtc-card-name">${name}</h3>
-      <p class="dtc-card-subtitle">${escapeHtml(classroom)}</p>
+      <h3 class="dtc-card-name">${displayName}</h3>
+      <p class="dtc-card-subtitle">${escapeHtml(relationship)}</p>
 
       <div class="dtc-inline-meta">
-        <span class="${getStatusBadgeClass(status)}">
-          ${escapeHtml(status)}
-        </span>
+        <span class="${statusBadgeClass}">${escapeHtml(status)}</span>
+      </div>
+
+      <div class="dtc-stack-sm">
+        <div class="dtc-person-meta">
+          <strong>Email:</strong> ${escapeHtml(email)}
+        </div>
+
+        <div class="dtc-person-meta">
+          <strong>Phone:</strong> ${escapeHtml(phone)}
+        </div>
+
+        <div class="dtc-person-meta">
+          <strong>WhatsApp:</strong> ${escapeHtml(whatsapp)}
+        </div>
+
+        <div class="dtc-person-meta">
+          <strong>Access:</strong> ${pinLabel}
+        </div>
       </div>
 
       <div class="dtc-card-footer">
         <a
-          class="dtc-btn dtc-btn-primary dtc-btn-sm"
-          href="./child-profile.html?id=${encodeURIComponent(child.id)}"
+          class="dtc-btn dtc-btn-secondary dtc-btn-sm"
+          href="./guardian-profile.html?id=${encodeURIComponent(guardian.id)}"
         >
           Profile
         </a>
-      </div>
 
+        <a
+          class="dtc-btn dtc-btn-ghost dtc-btn-sm"
+          href="./guardian-form.html?id=${encodeURIComponent(guardian.id)}"
+        >
+          Edit
+        </a>
+      </div>
     </article>
   `;
 }
 
-function renderChildren(rows) {
-  if (!childrenGrid) return;
+function renderGuardians(rows) {
+  if (!guardiansGrid) return;
 
   if (!rows.length) {
-    childrenGrid.innerHTML = "";
+    guardiansGrid.innerHTML = "";
     showEmpty(true);
     showGrid(false);
     return;
@@ -133,22 +186,26 @@ function renderChildren(rows) {
 
   showEmpty(false);
   showGrid(true);
-  childrenGrid.innerHTML = rows.map(childCard).join("");
+  guardiansGrid.innerHTML = rows.map(guardianCard).join("");
 }
 
-function filterChildren(query) {
+function filterGuardians(query) {
   const q = query.trim().toLowerCase();
 
-  if (!q) return [...allChildren];
+  if (!q) return [...allGuardians];
 
-  return allChildren.filter((child) => {
+  return allGuardians.filter((guardian) => {
     const haystack = [
-      child.first_name,
-      child.middle_name,
-      child.last_name,
-      child.classroom,
-      child.status,
-      child.gender,
+      guardian.display_name,
+      guardian.first_name,
+      guardian.middle_name,
+      guardian.last_name,
+      guardian.relationship_default,
+      guardian.email,
+      guardian.phone,
+      guardian.whatsapp,
+      guardian.status,
+      guardian.pin,
     ]
       .filter(Boolean)
       .join(" ")
@@ -158,14 +215,10 @@ function filterChildren(query) {
   });
 }
 
-function rerenderCurrentView() {
-  renderChildren(filterChildren(searchInput?.value || ""));
-}
+async function loadGuardians({ silent = false } = {}) {
+  if (isLoadingGuardians) return;
 
-async function loadChildren({ silent = false } = {}) {
-  if (isLoadingChildren) return;
-
-  isLoadingChildren = true;
+  isLoadingGuardians = true;
 
   if (!silent) {
     showLoading(true);
@@ -173,20 +226,29 @@ async function loadChildren({ silent = false } = {}) {
   }
 
   try {
-    allChildren = await getChildren();
+    const { data, error } = await supabase
+      .from("guardians")
+      .select("*")
+      .eq("organization_id", ORGANIZATION_ID)
+      .order("created_at", { ascending: false });
 
-    rerenderCurrentView();
-    lastLoadAt = Date.now();
+    if (error) throw error;
 
-    if (!allChildren.length) {
+    allGuardians = data ?? [];
+    renderGuardians(filterGuardians(searchInput?.value || ""));
+
+    if (!allGuardians.length) {
+      hideMessage();
+    } else if (!silent) {
       hideMessage();
     }
   } catch (error) {
-    console.error("Load children error:", error);
+    console.error("Load guardians error:", error);
+    showMessage(`Could not load guardians: ${error.message}`, "error");
 
-    showMessage(`Could not load children: ${error.message}`, "error");
-
-    if (childrenGrid) childrenGrid.innerHTML = "";
+    if (guardiansGrid) {
+      guardiansGrid.innerHTML = "";
+    }
 
     showEmpty(true);
     showGrid(false);
@@ -195,48 +257,43 @@ async function loadChildren({ silent = false } = {}) {
       showLoading(false);
     }
 
-    isLoadingChildren = false;
+    isLoadingGuardians = false;
   }
 }
 
-async function maybeAutoRefresh() {
-  if (!hasBooted) return;
-  if (isLoadingChildren) return;
-
-  const now = Date.now();
-  if (now - lastLoadAt < AUTO_REFRESH_COOLDOWN_MS) return;
-
-  await loadChildren({ silent: true });
-}
-
-searchInput?.addEventListener("input", () => {
-  rerenderCurrentView();
-});
-
-refreshBtn?.addEventListener("click", () => {
-  loadChildren();
-});
-
-window.addEventListener("pageshow", () => {
-  maybeAutoRefresh();
-});
-
-window.addEventListener("focus", () => {
-  maybeAutoRefresh();
-});
-
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    maybeAutoRefresh();
-  }
+const autoRefresh = setupAutoRefresh({
+  onRefresh: () => loadGuardians({ silent: true }),
+  cooldownMs: 1200,
+  isReady: () => hasBooted,
+  isBusy: () => isLoadingGuardians,
 });
 
 async function boot() {
   const user = await requireAuth();
   if (!user) return;
 
+  const config = await getAppConfig();
+
+  if (brandMain) {
+    brandMain.textContent = config.platform_name;
+  }
+
+  if (brandSub) {
+    brandSub.textContent = config.vertical_name;
+  }
+
   hasBooted = true;
-  await loadChildren();
+  await loadGuardians();
+  autoRefresh.markRefreshedNow();
 }
+
+searchInput?.addEventListener("input", () => {
+  renderGuardians(filterGuardians(searchInput.value));
+});
+
+refreshBtn?.addEventListener("click", async () => {
+  await loadGuardians();
+  autoRefresh.markRefreshedNow();
+});
 
 boot();

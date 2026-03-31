@@ -1,5 +1,6 @@
 import { requireAuth } from "../auth.js";
 import { getChildren } from "./children-api.js";
+import { setupAutoRefresh } from "../core/auto-refresh.js";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -9,6 +10,8 @@ const emptyState = document.getElementById("emptyState");
 const messageBox = document.getElementById("messageBox");
 
 let allChildren = [];
+let hasBooted = false;
+let isLoadingChildren = false;
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
@@ -157,9 +160,15 @@ function rerenderCurrentView() {
   renderChildren(filterChildren(searchInput?.value || ""));
 }
 
-async function loadChildren() {
-  showLoading(true);
-  hideMessage();
+async function loadChildren({ silent = false } = {}) {
+  if (isLoadingChildren) return;
+
+  isLoadingChildren = true;
+
+  if (!silent) {
+    showLoading(true);
+    hideMessage();
+  }
 
   try {
     allChildren = await getChildren();
@@ -178,23 +187,37 @@ async function loadChildren() {
     showEmpty(true);
     showGrid(false);
   } finally {
-    showLoading(false);
+    if (!silent) {
+      showLoading(false);
+    }
+
+    isLoadingChildren = false;
   }
 }
+
+const autoRefresh = setupAutoRefresh({
+  onRefresh: () => loadChildren({ silent: true }),
+  cooldownMs: 1200,
+  isReady: () => hasBooted,
+  isBusy: () => isLoadingChildren,
+});
 
 searchInput?.addEventListener("input", () => {
   rerenderCurrentView();
 });
 
-refreshBtn?.addEventListener("click", () => {
-  loadChildren();
+refreshBtn?.addEventListener("click", async () => {
+  await loadChildren();
+  autoRefresh.markRefreshedNow();
 });
 
 async function boot() {
   const user = await requireAuth();
   if (!user) return;
 
+  hasBooted = true;
   await loadChildren();
+  autoRefresh.markRefreshedNow();
 }
 
 boot();
