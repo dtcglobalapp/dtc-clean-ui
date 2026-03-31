@@ -1,23 +1,21 @@
 function shell({ title, subtitle = "", body = "", backLabel = "← Back", showBack = true }) {
   return `
-    <div style="min-height:100vh;background:#0f172a;color:white;font-family:system-ui;padding:28px;display:flex;align-items:center;justify-content:center;">
-      <div style="width:min(900px,100%);">
-        <div style="background:linear-gradient(135deg,#172554,#1e3a8a);border-radius:28px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.28);">
+    <div class="kiosk-shell">
+      <div class="kiosk-shell-inner">
+        <div class="kiosk-card">
           ${showBack ? `
-            <button id="routerBackBtn" type="button" style="border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:white;padding:10px 14px;border-radius:14px;font-weight:700;cursor:pointer;margin-bottom:18px;">
+            <button id="routerBackBtn" type="button" class="kiosk-back-btn">
               ${backLabel}
             </button>
           ` : ``}
 
-          <div style="display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;">
-            <div>
-              <div style="font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;opacity:.78;margin-bottom:8px;">DTC Smart Kiosk</div>
-              <h1 style="margin:0;font-size:clamp(2rem,4vw,3.3rem);line-height:1.05;">${title}</h1>
-              ${subtitle ? `<p style="margin:12px 0 0;color:rgba(255,255,255,.82);font-size:1.05rem;max-width:760px;">${subtitle}</p>` : ``}
-            </div>
+          <div class="kiosk-head">
+            <div class="kiosk-eyebrow">DTC SMART KIOSK</div>
+            <h1 class="kiosk-title">${title}</h1>
+            ${subtitle ? `<p class="kiosk-subtitle">${subtitle}</p>` : ``}
           </div>
 
-          <div style="margin-top:26px;">
+          <div class="kiosk-body">
             ${body}
           </div>
         </div>
@@ -27,22 +25,18 @@ function shell({ title, subtitle = "", body = "", backLabel = "← Back", showBa
 }
 
 function optionButton(label, type, tone = "default") {
-  const tones = {
-    default: "background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.14);",
-    primary: "background:#3b82f6;color:white;border:1px solid rgba(59,130,246,.5);",
-    success: "background:#15803d;color:white;border:1px solid rgba(21,128,61,.55);",
-    warning: "background:#a16207;color:white;border:1px solid rgba(161,98,7,.55);",
-    danger: "background:#b91c1c;color:white;border:1px solid rgba(185,28,28,.55);",
-  };
-
   return `
     <button
       type="button"
       data-route-type="${type}"
-      style="${tones[tone]}padding:14px 18px;border-radius:16px;font-weight:800;cursor:pointer;min-height:54px;text-align:left;">
+      class="kiosk-option-btn kiosk-option-${tone}">
       ${label}
     </button>
   `;
+}
+
+function infoTile(label) {
+  return `<div class="kiosk-info-tile">${label}</div>`;
 }
 
 function attachCommon(root, { onBack, onRoute }) {
@@ -69,7 +63,7 @@ function renderMirrorMenu(root, { onBack, onRoute }) {
     subtitle: "and I will tell you who you are. This is the intelligent router of the magical mirror.",
     showBack: false,
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+      <div class="kiosk-options-grid">
         ${optionButton("👑 Felencho", "felencho", "primary")}
         ${optionButton("🧠 Bob", "bob", "default")}
         ${optionButton("👨‍👩‍👧 Parent / Guardian", "parent", "success")}
@@ -87,7 +81,7 @@ function renderFelencho(root, { identity, onBack, onRoute }) {
     title: `${identity.name}, how do you want to enter?`,
     subtitle: "Platform Owner access. Choose any role or experience mode.",
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+      <div class="kiosk-options-grid">
         ${optionButton("👑 Platform Owner", "owner", "primary")}
         ${optionButton("🧭 Admin", "admin", "default")}
         ${optionButton("👷 Employee", "employee", "warning")}
@@ -105,7 +99,7 @@ function renderBob(root, { identity, onBack, onRoute }) {
     title: `${identity.name}, test operator mode`,
     subtitle: "Choose an authorized testing route.",
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+      <div class="kiosk-options-grid">
         ${optionButton("👷 Test Employee", "employee", "warning")}
         ${optionButton("👨‍👩‍👧 Test Parent", "parent", "success")}
         ${optionButton("🌍 Visitor Flow", "visitor", "default")}
@@ -121,10 +115,10 @@ function renderParent(root, { identity, onBack }) {
     title: `Welcome ${identity.name || ""}`,
     subtitle: identity.message || "Guardian recognized. Choose what you need to do.",
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">👶 Drop-off flow</div>
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">🧒 Pickup flow</div>
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">📄 Profile / alerts / documents</div>
+      <div class="kiosk-options-grid">
+        ${infoTile("👶 Drop-off flow")}
+        ${infoTile("🧒 Pickup flow")}
+        ${infoTile("📄 Profile / alerts / documents")}
       </div>
     `,
   });
@@ -137,7 +131,7 @@ function renderEmployee(root, { identity, onBack, onRoute }) {
     title: identity.name || "Employee recognized",
     subtitle: identity.message || "Employee route ready.",
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+      <div class="kiosk-options-grid">
         ${optionButton("✅ Continue to employee kiosk", "continue", "success")}
       </div>
     `,
@@ -151,10 +145,10 @@ function renderAdmin(root, { identity, onBack }) {
     title: "Business dashboard access",
     subtitle: `Role: ${identity.type}`,
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">📊 Alerts</div>
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">👥 Employees</div>
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">🧒 Children</div>
+      <div class="kiosk-options-grid">
+        ${infoTile("📊 Alerts")}
+        ${infoTile("👥 Employees")}
+        ${infoTile("🧒 Children")}
       </div>
     `,
   });
@@ -167,10 +161,10 @@ function renderVisitor(root, { onBack }) {
     title: "Your face is not registered",
     subtitle: "Do you want to know DTC? The magical mirror can also welcome future clients.",
     body: `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">🏢 What is DTC?</div>
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">🛡 Security & automation</div>
-        <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);">🌍 Demo for daycare or other business</div>
+      <div class="kiosk-options-grid">
+        ${infoTile("🏢 What is DTC?")}
+        ${infoTile("🛡 Security & automation")}
+        ${infoTile("🌍 Demo for daycare or other business")}
       </div>
     `,
   });
@@ -183,7 +177,7 @@ function renderError(root, { identity, onBack }) {
     title: identity.name || "Kiosk error",
     subtitle: identity.message || "Something went wrong.",
     body: `
-      <div style="padding:18px;border-radius:18px;background:rgba(185,28,28,.16);border:1px solid rgba(185,28,28,.28);color:#ffe2e2;">
+      <div class="kiosk-error-box">
         ${identity.message || "Unknown error"}
       </div>
     `,
