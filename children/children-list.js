@@ -1,8 +1,9 @@
 import { requireAuth, supabase } from "../auth.js";
 import { getChildren } from "./children-api.js";
 import { setupAutoRefresh } from "../core/auto-refresh.js";
-import { createCache } from "../core/dtc-cache.js";
 import { subscribeToTable } from "../core/realtime.js";
+import { createPersistentCache } from "../core/persistent-cache.js";
+import { isOnline } from "../core/network-status.js";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -16,7 +17,7 @@ let hasBooted = false;
 let isLoadingChildren = false;
 let unsubscribeRealtime = null;
 
-const childrenCache = createCache({ ttl: 8000 });
+const childrenCache = createPersistentCache("dtc-children-list-cache", { ttl: 8000 });
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
@@ -166,10 +167,31 @@ function rerenderCurrentView() {
 async function loadChildren({ silent = false, force = false } = {}) {
   if (isLoadingChildren) return;
 
-  const cached = !force ? childrenCache.get() : null;
-  if (cached) {
-    allChildren = cached;
+  const cachedFresh = !force ? childrenCache.get() : null;
+  if (cachedFresh) {
+    allChildren = cachedFresh;
     rerenderCurrentView();
+
+    if (childrenCache.isExpired() && isOnline()) {
+      loadChildren({ silent: true, force: true });
+    }
+
+    return;
+  }
+
+  if (!isOnline()) {
+    const offlineData = childrenCache.getRaw();
+
+    if (offlineData) {
+      allChildren = offlineData;
+      rerenderCurrentView();
+      showMessage("Offline mode: showing last saved children list.", "info");
+      return;
+    }
+
+    showMessage("No internet and no saved children list is available yet.", "error");
+    showEmpty(true);
+    showGrid(false);
     return;
   }
 
@@ -187,11 +209,19 @@ async function loadChildren({ silent = false, force = false } = {}) {
     rerenderCurrentView();
   } catch (error) {
     console.error("Load children error:", error);
-    showMessage(`Could not load children: ${error.message}`, "error");
+    childrenCache.setError(error);
 
-    if (childrenGrid) childrenGrid.innerHTML = "";
-    showEmpty(true);
-    showGrid(false);
+    const fallback = childrenCache.getRaw();
+    if (fallback) {
+      allChildren = fallback;
+      rerenderCurrentView();
+      showMessage("Could not reach server. Showing last saved children list.", "info");
+    } else {
+      showMessage(`Could not load children: ${error.message}`, "error");
+      if (childrenGrid) childrenGrid.innerHTML = "";
+      showEmpty(true);
+      showGrid(false);
+    }
   } finally {
     if (!silent) {
       showLoading(false);
@@ -246,7 +276,11 @@ async function boot() {
   hasBooted = true;
 
   await loadChildren();
-  setupRealtime();
+
+  if (isOnline()) {
+    setupRealtime();
+  }
+
   autoRefresh.markRefreshedNow();
 }
 
