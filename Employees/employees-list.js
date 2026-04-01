@@ -1,5 +1,6 @@
 import { requireAuth } from "../auth.js";
 import { getEmployees } from "./employees-api.js";
+import { setupAutoRefresh } from "../core/auto-refresh.js";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -9,10 +10,11 @@ const emptyState = document.getElementById("emptyState");
 const messageBox = document.getElementById("messageBox");
 
 let allEmployees = [];
+let hasBooted = false;
+let isLoadingEmployees = false;
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
-
   messageBox.textContent = text || "";
 
   if (!text) {
@@ -73,7 +75,6 @@ function getPhoto(employee) {
 
 function getBadge(status) {
   const s = String(status).toLowerCase();
-
   if (s === "active") return "dtc-badge dtc-badge-success";
   if (s === "pending") return "dtc-badge dtc-badge-warning";
   return "dtc-badge dtc-badge-neutral";
@@ -88,13 +89,7 @@ function employeeCard(employee) {
 
   return `
     <article class="dtc-record-card">
-
-      <img
-        class="dtc-card-photo"
-        src="${escapeHtml(getPhoto(employee))}"
-        alt="${name}"
-      />
-
+      <img class="dtc-card-photo" src="${escapeHtml(getPhoto(employee))}" />
       <h3 class="dtc-card-name">${name}</h3>
       <p class="dtc-card-subtitle">${escapeHtml(role)}</p>
 
@@ -103,34 +98,22 @@ function employeeCard(employee) {
       </div>
 
       <div class="dtc-stack-sm">
-        <div class="dtc-person-meta">
-          <strong>Email:</strong> ${escapeHtml(email)}
-        </div>
-
-        <div class="dtc-person-meta">
-          <strong>Access:</strong> ${escapeHtml(pin)}
-        </div>
+        <div class="dtc-person-meta"><strong>Email:</strong> ${escapeHtml(email)}</div>
+        <div class="dtc-person-meta"><strong>Access:</strong> ${escapeHtml(pin)}</div>
       </div>
 
       <div class="dtc-card-footer">
         <a class="dtc-btn dtc-btn-secondary dtc-btn-sm"
-           href="./employee-profile.html?id=${encodeURIComponent(employee.id)}">
-           Profile
-        </a>
+          href="./employee-profile.html?id=${encodeURIComponent(employee.id)}">Profile</a>
 
         <a class="dtc-btn dtc-btn-ghost dtc-btn-sm"
-           href="./employee-form.html?id=${encodeURIComponent(employee.id)}">
-           Edit
-        </a>
+          href="./employee-form.html?id=${encodeURIComponent(employee.id)}">Edit</a>
       </div>
-
     </article>
   `;
 }
 
 function renderEmployees(rows) {
-  if (!employeesGrid) return;
-
   if (!rows.length) {
     employeesGrid.innerHTML = "";
     showEmpty(true);
@@ -145,57 +128,61 @@ function renderEmployees(rows) {
 
 function filterEmployees(query) {
   const q = query.trim().toLowerCase();
-
   if (!q) return [...allEmployees];
 
-  return allEmployees.filter((employee) => {
-    const haystack = [
-      employee.first_name,
-      employee.middle_name,
-      employee.last_name,
-      employee.display_name,
-      employee.role,
-      employee.status,
-      employee.email,
-      employee.phone,
-      employee.pin,
-    ]
+  return allEmployees.filter(e =>
+    [e.first_name, e.last_name, e.email, e.role, e.status]
       .filter(Boolean)
       .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(q);
-  });
+      .toLowerCase()
+      .includes(q)
+  );
 }
 
 function rerender() {
   renderEmployees(filterEmployees(searchInput?.value || ""));
 }
 
-async function loadEmployees() {
-  showLoading(true);
-  hideMessage();
+async function loadEmployees({ silent = false } = {}) {
+  if (isLoadingEmployees) return;
+  isLoadingEmployees = true;
+
+  if (!silent) {
+    showLoading(true);
+    hideMessage();
+  }
 
   try {
     allEmployees = await getEmployees();
     rerender();
-  } catch (error) {
-    console.error(error);
-    showMessage(error.message, "error");
-    showEmpty(true);
+  } catch (err) {
+    showMessage(err.message, "error");
   } finally {
-    showLoading(false);
+    if (!silent) showLoading(false);
+    isLoadingEmployees = false;
   }
 }
 
+const autoRefresh = setupAutoRefresh({
+  onRefresh: () => loadEmployees({ silent: true }),
+  isReady: () => hasBooted,
+  isBusy: () => isLoadingEmployees
+});
+
 searchInput?.addEventListener("input", rerender);
-refreshBtn?.addEventListener("click", loadEmployees);
+
+refreshBtn?.addEventListener("click", async () => {
+  await loadEmployees();
+  autoRefresh.markRefreshedNow();
+});
 
 async function boot() {
   const user = await requireAuth();
   if (!user) return;
 
+  hasBooted = true;
   await loadEmployees();
+  autoRefresh.markRefreshedNow();
 }
 
 boot();

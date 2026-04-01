@@ -1,6 +1,8 @@
-import { requireAuth } from "../auth.js";
+import { requireAuth, supabase } from "../auth.js";
 import { getChildren } from "./children-api.js";
 import { setupAutoRefresh } from "../core/auto-refresh.js";
+import { createCache } from "../core/dtc-cache.js";
+import { subscribeToTable } from "../core/realtime.js";
 
 const searchInput = document.getElementById("searchInput");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -12,6 +14,9 @@ const messageBox = document.getElementById("messageBox");
 let allChildren = [];
 let hasBooted = false;
 let isLoadingChildren = false;
+let unsubscribeRealtime = null;
+
+const childrenCache = createCache({ ttl: 8000 });
 
 function showMessage(text, type = "info") {
   if (!messageBox) return;
@@ -90,7 +95,6 @@ function childCard(child) {
 
   return `
     <article class="dtc-record-card">
-
       <img
         class="dtc-card-photo"
         src="${escapeHtml(getPhotoUrl(child))}"
@@ -114,7 +118,6 @@ function childCard(child) {
           Profile
         </a>
       </div>
-
     </article>
   `;
 }
@@ -160,8 +163,15 @@ function rerenderCurrentView() {
   renderChildren(filterChildren(searchInput?.value || ""));
 }
 
-async function loadChildren({ silent = false } = {}) {
+async function loadChildren({ silent = false, force = false } = {}) {
   if (isLoadingChildren) return;
+
+  const cached = !force ? childrenCache.get() : null;
+  if (cached) {
+    allChildren = cached;
+    rerenderCurrentView();
+    return;
+  }
 
   isLoadingChildren = true;
 
@@ -171,19 +181,15 @@ async function loadChildren({ silent = false } = {}) {
   }
 
   try {
-    allChildren = await getChildren();
+    const data = await getChildren();
+    allChildren = data ?? [];
+    childrenCache.set(allChildren);
     rerenderCurrentView();
-
-    if (!allChildren.length) {
-      hideMessage();
-    }
   } catch (error) {
     console.error("Load children error:", error);
-
     showMessage(`Could not load children: ${error.message}`, "error");
 
     if (childrenGrid) childrenGrid.innerHTML = "";
-
     showEmpty(true);
     showGrid(false);
   } finally {
@@ -202,13 +208,35 @@ const autoRefresh = setupAutoRefresh({
   isBusy: () => isLoadingChildren,
 });
 
+function setupRealtime() {
+  if (unsubscribeRealtime) {
+    unsubscribeRealtime();
+    unsubscribeRealtime = null;
+  }
+
+  unsubscribeRealtime = subscribeToTable({
+    supabase,
+    table: "children",
+    onChange: async () => {
+      childrenCache.clear();
+      await loadChildren({ silent: true, force: true });
+      autoRefresh.markRefreshedNow();
+    },
+  });
+}
+
 searchInput?.addEventListener("input", () => {
   rerenderCurrentView();
 });
 
 refreshBtn?.addEventListener("click", async () => {
-  await loadChildren();
+  childrenCache.clear();
+  await loadChildren({ force: true });
   autoRefresh.markRefreshedNow();
+});
+
+window.addEventListener("beforeunload", () => {
+  if (unsubscribeRealtime) unsubscribeRealtime();
 });
 
 async function boot() {
@@ -216,7 +244,9 @@ async function boot() {
   if (!user) return;
 
   hasBooted = true;
+
   await loadChildren();
+  setupRealtime();
   autoRefresh.markRefreshedNow();
 }
 
