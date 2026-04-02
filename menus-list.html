@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC — Menus</title>
+  <link rel="stylesheet" href="../dtc.css" />
+</head>
+
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Smart Menu / Menus</p>
+        <h1 class="dtc-page-title">Menus</h1>
+        <p class="dtc-page-subtitle">
+          Create, edit, activate, and organize weekly menus for your daycare.
+        </p>
+      </div>
+
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost dtc-action-back" href="../dashboard.html">← Back</a>
+        <button id="createMenuBtn" class="dtc-btn dtc-btn-primary dtc-action-primary" type="button">
+          + New Menu
+        </button>
+      </div>
+    </section>
+
+    <section class="dtc-card">
+      <div id="menusList" class="dtc-grid-cards"></div>
+    </section>
+
+  </main>
+
+  <script type="module" src="./menus-list.js"></script>
+</body>
+</html>
