@@ -45,7 +45,6 @@ extractBtn.addEventListener("click", async () => {
     renderWarnings(parsed.warnings);
     textPreview.textContent = text.slice(0, 5000);
 
-    // Autofill immediately after analyze
     autofillDemo(parsed.fields);
 
     setStatus("Document analyzed successfully and demo form autofilled.");

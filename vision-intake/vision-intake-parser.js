@@ -45,7 +45,10 @@ extractBtn.addEventListener("click", async () => {
     renderWarnings(parsed.warnings);
     textPreview.textContent = text.slice(0, 5000);
 
-    setStatus("Document analyzed successfully.");
+    // Autofill immediately after analyze
+    autofillDemo(parsed.fields);
+
+    setStatus("Document analyzed successfully and demo form autofilled.");
   } catch (error) {
     console.error("Vision intake error:", error);
     setStatus(`Analysis failed: ${error.message || "Unknown error"}`);
@@ -58,8 +61,11 @@ fillDemoBtn.addEventListener("click", () => {
     return;
   }
 
-  const { fields } = latestParsed;
+  autofillDemo(latestParsed.fields);
+  setStatus("Demo form autofilled from detected fields.");
+});
 
+function autofillDemo(fields) {
   demoFirstName.value = fields.childFirstName || "";
   demoLastName.value = fields.childLastName || "";
   demoDob.value = fields.dob || "";
@@ -68,9 +74,7 @@ fillDemoBtn.addEventListener("click", () => {
   demoPhone.value = fields.phone || "";
   demoPhysician.value = fields.physician || "";
   demoAllergies.value = fields.allergies || "";
-
-  setStatus("Demo form autofilled from detected fields.");
-});
+}
 
 function setStatus(message) {
   statusBox.innerHTML = `<p>${escapeHtml(message)}</p>`;
@@ -81,6 +85,15 @@ function clearOutput() {
   warningsBox.innerHTML = "";
   textPreview.textContent = "";
   latestParsed = null;
+
+  demoFirstName.value = "";
+  demoLastName.value = "";
+  demoDob.value = "";
+  demoGender.value = "";
+  demoGuardian.value = "";
+  demoPhone.value = "";
+  demoPhysician.value = "";
+  demoAllergies.value = "";
 }
 
 function renderFields(fields) {
