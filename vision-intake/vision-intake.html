@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC Vision Intake</title>
+  <link rel="stylesheet" href="../dtc.css" />
+</head>
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">DTC Vision / Intake</p>
+        <h1 class="dtc-page-title">Vision Intake</h1>
+        <p class="dtc-page-subtitle">
+          Upload a photo or PDF, extract the text, detect child data, and prepare autofill for DTC forms.
+        </p>
+      </div>
+
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost dtc-action-back" href="../dashboard.html">← Back</a>
+      </div>
+    </section>
+
+    <section class="dtc-card">
+      <div class="dtc-stack-lg">
+
+        <div class="dtc-field">
+          <label class="dtc-label" for="docInput">Upload image or PDF</label>
+          <input
+            id="docInput"
+            class="dtc-input"
+            type="file"
+            accept=".pdf,image/*,application/pdf"
+          />
+        </div>
+
+        <div class="dtc-inline-actions">
+          <button id="extractBtn" class="dtc-btn dtc-btn-primary" type="button">
+            Extract & Analyze
+          </button>
+          <button id="fillDemoBtn" class="dtc-btn dtc-btn-secondary" type="button">
+            Fill Demo Form
+          </button>
+        </div>
+
+        <div id="statusBox" class="dtc-card">
+          <p>Waiting for document...</p>
+        </div>
+
+        <div class="dtc-grid-2">
+          <section class="dtc-card">
+            <h3>Detected Fields</h3>
+            <div id="fieldsBox" class="dtc-stack-md"></div>
+          </section>
+
+          <section class="dtc-card">
+            <h3>Warnings</h3>
+            <div id="warningsBox" class="dtc-stack-md"></div>
+          </section>
+        </div>
+
+        <section class="dtc-card">
+          <h3>Extracted Text</h3>
+          <pre id="textPreview" style="white-space: pre-wrap; word-break: break-word;"></pre>
+        </section>
+
+        <section class="dtc-card">
+          <h3>Demo Child Form Autofill Preview</h3>
+          <div class="dtc-grid-2">
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoFirstName">First Name</label>
+              <input id="demoFirstName" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoLastName">Last Name</label>
+              <input id="demoLastName" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoDob">DOB</label>
+              <input id="demoDob" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoGender">Gender</label>
+              <input id="demoGender" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoGuardian">Guardian</label>
+              <input id="demoGuardian" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoPhone">Phone</label>
+              <input id="demoPhone" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoPhysician">Physician</label>
+              <input id="demoPhysician" class="dtc-input" type="text" />
+            </div>
+
+            <div class="dtc-field">
+              <label class="dtc-label" for="demoAllergies">Allergies</label>
+              <input id="demoAllergies" class="dtc-input" type="text" />
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="./vision-intake.js"></script>
+</body>
+</html>
