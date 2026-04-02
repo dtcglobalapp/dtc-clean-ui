@@ -8,6 +8,7 @@ const menuId = params.get("id");
 const grid = document.getElementById("menuGrid");
 const saveBtn = document.getElementById("saveMenuBtn");
 const nameInput = document.getElementById("menuName");
+const generateSmartBtn = document.getElementById("generateSmartBtn");
 
 const days = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
@@ -243,6 +244,10 @@ async function saveStructure() {
 }
 
 saveBtn?.addEventListener("click", saveStructure);
+
+generateSmartBtn?.addEventListener("click", () => {
+  alert("DTC smart generation will be connected in the next phase.");
+});
 
 async function init() {
   try {

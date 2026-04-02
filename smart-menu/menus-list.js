@@ -5,10 +5,6 @@ const ORG_ID = "1b707d53-1b8a-4678-950f-1f6400c9e584";
 const listEl = document.getElementById("menusList");
 const createBtn = document.getElementById("createMenuBtn");
 
-createBtn?.addEventListener("click", () => {
-  window.location.href = "./menu-builder.html";
-});
-
 function escapeHtml(value = "") {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -17,6 +13,10 @@ function escapeHtml(value = "") {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+createBtn?.addEventListener("click", () => {
+  window.location.href = "./menu-builder.html";
+});
 
 async function setActive(menuId) {
   const { error: resetError } = await supabase
@@ -53,16 +53,22 @@ async function loadMenus() {
 
   if (error) {
     console.error(error);
-    listEl.innerHTML = `<div class="dtc-card"><p>${escapeHtml(error.message)}</p></div>`;
+    listEl.innerHTML = `
+      <article class="dtc-card">
+        <p>${escapeHtml(error.message || "Could not load menus.")}</p>
+      </article>
+    `;
     return;
   }
 
   if (!data?.length) {
     listEl.innerHTML = `
-      <div class="dtc-card">
-        <h3>No menus yet</h3>
-        <p>Create your first smart menu to begin.</p>
-      </div>
+      <article class="dtc-card">
+        <div class="dtc-stack-md">
+          <h3>No menus yet</h3>
+          <p>Create your first smart menu to begin.</p>
+        </div>
+      </article>
     `;
     return;
   }
@@ -70,7 +76,7 @@ async function loadMenus() {
   listEl.innerHTML = data
     .map(
       (menu) => `
-        <article class="dtc-card">
+        <article class="dtc-record-card">
           <div class="dtc-stack-md">
             <div class="dtc-inline-meta">
               ${
@@ -80,14 +86,17 @@ async function loadMenus() {
               }
             </div>
 
-            <h3>${escapeHtml(menu.name)}</h3>
-            <p>${escapeHtml(menu.notes || "No notes yet.")}</p>
+            <h3 class="dtc-card-name" style="text-align:left;">${escapeHtml(menu.name)}</h3>
+            <p class="dtc-card-subtitle" style="text-align:left;">
+              ${escapeHtml(menu.notes || "No notes yet.")}
+            </p>
 
-            <div class="dtc-inline-actions">
-              <button class="dtc-btn dtc-btn-secondary" data-edit="${menu.id}">
+            <div class="dtc-card-footer" style="justify-content:flex-start;">
+              <button class="dtc-btn dtc-btn-secondary dtc-btn-sm" data-edit="${menu.id}" type="button">
                 Edit
               </button>
-              <button class="dtc-btn dtc-btn-ghost" data-activate="${menu.id}">
+
+              <button class="dtc-btn dtc-btn-ghost dtc-btn-sm" data-activate="${menu.id}" type="button">
                 ${menu.is_active ? "Active" : "Set Active"}
               </button>
             </div>
