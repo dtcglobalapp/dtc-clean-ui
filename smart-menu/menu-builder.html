@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DTC — Menu Builder</title>
+  <link rel="stylesheet" href="../dtc.css" />
+</head>
+
+<body class="dtc-shell">
+  <main class="dtc-page">
+
+    <section class="dtc-page-head">
+      <div class="dtc-title-group">
+        <p class="dtc-eyebrow">Smart Menu / Builder</p>
+        <h1 class="dtc-page-title">Menu Builder</h1>
+        <p class="dtc-page-subtitle">
+          Build a weekly menu structure by day and meal slot. This is the foundation for ingredients, allergy checks, and smart meal prep.
+        </p>
+      </div>
+
+      <div class="dtc-head-actions">
+        <a class="dtc-btn dtc-btn-ghost dtc-action-back" href="./menus-list.html">← Back</a>
+        <button id="saveMenuBtn" class="dtc-btn dtc-btn-primary dtc-action-primary" type="button">
+          Save Menu
+        </button>
+      </div>
+    </section>
+
+    <section class="dtc-card">
+      <div class="dtc-stack-lg">
+
+        <div class="dtc-field">
+          <label class="dtc-label" for="menuName">Menu Name</label>
+          <input
+            id="menuName"
+            class="dtc-input"
+            type="text"
+            placeholder="Example: Menu #3 or Summer Menu"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="dtc-inline-actions">
+          <button id="generateSmartBtn" class="dtc-btn dtc-btn-secondary" type="button">
+            Generate with DTC
+          </button>
+        </div>
+
+        <div id="menuGrid" class="dtc-stack-lg"></div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="./menu-builder.js"></script>
+</body>
+</html>

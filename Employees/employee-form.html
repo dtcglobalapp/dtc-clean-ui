@@ -1,115 +1,153 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DTC — Employee</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Employee — DTC</title>
+
   <link rel="stylesheet" href="../dtc.css" />
 </head>
 
 <body class="dtc-shell">
+
   <main class="dtc-page">
 
-    <section class="dtc-page-head">
-      <div class="dtc-title-group">
-        <p class="dtc-eyebrow">Employees / Form</p>
-        <h1 id="pageTitle" class="dtc-page-title">Employee</h1>
-        <p id="pageSubtitle" class="dtc-page-subtitle">Manage employee details and access.</p>
+    <!-- HEADER -->
+    <header class="dtc-header">
+      <div class="dtc-header-left">
+        <p class="dtc-kicker">DTC • Employees</p>
+        <h1 class="dtc-header-title">Create Employee</h1>
+        <p class="dtc-header-subtitle">
+          Register a new staff member in your daycare.
+        </p>
       </div>
 
-      <div class="dtc-head-actions">
-        <a class="dtc-btn dtc-btn-ghost" href="./employees-list.html" id="backBtn">← Back</a>
+      <div class="dtc-header-right">
+        <a href="./employees-list.html" class="dtc-btn dtc-btn-ghost">
+          ← Back
+        </a>
       </div>
-    </section>
+    </header>
 
-    <section class="dtc-card form-panel">
-      <div class="guardian-form-grid">
+    <!-- MESSAGE -->
+    <div id="messageBox" class="dtc-feedback hidden"></div>
 
-        <div class="guardian-form-main">
-          <div class="form-group photo-group">
-            <label>Photo</label>
-            <div class="dtc-stack-md">
-              <div class="dtc-media-frame" style="max-width:220px;">
-                <img
-                  id="photoPreview"
-                  src="https://placehold.co/300x300?text=Employee"
-                  alt="Employee Preview"
-                />
-              </div>
-              <input type="file" id="photoInput" accept="image/*" />
-            </div>
-          </div>
+    <!-- FORM PANEL -->
+    <section class="dtc-panel">
 
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label>First Name</label>
-              <input type="text" id="firstName" placeholder="John" />
-            </div>
+      <form id="employeeForm" class="dtc-stack-lg">
 
-            <div class="form-group">
-              <label>Last Name</label>
-              <input type="text" id="lastName" placeholder="Doe" />
+        <!-- PHOTO -->
+        <div class="dtc-field">
+          <span>Photo</span>
+
+          <div class="dtc-stack-md">
+
+            <div class="dtc-media-frame">
+              <img
+                id="photoPreview"
+                class="dtc-profile-photo"
+                src="https://placehold.co/400x400?text=Employee"
+                alt="Employee Preview"
+              />
             </div>
 
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="email" placeholder="email@example.com" />
-            </div>
+            <input type="file" id="photoInput" accept="image/*" />
 
-            <div class="form-group">
-              <label>Phone</label>
-              <input type="text" id="phone" placeholder="(000) 000-0000" />
-            </div>
-
-            <div class="form-group">
-              <label>Role</label>
-              <select id="role">
-                <option value="employee">Employee</option>
-                <option value="assistant">Assistant</option>
-                <option value="director">Director</option>
-                <option value="admin">Admin</option>
-                <option value="owner">Owner</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Status</label>
-              <select id="status">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>PIN</label>
-              <input type="text" id="pin" placeholder="4-8 digits" maxlength="8" />
-            </div>
-
-            <div class="form-group toggles">
-              <label class="toggle-row">
-                <input type="checkbox" id="pinEnabled" checked />
-                <span>Enable PIN</span>
-              </label>
-
-              <label class="toggle-row">
-                <input type="checkbox" id="faceEnabled" />
-                <span>Enable Face Scan</span>
-              </label>
-            </div>
           </div>
         </div>
 
-      </div>
+        <!-- NAME -->
+        <div class="dtc-grid-3">
 
-      <div class="form-actions">
-        <button class="dtc-btn dtc-btn-primary" id="saveBtn" type="button">Save</button>
-        <a class="dtc-btn dtc-btn-secondary" href="./employees-list.html">Cancel</a>
-      </div>
+          <div class="dtc-field">
+            <span>First Name</span>
+            <input id="first_name" required />
+          </div>
+
+          <div class="dtc-field">
+            <span>Middle Name</span>
+            <input id="middle_name" />
+          </div>
+
+          <div class="dtc-field">
+            <span>Last Name</span>
+            <input id="last_name" required />
+          </div>
+
+        </div>
+
+        <!-- CONTACT -->
+        <div class="dtc-grid-3">
+
+          <div class="dtc-field">
+            <span>Phone</span>
+            <input id="phone" />
+          </div>
+
+          <div class="dtc-field">
+            <span>Secondary Phone</span>
+            <input id="secondary_phone" />
+          </div>
+
+          <div class="dtc-field">
+            <span>Email</span>
+            <input id="email" type="email" />
+          </div>
+
+        </div>
+
+        <!-- ROLE -->
+        <div class="dtc-grid-3">
+
+          <div class="dtc-field">
+            <span>Role</span>
+            <select id="role">
+              <option value="assistant">Assistant</option>
+              <option value="admin">Admin</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
+
+          <div class="dtc-field">
+            <span>Status</span>
+            <select id="status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div class="dtc-field">
+            <span>Start Date</span>
+            <input id="start_date" type="date" />
+          </div>
+
+        </div>
+
+        <!-- NOTES -->
+        <div class="dtc-field">
+          <span>Notes</span>
+          <textarea id="notes"></textarea>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="dtc-inline-actions">
+          <button type="submit" class="dtc-btn dtc-btn-primary">
+            Save Employee
+          </button>
+
+          <a href="./employees-list.html" class="dtc-btn dtc-btn-secondary">
+            Cancel
+          </a>
+        </div>
+
+      </form>
+
     </section>
 
   </main>
 
   <script type="module" src="./employee-form.js"></script>
+
 </body>
 </html>

@@ -187,3 +187,39 @@ DTC tiene UN SOLO CSS: dtc.css
 Ningún módulo puede tener estilos propios fuera del sistema global.
 
 /* DTC CONSOLIDATED MODULE STYLES */ no se escribe nada nuevo. Ese bloque queda congelado como zona vieja. La base viva del sistema es la parte de arriba.
+
+### Food Allergy and Special Meal Alerts
+DTC must treat food allergies, dietary restrictions, and medically required meal notes as active safety rules, not passive notes.
+
+If a child profile contains allergy or special food information, the system must generate meal-time alerts for active staff, owners, and administrators during breakfast, lunch, and snack periods.
+
+Alerts should display the child’s name, photo, restriction, and recommended action. This logic must connect to the future food/menu module.
+
+### Intelligent Meal Allergy Alerts
+DTC must not send food alerts on a fixed schedule by default.
+Instead, it must compare the actual ingredients of the daily menu against each child’s food allergies, dietary restrictions, and medical meal notes.
+
+If the system detects a conflict between a menu item and a child’s restriction, it must send a targeted alert to active assistants, owners, and administrators using DTC.
+
+This alert should identify the child, the risky ingredient, the affected meal, and the recommended safe action.
+
+🧠 LO IMPORTANTE (esto es clave)
+
+A partir de ahora trabajamos así:
+
+👉 Tú:
+
+defines comportamiento
+defines visión
+defines lógica del negocio
+
+👉 Yo:
+
+te doy archivos completos
+listos para reemplazar
+sin que tengas que buscar nada
+
+Meal scheduling in DTC must be organization-configurable.
+The platform must support daycare businesses with different meal structures, including daytime, nighttime, and mixed schedules.
+DTC may follow KidKare-inspired food compliance logic, but must not be limited to a fixed set of meal types.
+Each organization must be able to define its own active meal slots such as Breakfast, AM Snack, Lunch, PM Snack, Dinner, or Evening Snack.
