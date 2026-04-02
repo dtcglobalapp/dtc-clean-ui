@@ -32,6 +32,7 @@ extractBtn.addEventListener("click", async () => {
     clearOutput();
 
     const text = await extractDocumentText(file);
+
     if (!text.trim()) {
       setStatus("No readable text extracted.");
       return;
@@ -153,18 +154,25 @@ async function extractPdfText(file) {
 }
 
 async function extractImageTextWithOCR(file) {
-  let TesseractLib;
+  let Tesseract;
+
   try {
-    TesseractLib = await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js");
+    const module = await import(
+      "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js"
+    );
+    Tesseract = module.default;
   } catch (error) {
-    throw new Error("Could not load OCR module.");
+    throw new Error("Could not load OCR engine.");
   }
 
   const imageUrl = URL.createObjectURL(file);
 
   try {
-    const result = await TesseractLib.recognize(imageUrl, "eng");
-    return result?.data?.text || "";
+    const { data } = await Tesseract.recognize(imageUrl, "eng", {
+      logger: (message) => console.log("OCR:", message),
+    });
+
+    return data?.text || "";
   } finally {
     URL.revokeObjectURL(imageUrl);
   }
