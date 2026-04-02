@@ -1,132 +1,193 @@
-export function parseVisionDocument(rawText) {
-  const text = String(rawText || "").replace(/\s+/g, " ").trim();
-  const lower = text.toLowerCase();
+import { parseVisionDocument } from "./vision-intake-parser.js";
 
-  const warnings = [];
-  const fields = {
-    childFirstName: "",
-    childLastName: "",
-    dob: "",
-    gender: "",
-    guardianName: "",
-    phone: "",
-    physician: "",
-    allergies: "",
-  };
+const docInput = document.getElementById("docInput");
+const extractBtn = document.getElementById("extractBtn");
+const fillDemoBtn = document.getElementById("fillDemoBtn");
 
-  const findFirst = (patterns) => {
-    for (const pattern of patterns) {
-      const match = text.match(pattern);
-      if (match?.[1]) return match[1].trim();
+const statusBox = document.getElementById("statusBox");
+const fieldsBox = document.getElementById("fieldsBox");
+const warningsBox = document.getElementById("warningsBox");
+const textPreview = document.getElementById("textPreview");
+
+const demoFirstName = document.getElementById("demoFirstName");
+const demoLastName = document.getElementById("demoLastName");
+const demoDob = document.getElementById("demoDob");
+const demoGender = document.getElementById("demoGender");
+const demoGuardian = document.getElementById("demoGuardian");
+const demoPhone = document.getElementById("demoPhone");
+const demoPhysician = document.getElementById("demoPhysician");
+const demoAllergies = document.getElementById("demoAllergies");
+
+let latestParsed = null;
+
+extractBtn.addEventListener("click", async () => {
+  const file = docInput.files?.[0];
+  if (!file) {
+    alert("Please choose a PDF or image first.");
+    return;
+  }
+
+  try {
+    setStatus("Reading document...");
+    clearOutput();
+
+    const text = await extractDocumentText(file);
+
+    if (!text.trim()) {
+      setStatus("No readable text extracted.");
+      return;
     }
-    return "";
-  };
 
-  const normalizePhone = (value) => {
-    const digits = String(value || "").replace(/\D/g, "");
-    if (digits.length === 10) {
-      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-    }
-    return value || "";
-  };
+    const parsed = parseVisionDocument(text);
+    latestParsed = parsed;
 
-  const splitName = (fullName) => {
-    const cleaned = String(fullName || "").trim();
-    if (!cleaned) return { first: "", last: "" };
-    const parts = cleaned.split(/\s+/);
-    if (parts.length === 1) return { first: parts[0], last: "" };
-    return {
-      first: parts.slice(0, -1).join(" "),
-      last: parts.slice(-1).join(" "),
-    };
-  };
+    renderFields(parsed.fields);
+    renderWarnings(parsed.warnings);
+    textPreview.textContent = text.slice(0, 5000);
 
-  const childName =
-    findFirst([
-      /child(?:'s)? name[:\s]+([a-z ,.'-]{3,80})/i,
-      /student name[:\s]+([a-z ,.'-]{3,80})/i,
-      /name of child[:\s]+([a-z ,.'-]{3,80})/i,
-      /patient name[:\s]+([a-z ,.'-]{3,80})/i,
-    ]) || "";
+    setStatus("Document analyzed successfully.");
+  } catch (error) {
+    console.error("Vision intake error:", error);
+    setStatus(`Analysis failed: ${error.message || "Unknown error"}`);
+  }
+});
 
-  if (childName) {
-    const parts = splitName(childName);
-    fields.childFirstName = parts.first;
-    fields.childLastName = parts.last;
-  } else {
-    warnings.push("Child name not confidently detected");
+fillDemoBtn.addEventListener("click", () => {
+  if (!latestParsed) {
+    alert("Analyze a document first.");
+    return;
   }
 
-  fields.dob = findFirst([
-    /date of birth[:\s]+([0-9/.-]{6,20})/i,
-    /\bdob[:\s]+([0-9/.-]{6,20})/i,
-    /\bbirth date[:\s]+([0-9/.-]{6,20})/i,
-  ]);
+  const { fields } = latestParsed;
 
-  if (!fields.dob) {
-    warnings.push("DOB not confidently detected");
+  demoFirstName.value = fields.childFirstName || "";
+  demoLastName.value = fields.childLastName || "";
+  demoDob.value = fields.dob || "";
+  demoGender.value = fields.gender || "";
+  demoGuardian.value = fields.guardianName || "";
+  demoPhone.value = fields.phone || "";
+  demoPhysician.value = fields.physician || "";
+  demoAllergies.value = fields.allergies || "";
+
+  setStatus("Demo form autofilled from detected fields.");
+});
+
+function setStatus(message) {
+  statusBox.innerHTML = `<p>${escapeHtml(message)}</p>`;
+}
+
+function clearOutput() {
+  fieldsBox.innerHTML = "";
+  warningsBox.innerHTML = "";
+  textPreview.textContent = "";
+  latestParsed = null;
+}
+
+function renderFields(fields) {
+  const rows = [
+    ["Child First Name", fields.childFirstName],
+    ["Child Last Name", fields.childLastName],
+    ["DOB", fields.dob],
+    ["Gender", fields.gender],
+    ["Guardian", fields.guardianName],
+    ["Phone", fields.phone],
+    ["Physician", fields.physician],
+    ["Allergies", fields.allergies],
+    ["Address", fields.address],
+    ["Meals", fields.meals],
+    ["Enrollment Date", fields.enrollmentDate],
+    ["Attendance", fields.attendanceSchedule],
+  ];
+
+  fieldsBox.innerHTML = rows
+    .map(([label, value]) => {
+      const safeValue = value ? escapeHtml(value) : "<em>Not detected</em>";
+      return `<div><strong>${escapeHtml(label)}:</strong> ${safeValue}</div>`;
+    })
+    .join("");
+}
+
+function renderWarnings(warnings) {
+  if (!warnings?.length) {
+    warningsBox.innerHTML = `<p>No warnings detected.</p>`;
+    return;
   }
 
-  fields.gender = findFirst([
-    /\bgender[:\s]+(male|female|m|f|boy|girl)/i,
-    /\bsex[:\s]+(male|female|m|f)/i,
-  ]);
+  warningsBox.innerHTML = `
+    <ul style="margin:0; padding-left:18px;">
+      ${warnings.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+    </ul>
+  `;
+}
 
-  fields.guardianName = findFirst([
-    /parent(?:\/guardian)? name[:\s]+([a-z ,.'-]{3,80})/i,
-    /guardian name[:\s]+([a-z ,.'-]{3,80})/i,
-    /mother[' ]?s name[:\s]+([a-z ,.'-]{3,80})/i,
-    /father[' ]?s name[:\s]+([a-z ,.'-]{3,80})/i,
-  ]);
+async function extractDocumentText(file) {
+  const name = file.name.toLowerCase();
 
-  if (!fields.guardianName) {
-    warnings.push("Guardian name not confidently detected");
+  if (name.endsWith(".pdf")) {
+    return extractPdfText(file);
   }
 
-  fields.phone = normalizePhone(
-    findFirst([
-      /\bphone[:\s]+([0-9().\- ]{7,25})/i,
-      /\bcell[:\s]+([0-9().\- ]{7,25})/i,
-      /\btelephone[:\s]+([0-9().\- ]{7,25})/i,
-      /\bmobile[:\s]+([0-9().\- ]{7,25})/i,
-    ])
-  );
-
-  fields.physician = findFirst([
-    /physician[:\s]+([a-z ,.'-]{3,80})/i,
-    /doctor[:\s]+([a-z ,.'-]{3,80})/i,
-    /provider[:\s]+([a-z ,.'-]{3,80})/i,
-    /pediatrician[:\s]+([a-z ,.'-]{3,80})/i,
-  ]);
-
-  if (!fields.physician && (lower.includes("physician") || lower.includes("doctor") || lower.includes("provider"))) {
-    warnings.push("Physician section found, but name could not be mapped cleanly");
+  if (file.type.startsWith("image/")) {
+    return extractImageTextWithOCR(file);
   }
 
-  fields.allergies = findFirst([
-    /allerg(?:y|ies)[:\s]+([a-z0-9 ,.'()\/-]{2,200})/i,
-    /food allergies[:\s]+([a-z0-9 ,.'()\/-]{2,200})/i,
-    /known allergies[:\s]+([a-z0-9 ,.'()\/-]{2,200})/i,
-  ]);
+  throw new Error("Unsupported file type. Please upload a PDF or image.");
+}
 
-  if (!fields.allergies && lower.includes("no known allergies")) {
-    fields.allergies = "No known allergies";
+async function extractPdfText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+
+  let pdfjsLib;
+  try {
+    pdfjsLib = await import("https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.mjs");
+  } catch (error) {
+    throw new Error("Could not load PDF reader module.");
   }
 
-  if (lower.includes("no allergies") && /allerg(?:y|ies)[:\s]+/i.test(text)) {
-    warnings.push("Possible conflicting allergy language detected");
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = "";
+
+  for (let i = 1; i <= pdf.numPages; i += 1) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strings = content.items.map((item) => item.str || "");
+    fullText += strings.join(" ") + "\n";
   }
 
-  if (!/signature|signed|guardian signature|physician signature/i.test(text)) {
-    warnings.push("No signature text detected. Visual signature may still exist.");
+  return fullText.trim();
+}
+
+async function extractImageTextWithOCR(file) {
+  let Tesseract;
+
+  try {
+    const module = await import(
+      "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js"
+    );
+    Tesseract = module.default;
+  } catch (error) {
+    throw new Error("Could not load OCR engine.");
   }
 
-  if (!/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b|\b\d{4}-\d{1,2}-\d{1,2}\b/.test(text)) {
-    warnings.push("No clear date pattern detected");
-  }
+  const imageUrl = URL.createObjectURL(file);
 
-  return {
-    fields,
-    warnings,
-  };
+  try {
+    const { data } = await Tesseract.recognize(imageUrl, "eng", {
+      logger: () => {},
+    });
+
+    return data?.text || "";
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
