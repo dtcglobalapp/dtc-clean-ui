@@ -43,7 +43,7 @@ extractBtn.addEventListener("click", async () => {
 
     renderFields(parsed.fields);
     renderWarnings(parsed.warnings);
-    textPreview.textContent = text.slice(0, 4000);
+    textPreview.textContent = text.slice(0, 5000);
 
     setStatus("Document analyzed successfully.");
   } catch (error) {
@@ -80,6 +80,7 @@ function clearOutput() {
   fieldsBox.innerHTML = "";
   warningsBox.innerHTML = "";
   textPreview.textContent = "";
+  latestParsed = null;
 }
 
 function renderFields(fields) {
@@ -92,6 +93,10 @@ function renderFields(fields) {
     ["Phone", fields.phone],
     ["Physician", fields.physician],
     ["Allergies", fields.allergies],
+    ["Address", fields.address],
+    ["Meals", fields.meals],
+    ["Enrollment Date", fields.enrollmentDate],
+    ["Attendance", fields.attendanceSchedule],
   ];
 
   fieldsBox.innerHTML = rows
@@ -169,7 +174,7 @@ async function extractImageTextWithOCR(file) {
 
   try {
     const { data } = await Tesseract.recognize(imageUrl, "eng", {
-      logger: (message) => console.log("OCR:", message),
+      logger: () => {},
     });
 
     return data?.text || "";
