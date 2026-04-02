@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Health Docs Intelligence</title>
+  <link rel="stylesheet" href="../dtc.css">
+</head>
+<body class="dtc-shell">
+
+  <main class="dtc-page">
+
+    <h1>Health Documents</h1>
+    <p>Upload and validate medical documents intelligently.</p>
+
+    <div class="dtc-card">
+
+      <input type="file" id="pdfInput" accept="application/pdf"/>
+
+      <button id="analyzeBtn" class="dtc-btn">
+        Analyze Document
+      </button>
+
+      <div id="resultBox" style="margin-top:20px;"></div>
+
+    </div>
+
+  </main>
+
+  <script type="module" src="./health-docs-upload.js"></script>
+</body>
+</html>
