@@ -8,333 +8,190 @@ const menuId = params.get("id");
 const grid = document.getElementById("menuGrid");
 const saveBtn = document.getElementById("saveMenuBtn");
 const nameInput = document.getElementById("menuName");
-const generateSmartBtn = document.getElementById("generateSmartBtn");
 
-const days = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+const days = ["monday","tuesday","wednesday","thursday","friday"];
 
 let mealSlots = [];
-let existingDayMap = new Map();
-let existingMealMap = new Map();
 
-function titleCase(value) {
-  return String(value || "")
-    .split(" ")
-    .map((part) => part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : "")
-    .join(" ");
+function escapeHtml(v=""){
+  return String(v)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
 }
 
-function escapeHtml(value = "") {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function prettyMealName(v){
+  const map = { B:"Breakfast", L:"Lunch", S:"Snack" };
+  return map[v] || v;
 }
 
-function slotKey(day, slotId) {
-  return `${day}__${slotId}`;
-}
-
-function prettyMealName(value = "") {
-  const raw = String(value || "").trim();
-  const normalized = raw.toLowerCase();
-
-  const map = {
-    b: "Breakfast",
-    breakfast: "Breakfast",
-
-    l: "Lunch",
-    lunch: "Lunch",
-
-    s: "Snack",
-    snack: "Snack",
-
-    "am snack": "AM Snack",
-    amsnack: "AM Snack",
-
-    "pm snack": "PM Snack",
-    pmsnack: "PM Snack",
-
-    d: "Dinner",
-    dinner: "Dinner",
-
-    e: "Evening Snack",
-    "eve. snack": "Evening Snack",
-    "evening snack": "Evening Snack",
-  };
-
-  return map[normalized] || titleCase(raw);
-}
-
-function normalizeMealLabel(rawValue, slot) {
-  const raw = String(rawValue || "").trim();
-
-  if (!raw) {
-    return prettyMealName(slot?.name || slot?.code || "Meal");
-  }
-
-  return prettyMealName(raw);
-}
-
-async function loadMealSlots() {
-  const { data, error } = await supabase
+async function loadMealSlots(){
+  const { data } = await supabase
     .from("meal_slots")
     .select("*")
     .eq("organization_id", ORG_ID)
     .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .order("sort_order",{ascending:true});
 
-  if (error) throw error;
-
-  mealSlots = data ?? [];
+  mealSlots = data || [];
 }
 
-function buildGrid() {
-  grid.innerHTML = "";
+function createTagInput(day, slot){
+  const wrapper = document.createElement("div");
+  wrapper.className = "dtc-field";
 
-  days.forEach((day) => {
-    const dayBlock = document.createElement("section");
-    dayBlock.className = "dtc-card";
+  wrapper.innerHTML = `
+    <label>${prettyMealName(slot.name)}</label>
+    <div class="tag-box" data-day="${day}" data-slot="${slot.id}">
+      <input type="text" placeholder="Type ingredient and press Enter"/>
+    </div>
+  `;
 
-    dayBlock.innerHTML = `
-      <div class="dtc-stack-md">
-        <h3>${escapeHtml(titleCase(day))}</h3>
-        <div class="dtc-stack-md" id="day-${day}"></div>
-      </div>
-    `;
+  const input = wrapper.querySelector("input");
+  const box = wrapper.querySelector(".tag-box");
 
-    const container = dayBlock.querySelector(`#day-${day}`);
+  input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      e.preventDefault();
+      const val = input.value.trim();
+      if(!val) return;
 
-    mealSlots.forEach((slot) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "dtc-field";
-
-      const existing = existingMealMap.get(slotKey(day, slot.id));
-      const displayName = prettyMealName(slot.name || slot.code || "Meal");
-      const inputValue = normalizeMealLabel(existing?.label || slot.name || slot.code, slot);
-
-      wrapper.innerHTML = `
-        <label class="dtc-label">${escapeHtml(displayName)}</label>
-        <input
-          class="dtc-input meal-label-input"
-          type="text"
-          data-day="${day}"
-          data-slot-id="${slot.id}"
-          data-slot-name="${escapeHtml(slot.name || "")}"
-          value="${escapeHtml(inputValue)}"
-          placeholder="Label for ${escapeHtml(displayName)}"
-        />
-      `;
-
-      container.appendChild(wrapper);
-    });
-
-    grid.appendChild(dayBlock);
+      addTag(box, val);
+      input.value="";
+    }
   });
+
+  return wrapper;
 }
 
-async function ensureMenu() {
-  const name = nameInput.value.trim();
+function addTag(box, text){
+  const tag = document.createElement("span");
+  tag.className = "tag";
+  tag.textContent = text;
 
-  if (!name) {
-    throw new Error("Menu name is required.");
-  }
+  tag.onclick = () => tag.remove();
 
-  if (menuId) {
-    const { error } = await supabase
-      .from("menus")
-      .update({ name })
-      .eq("id", menuId);
+  box.insertBefore(tag, box.querySelector("input"));
+}
 
-    if (error) throw error;
-    return menuId;
-  }
+function getTags(box){
+  return [...box.querySelectorAll(".tag")].map(t=>t.textContent.trim());
+}
 
-  const { data, error } = await supabase
-    .from("menus")
+async function getOrCreateIngredient(name){
+  const normalized = name.toLowerCase();
+
+  const { data: existing } = await supabase
+    .from("ingredients")
+    .select("*")
+    .eq("organization_id", ORG_ID)
+    .eq("normalized_name", normalized)
+    .maybeSingle();
+
+  if(existing) return existing.id;
+
+  const { data } = await supabase
+    .from("ingredients")
     .insert({
       organization_id: ORG_ID,
       name,
-      is_active: false,
-      notes: null,
+      normalized_name: normalized
     })
     .select()
     .single();
 
-  if (error) throw error;
   return data.id;
 }
 
-async function loadExistingStructure(id) {
-  const { data: menu, error: menuError } = await supabase
-    .from("menus")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (menuError) throw menuError;
-
-  if (menu) {
-    nameInput.value = menu.name || "";
-  }
-
-  const { data: menuDays, error: dayError } = await supabase
-    .from("menu_days")
-    .select("*")
-    .eq("menu_id", id);
-
-  if (dayError) throw dayError;
-
-  existingDayMap = new Map((menuDays ?? []).map((row) => [row.day_of_week, row]));
-
-  const dayIds = (menuDays ?? []).map((row) => row.id);
-  if (!dayIds.length) {
-    existingMealMap = new Map();
-    return;
-  }
-
-  const { data: menuMeals, error: mealError } = await supabase
-    .from("menu_meals")
-    .select("*")
-    .in("menu_day_id", dayIds);
-
-  if (mealError) throw mealError;
-
-  existingMealMap = new Map();
-
-  (menuMeals ?? []).forEach((meal) => {
-    const day = (menuDays ?? []).find((d) => d.id === meal.menu_day_id);
-    if (!day) return;
-    existingMealMap.set(slotKey(day.day_of_week, meal.meal_slot_id), meal);
-  });
-}
-
-async function upsertDay(menuIdValue, day) {
-  const existing = existingDayMap.get(day);
-  if (existing) return existing.id;
-
-  const { data, error } = await supabase
-    .from("menu_days")
-    .insert({
-      menu_id: menuIdValue,
-      day_of_week: day,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  existingDayMap.set(day, data);
-  return data.id;
-}
-
-async function upsertMeal(menuDayId, slotId, label, sortOrder, day) {
-  const key = slotKey(day, slotId);
-  const existing = existingMealMap.get(key);
-
-  if (existing) {
-    const { data, error } = await supabase
-      .from("menu_meals")
-      .update({
-        label,
-        sort_order: sortOrder,
-      })
-      .eq("id", existing.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    existingMealMap.set(key, data);
-    return data.id;
-  }
-
-  const { data, error } = await supabase
-    .from("menu_meals")
-    .insert({
-      menu_day_id: menuDayId,
-      meal_slot_id: slotId,
-      label,
-      sort_order: sortOrder,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  existingMealMap.set(key, data);
-  return data.id;
-}
-
-async function saveStructure() {
+async function saveMenu(){
   saveBtn.disabled = true;
   saveBtn.textContent = "Saving...";
 
-  try {
-    const id = await ensureMenu();
+  try{
 
-    for (const day of days) {
-      const dayId = await upsertDay(id, day);
+    const { data: menu } = await supabase
+      .from("menus")
+      .insert({
+        organization_id: ORG_ID,
+        name: nameInput.value
+      })
+      .select()
+      .single();
 
-      for (let i = 0; i < mealSlots.length; i += 1) {
-        const slot = mealSlots[i];
-        const input = document.querySelector(
-          `.meal-label-input[data-day="${day}"][data-slot-id="${slot.id}"]`
+    for(const day of days){
+
+      const { data: dayRow } = await supabase
+        .from("menu_days")
+        .insert({
+          menu_id: menu.id,
+          day_of_week: day
+        })
+        .select()
+        .single();
+
+      for(const slot of mealSlots){
+
+        const box = document.querySelector(
+          `.tag-box[data-day="${day}"][data-slot="${slot.id}"]`
         );
 
-        const label = normalizeMealLabel(
-          input?.value?.trim() || slot.name || slot.code,
-          slot
-        );
+        const ingredients = getTags(box);
 
-        await upsertMeal(dayId, slot.id, label, i + 1, day);
+        const { data: meal } = await supabase
+          .from("menu_meals")
+          .insert({
+            menu_day_id: dayRow.id,
+            meal_slot_id: slot.id,
+            label: prettyMealName(slot.name)
+          })
+          .select()
+          .single();
+
+        for(const ing of ingredients){
+          const ingId = await getOrCreateIngredient(ing);
+
+          await supabase
+            .from("menu_meal_ingredients")
+            .insert({
+              menu_meal_id: meal.id,
+              ingredient_id: ingId
+            });
+        }
       }
     }
 
-    alert("Menu structure saved.");
-    window.location.href = `./menu-builder.html?id=${encodeURIComponent(id)}`;
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "Could not save menu structure.");
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = "Save Menu";
+    alert("🔥 Smart menu saved.");
+  }catch(err){
+    console.error(err);
+    alert("Error saving menu");
   }
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = "Save Menu";
 }
 
-saveBtn?.addEventListener("click", saveStructure);
+function buildUI(){
+  grid.innerHTML="";
 
-generateSmartBtn?.addEventListener("click", () => {
-  alert("DTC smart generation will be connected in the next phase.");
-});
+  days.forEach(day=>{
+    const card = document.createElement("div");
+    card.className="dtc-card";
 
-async function init() {
-  try {
-    await loadMealSlots();
+    card.innerHTML=`<h3>${day}</h3>`;
 
-    if (!mealSlots.length) {
-      grid.innerHTML = `
-        <div class="dtc-card">
-          <p>No active meal slots found for this organization.</p>
-        </div>
-      `;
-      return;
-    }
+    mealSlots.forEach(slot=>{
+      card.appendChild(createTagInput(day, slot));
+    });
 
-    if (menuId) {
-      await loadExistingStructure(menuId);
-    }
+    grid.appendChild(card);
+  });
+}
 
-    buildGrid();
-  } catch (error) {
-    console.error(error);
-    grid.innerHTML = `
-      <div class="dtc-card">
-        <p>${escapeHtml(error.message || "Could not load menu builder.")}</p>
-      </div>
-    `;
-  }
+saveBtn.addEventListener("click", saveMenu);
+
+async function init(){
+  await loadMealSlots();
+  buildUI();
 }
 
 init();
