@@ -1,245 +1,312 @@
-import { parseVisionDocument } from "./vision-intake-parser.js";
+export function parseVisionDocument(rawText) {
+  const source = String(rawText || "");
+  const text = source.replace(/\r/g, "");
+  const compact = text.replace(/\s+/g, " ").trim();
+  const lower = compact.toLowerCase();
 
-const docInput = document.getElementById("docInput");
-const extractBtn = document.getElementById("extractBtn");
-const fillDemoBtn = document.getElementById("fillDemoBtn");
+  const warnings = [];
+  const fields = {
+    childFirstName: "",
+    childLastName: "",
+    dob: "",
+    gender: "",
+    guardianName: "",
+    phone: "",
+    physician: "",
+    allergies: "",
+    address: "",
+    meals: "",
+    attendanceSchedule: "",
+    enrollmentDate: "",
+  };
 
-const statusBox = document.getElementById("statusBox");
-const fieldsBox = document.getElementById("fieldsBox");
-const warningsBox = document.getElementById("warningsBox");
-const textPreview = document.getElementById("textPreview");
-
-const demoFirstName = document.getElementById("demoFirstName");
-const demoLastName = document.getElementById("demoLastName");
-const demoDob = document.getElementById("demoDob");
-const demoGender = document.getElementById("demoGender");
-const demoGuardian = document.getElementById("demoGuardian");
-const demoPhone = document.getElementById("demoPhone");
-const demoPhysician = document.getElementById("demoPhysician");
-const demoAllergies = document.getElementById("demoAllergies");
-
-let latestParsed = null;
-let isBusy = false;
-
-extractBtn.addEventListener("click", async () => {
-  const file = docInput.files?.[0];
-  if (!file) {
-    alert("Please choose a PDF or image first.");
-    return;
+  function clean(value = "") {
+    return String(value)
+      .replace(/\s+/g, " ")
+      .replace(/^[:\-\s"'`|>#\\]+/, "")
+      .replace(/[:\-\s"'`|>#\\]+$/, "")
+      .trim();
   }
 
-  if (isBusy) return;
-
-  try {
-    isBusy = true;
-    extractBtn.disabled = true;
-    fillDemoBtn.disabled = true;
-
-    setStatus(`Reading document: ${escapeHtml(file.name)}`);
-    clearOutput(false);
-
-    const text = await extractDocumentText(file);
-
-    if (!text.trim()) {
-      setStatus("No readable text extracted.");
-      return;
+  function normalizePhone(value = "") {
+    const digits = String(value).replace(/\D/g, "");
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
     }
-
-    const parsed = parseVisionDocument(text);
-    latestParsed = parsed;
-
-    renderFields(parsed.fields);
-    renderWarnings(parsed.warnings);
-    textPreview.textContent = text.slice(0, 5000);
-
-    autofillDemo(parsed.fields);
-
-    setStatus("Document analyzed successfully and demo form autofilled.");
-  } catch (error) {
-    console.error("Vision intake error:", error);
-    setStatus(`Analysis failed: ${error.message || "Unknown error"}`);
-  } finally {
-    isBusy = false;
-    extractBtn.disabled = false;
-    fillDemoBtn.disabled = false;
-  }
-});
-
-fillDemoBtn.addEventListener("click", () => {
-  if (!latestParsed) {
-    alert("Analyze a document first.");
-    return;
+    return clean(value);
   }
 
-  autofillDemo(latestParsed.fields);
-  setStatus("Demo form autofilled from detected fields.");
-});
+  function splitName(fullName = "") {
+    const cleaned = clean(fullName);
+    if (!cleaned) return { first: "", last: "" };
 
-function autofillDemo(fields) {
-  demoFirstName.value = fields.childFirstName || "";
-  demoLastName.value = fields.childLastName || "";
-  demoDob.value = fields.dob || "";
-  demoGender.value = fields.gender || "";
-  demoGuardian.value = fields.guardianName || "";
-  demoPhone.value = fields.phone || "";
-  demoPhysician.value = fields.physician || "";
-  demoAllergies.value = fields.allergies || "";
-}
+    const parts = cleaned.split(/\s+/);
+    if (parts.length === 1) return { first: parts[0], last: "" };
 
-function setStatus(message) {
-  statusBox.innerHTML = `<p>${escapeHtml(message)}</p>`;
-}
-
-function clearOutput(clearStatus = true) {
-  fieldsBox.innerHTML = "";
-  warningsBox.innerHTML = "";
-  textPreview.textContent = "";
-  latestParsed = null;
-
-  demoFirstName.value = "";
-  demoLastName.value = "";
-  demoDob.value = "";
-  demoGender.value = "";
-  demoGuardian.value = "";
-  demoPhone.value = "";
-  demoPhysician.value = "";
-  demoAllergies.value = "";
-
-  if (clearStatus) {
-    setStatus("Waiting for document...");
-  }
-}
-
-function renderFields(fields) {
-  const rows = [
-    ["Child First Name", fields.childFirstName],
-    ["Child Last Name", fields.childLastName],
-    ["DOB", fields.dob],
-    ["Gender", fields.gender],
-    ["Guardian", fields.guardianName],
-    ["Phone", fields.phone],
-    ["Physician", fields.physician],
-    ["Allergies", fields.allergies],
-    ["Address", fields.address],
-    ["Meals", fields.meals],
-    ["Enrollment Date", fields.enrollmentDate],
-    ["Attendance", fields.attendanceSchedule],
-  ];
-
-  fieldsBox.innerHTML = rows
-    .map(([label, value]) => {
-      const safeValue = value ? escapeHtml(value) : "<em>Not detected</em>";
-      return `<div><strong>${escapeHtml(label)}:</strong> ${safeValue}</div>`;
-    })
-    .join("");
-}
-
-function renderWarnings(warnings) {
-  if (!warnings?.length) {
-    warningsBox.innerHTML = `<p>No warnings detected.</p>`;
-    return;
+    return {
+      first: parts.slice(0, -1).join(" "),
+      last: parts.slice(-1)[0],
+    };
   }
 
-  warningsBox.innerHTML = `
-    <ul style="margin:0; padding-left:18px;">
-      ${warnings.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-    </ul>
-  `;
-}
-
-async function extractDocumentText(file) {
-  const name = (file.name || "").toLowerCase();
-  const type = file.type || "";
-
-  if (name.endsWith(".pdf") || type === "application/pdf") {
-    return extractPdfText(file);
+  function matchFirst(patterns, haystack = compact) {
+    for (const pattern of patterns) {
+      const match = haystack.match(pattern);
+      if (match?.[1]) return clean(match[1]);
+    }
+    return "";
   }
 
-  if (type.startsWith("image/")) {
-    return extractImageTextWithOCR(file);
+  // =========================
+  // CHILD NAME
+  // Format:
+  // # > Kaylee Rojas > Child Information
+  // =========================
+  let childFullName = matchFirst([
+    /#\s*>\s*([A-Za-z]+(?:\s+[A-Za-z]+)+)\s*>\s*Child Information/i,
+    /#\s*>\s*([A-Za-z]+(?:\s+[A-Za-z]+)+)\s*>\s*Child/i,
+  ]);
+
+  // fallback:
+  // « | Rojas, Kaylee vo»
+  if (!childFullName) {
+    const reversed = compact.match(/\|\s*([A-Za-z]+),\s*([A-Za-z]+)/i);
+    if (reversed?.[1] && reversed?.[2]) {
+      childFullName = `${clean(reversed[2])} ${clean(reversed[1])}`;
+    }
   }
 
-  throw new Error("Unsupported file type. Please upload a PDF or image.");
-}
-
-async function extractPdfText(file) {
-  setStatus("Loading PDF reader...");
-
-  const arrayBuffer = await file.arrayBuffer();
-
-  let pdfjsLib;
-  try {
-    pdfjsLib = await import("https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.mjs");
-  } catch (error) {
-    throw new Error("Could not load PDF reader module.");
+  // fallback:
+  // Name: Kaylee Rojas Name: Yokasta Santana Tiburcio
+  if (!childFullName) {
+    const firstNameField = compact.match(/\bName:\s*([A-Za-z]+(?:\s+[A-Za-z]+)+)\s+Name:/i);
+    if (firstNameField?.[1]) {
+      childFullName = clean(firstNameField[1]);
+    }
   }
 
-  setStatus("Reading PDF pages...");
-
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-  let fullText = "";
-
-  for (let i = 1; i <= pdf.numPages; i += 1) {
-    setStatus(`Reading PDF page ${i} of ${pdf.numPages}...`);
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const strings = content.items.map((item) => item.str || "");
-    fullText += strings.join(" ") + "\n";
+  if (childFullName) {
+    const nameParts = splitName(childFullName);
+    fields.childFirstName = nameParts.first;
+    fields.childLastName = nameParts.last;
+  } else {
+    warnings.push("Child name not confidently detected");
   }
 
-  return fullText.trim();
-}
+  // =========================
+  // GUARDIAN NAME
+  // second Name: in same line
+  // =========================
+  let guardianName = "";
 
-async function extractImageTextWithOCR(file) {
-  setStatus("Loading OCR engine...");
+  const dualName = compact.match(
+    /\bName:\s*[A-Za-z]+(?:\s+[A-Za-z]+)+\s+Name:\s*([A-Za-z]+(?:\s+[A-Za-z]+){1,5})/i
+  );
+  if (dualName?.[1]) {
+    guardianName = clean(dualName[1]);
+  }
 
-  let Tesseract;
-  try {
-    const module = await import(
-      "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js"
+  if (!guardianName) {
+    guardianName = matchFirst([
+      /\bGuardian Name:\s*([A-Za-z]+(?:\s+[A-Za-z]+){1,5})/i,
+      /\bParent(?:\/Guardian)? Name:\s*([A-Za-z]+(?:\s+[A-Za-z]+){1,5})/i,
+      /\bContact Name:\s*([A-Za-z]+(?:\s+[A-Za-z]+){1,5})/i,
+    ]);
+  }
+
+  if (
+    guardianName &&
+    childFullName &&
+    guardianName.toLowerCase() === childFullName.toLowerCase()
+  ) {
+    guardianName = "";
+  }
+
+  fields.guardianName = guardianName;
+
+  if (!fields.guardianName) {
+    warnings.push("Guardian name not confidently detected");
+  }
+
+  // =========================
+  // DOB
+  // =========================
+  fields.dob = matchFirst([
+    /\bDOB:\s*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{2,4})/i,
+    /\bDate of Birth:\s*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{2,4})/i,
+    /\bBirth Date:\s*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{2,4})/i,
+  ]);
+
+  if (!fields.dob) {
+    warnings.push("DOB not confidently detected");
+  }
+
+  // =========================
+  // GENDER
+  // =========================
+  fields.gender = matchFirst([
+    /\bSex:\s*(Male|Female|M|F)\b/i,
+    /\bGender:\s*(Male|Female|M|F|Boy|Girl)\b/i,
+    /\bStatus:\s*[A-Za-z ]+\s+Sex:\s*(Male|Female|M|F)\b/i,
+  ]);
+
+  // =========================
+  // PHONE
+  // Format:
+  // Phone: Primary - (917) 478-5898
+  // "Secondary - (917) 478-5898
+  // =========================
+  let phone = "";
+
+  const primaryPhone = compact.match(
+    /\bPhone:\s*Primary\s*[-:]\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i
+  );
+  if (primaryPhone?.[1]) {
+    phone = normalizePhone(primaryPhone[1]);
+  }
+
+  if (!phone) {
+    const anyPhone = compact.match(/(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/);
+    if (anyPhone?.[1]) {
+      phone = normalizePhone(anyPhone[1]);
+    }
+  }
+
+  fields.phone = phone;
+
+  if (!fields.phone) {
+    warnings.push("Phone not confidently detected");
+  }
+
+  // =========================
+  // ADDRESS
+  // Format:
+  // Address: 600w 189 st Apt 4F, New York, NY, 10040
+  // =========================
+  fields.address = matchFirst([
+    /\bAddress:\s*([^]+?)(?=Pay source:|Withdraw|Race:|Expiration date:|Status:|$)/i,
+  ]);
+
+  // =========================
+  // ENROLLMENT DATE
+  // =========================
+  fields.enrollmentDate = matchFirst([
+    /\bEnrollment date:\s*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{2,4})/i,
+  ]);
+
+  // =========================
+  // MEALS
+  // Format:
+  // Meals: Breakfast, Lunch, PM Snack
+  // =========================
+  fields.meals = matchFirst([
+    /\bMeals:\s*([A-Za-z,\s]+?)(?=Is child of migrant worker:|Special needs:|$)/i,
+  ]);
+
+  // =========================
+  // ATTENDANCE
+  // Format:
+  // Mo: 12:30 PM - 06:00 PM
+  // Tu: ...
+  // =========================
+  const attendanceMatches = compact.match(
+    /(?:Mo|Tu|We|Th|Fr|Sa|Su):\s*[0-9:AMPamp\s\-]{5,40}/g
+  );
+  if (attendanceMatches?.length) {
+    fields.attendanceSchedule = attendanceMatches.map(clean).join(" | ");
+  }
+
+  // =========================
+  // PHYSICIAN
+  // Only if explicitly medical
+  // =========================
+  let physician = matchFirst([
+    /\bPhysician:\s*([A-Za-z .,'-]{3,100})/i,
+    /\bDoctor:\s*([A-Za-z .,'-]{3,100})/i,
+    /\bProvider:\s*([A-Za-z .,'-]{3,100})/i,
+    /\bPediatrician:\s*([A-Za-z .,'-]{3,100})/i,
+  ]);
+
+  if (
+    physician &&
+    /not related|day care child|breakfast|lunch|pm snack|attendance details|school details/i.test(
+      physician
+    )
+  ) {
+    physician = "";
+  }
+
+  fields.physician = physician;
+
+  // =========================
+  // ALLERGIES
+  // =========================
+  fields.allergies = matchFirst([
+    /\bAllerg(?:y|ies):\s*([A-Za-z0-9 ,.'()\/-]{2,200})/i,
+    /\bFood Allergies:\s*([A-Za-z0-9 ,.'()\/-]{2,200})/i,
+    /\bKnown Allergies:\s*([A-Za-z0-9 ,.'()\/-]{2,200})/i,
+  ]);
+
+  if (!fields.allergies && /no known allergies/i.test(compact)) {
+    fields.allergies = "No known allergies";
+  }
+
+  // =========================
+  // HARD FIXES FOR THIS EXACT FORMAT
+  // =========================
+  // Child name from top breadcrumb if still missing
+  if (!fields.childFirstName || !fields.childLastName) {
+    const top = compact.match(/#\s*>\s*([A-Za-z]+)\s+([A-Za-z]+)\s*>\s*Child Information/i);
+    if (top?.[1] && top?.[2]) {
+      fields.childFirstName = clean(top[1]);
+      fields.childLastName = clean(top[2]);
+    }
+  }
+
+  // Guardian from second Name:
+  if (!fields.guardianName) {
+    const secondName = compact.match(
+      /\bName:\s*[A-Za-z]+(?:\s+[A-Za-z]+)+\s+Name:\s*([A-Za-z]+(?:\s+[A-Za-z]+){1,5})/i
     );
-    Tesseract = module.default;
-  } catch (error) {
-    throw new Error("Could not load OCR engine.");
+    if (secondName?.[1]) {
+      fields.guardianName = clean(secondName[1]);
+    }
   }
 
-  const imageUrl = URL.createObjectURL(file);
-
-  try {
-    setStatus("Preparing image for OCR...");
-
-    const ocrPromise = Tesseract.recognize(imageUrl, "eng", {
-      logger: (message) => {
-        if (!message) return;
-        if (message.status) {
-          const pct =
-            typeof message.progress === "number"
-              ? ` ${Math.round(message.progress * 100)}%`
-              : "";
-          setStatus(`OCR: ${message.status}${pct}`);
-        }
-      },
-    });
-
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error("OCR timed out. Try a clearer image or smaller screenshot."));
-      }, 45000);
-    });
-
-    const result = await Promise.race([ocrPromise, timeoutPromise]);
-    return result?.data?.text || "";
-  } finally {
-    URL.revokeObjectURL(imageUrl);
+  // Phone from "Phone: Primary - ..."
+  if (!fields.phone) {
+    const phoneLine = compact.match(
+      /\bPhone:\s*Primary\s*[-:]\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i
+    );
+    if (phoneLine?.[1]) {
+      fields.phone = normalizePhone(phoneLine[1]);
+    }
   }
-}
 
-function escapeHtml(value = "") {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  // DOB / gender already strong, but keep as-is
+
+  // Never let "Not Related" become physician
+  if (/not related/i.test(fields.physician || "")) {
+    fields.physician = "";
+  }
+
+  // =========================
+  // WARNINGS
+  // =========================
+  if (!fields.childFirstName || !fields.childLastName) {
+    warnings.push("Child name not confidently detected");
+  }
+
+  if (!fields.guardianName) {
+    warnings.push("Guardian name not confidently detected");
+  }
+
+  if (!/signature|signed|guardian signature|physician signature/i.test(compact)) {
+    warnings.push("No signature text detected. Visual signature may still exist.");
+  }
+
+  return {
+    fields,
+    warnings: [...new Set(warnings)],
+  };
 }
