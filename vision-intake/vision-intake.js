@@ -19,6 +19,7 @@ const demoPhysician = document.getElementById("demoPhysician");
 const demoAllergies = document.getElementById("demoAllergies");
 
 let latestParsed = null;
+let isBusy = false;
 
 extractBtn.addEventListener("click", async () => {
   const file = docInput.files?.[0];
@@ -27,9 +28,15 @@ extractBtn.addEventListener("click", async () => {
     return;
   }
 
+  if (isBusy) return;
+
   try {
-    setStatus("Reading document...");
-    clearOutput();
+    isBusy = true;
+    extractBtn.disabled = true;
+    fillDemoBtn.disabled = true;
+
+    setStatus(`Reading document: ${escapeHtml(file.name)}`);
+    clearOutput(false);
 
     const text = await extractDocumentText(file);
 
@@ -51,6 +58,10 @@ extractBtn.addEventListener("click", async () => {
   } catch (error) {
     console.error("Vision intake error:", error);
     setStatus(`Analysis failed: ${error.message || "Unknown error"}`);
+  } finally {
+    isBusy = false;
+    extractBtn.disabled = false;
+    fillDemoBtn.disabled = false;
   }
 });
 
@@ -79,7 +90,7 @@ function setStatus(message) {
   statusBox.innerHTML = `<p>${escapeHtml(message)}</p>`;
 }
 
-function clearOutput() {
+function clearOutput(clearStatus = true) {
   fieldsBox.innerHTML = "";
   warningsBox.innerHTML = "";
   textPreview.textContent = "";
@@ -93,6 +104,10 @@ function clearOutput() {
   demoPhone.value = "";
   demoPhysician.value = "";
   demoAllergies.value = "";
+
+  if (clearStatus) {
+    setStatus("Waiting for document...");
+  }
 }
 
 function renderFields(fields) {
@@ -133,13 +148,14 @@ function renderWarnings(warnings) {
 }
 
 async function extractDocumentText(file) {
-  const name = file.name.toLowerCase();
+  const name = (file.name || "").toLowerCase();
+  const type = file.type || "";
 
-  if (name.endsWith(".pdf")) {
+  if (name.endsWith(".pdf") || type === "application/pdf") {
     return extractPdfText(file);
   }
 
-  if (file.type.startsWith("image/")) {
+  if (type.startsWith("image/")) {
     return extractImageTextWithOCR(file);
   }
 
@@ -147,6 +163,8 @@ async function extractDocumentText(file) {
 }
 
 async function extractPdfText(file) {
+  setStatus("Loading PDF reader...");
+
   const arrayBuffer = await file.arrayBuffer();
 
   let pdfjsLib;
@@ -156,11 +174,14 @@ async function extractPdfText(file) {
     throw new Error("Could not load PDF reader module.");
   }
 
+  setStatus("Reading PDF pages...");
+
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   let fullText = "";
 
   for (let i = 1; i <= pdf.numPages; i += 1) {
+    setStatus(`Reading PDF page ${i} of ${pdf.numPages}...`);
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const strings = content.items.map((item) => item.str || "");
@@ -171,8 +192,9 @@ async function extractPdfText(file) {
 }
 
 async function extractImageTextWithOCR(file) {
-  let Tesseract;
+  setStatus("Loading OCR engine...");
 
+  let Tesseract;
   try {
     const module = await import(
       "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js"
@@ -185,11 +207,29 @@ async function extractImageTextWithOCR(file) {
   const imageUrl = URL.createObjectURL(file);
 
   try {
-    const { data } = await Tesseract.recognize(imageUrl, "eng", {
-      logger: () => {},
+    setStatus("Preparing image for OCR...");
+
+    const ocrPromise = Tesseract.recognize(imageUrl, "eng", {
+      logger: (message) => {
+        if (!message) return;
+        if (message.status) {
+          const pct =
+            typeof message.progress === "number"
+              ? ` ${Math.round(message.progress * 100)}%`
+              : "";
+          setStatus(`OCR: ${message.status}${pct}`);
+        }
+      },
     });
 
-    return data?.text || "";
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("OCR timed out. Try a clearer image or smaller screenshot."));
+      }, 45000);
+    });
+
+    const result = await Promise.race([ocrPromise, timeoutPromise]);
+    return result?.data?.text || "";
   } finally {
     URL.revokeObjectURL(imageUrl);
   }
