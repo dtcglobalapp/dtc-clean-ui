@@ -9,7 +9,6 @@ const fieldsBox = document.getElementById("fieldsBox");
 const warningsBox = document.getElementById("warningsBox");
 const textPreview = document.getElementById("textPreview");
 
-// FORM INPUTS
 const demoFirstName = document.getElementById("demoFirstName");
 const demoLastName = document.getElementById("demoLastName");
 const demoDob = document.getElementById("demoDob");
@@ -66,13 +65,12 @@ extractBtn.addEventListener("click", async () => {
 
     renderVisibleFields(parsed.visibleFields);
     renderWarnings(parsed.warnings);
-
     autofillDemo(parsed.visibleFields);
 
     setStatus("Document analyzed successfully.");
   } catch (error) {
     console.error("Vision Intake error:", error);
-    setStatus(`Error: ${error.message}`);
+    setStatus(`Error: ${error.message || "Unknown error"}`);
   } finally {
     isBusy = false;
     extractBtn.disabled = false;
@@ -91,9 +89,6 @@ fillDemoBtn.addEventListener("click", () => {
   setStatus("Form autofilled.");
 });
 
-// =========================
-// AUTOFILL (VISIBLE FIELDS ONLY)
-// =========================
 function autofillDemo(fields) {
   demoFirstName.value = fields.childFirstName?.value || "";
   demoLastName.value = fields.childLastName?.value || "";
@@ -105,13 +100,10 @@ function autofillDemo(fields) {
   demoAllergies.value = fields.allergies?.value || "";
 }
 
-// =========================
-// RENDER ONLY WHAT MATTERS
-// =========================
 function renderVisibleFields(fields) {
   const rows = Object.entries(fields).map(([key, data]) => {
-    const value = data.value;
-    const conf = Math.round((data.confidence || 0) * 100);
+    const value = data?.value ?? "";
+    const conf = Math.round((data?.confidence || 0) * 100);
 
     return `
       <div style="margin-bottom:6px;">
@@ -124,9 +116,6 @@ function renderVisibleFields(fields) {
   fieldsBox.innerHTML = rows.join("");
 }
 
-// =========================
-// WARNINGS
-// =========================
 function renderWarnings(warnings) {
   if (!warnings || !warnings.length) {
     warningsBox.innerHTML = "<div>No warnings</div>";
@@ -138,9 +127,6 @@ function renderWarnings(warnings) {
     .join("");
 }
 
-// =========================
-// TEXT EXTRACTION
-// =========================
 async function extractText(file) {
   const type = file.type || "";
   const name = (file.name || "").toLowerCase();
@@ -156,9 +142,6 @@ async function extractText(file) {
   throw new Error("Unsupported file type.");
 }
 
-// =========================
-// PDF
-// =========================
 async function extractPdfText(file) {
   if (!window.pdfjsLib) {
     throw new Error("PDF library not loaded.");
@@ -171,19 +154,16 @@ async function extractPdfText(file) {
 
   let text = "";
 
-  for (let i = 1; i <= pdf.numPages; i++) {
+  for (let i = 1; i <= pdf.numPages; i += 1) {
     setStatus(`Page ${i}/${pdf.numPages}`);
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    text += content.items.map((i) => i.str).join(" ") + "\n";
+    text += content.items.map((item) => item.str || "").join(" ") + "\n";
   }
 
   return text;
 }
 
-// =========================
-// OCR (IMAGE)
-// =========================
 async function extractImageText(file) {
   if (!window.Tesseract) {
     throw new Error("OCR not loaded.");
@@ -197,22 +177,18 @@ async function extractImageText(file) {
     const result = await window.Tesseract.recognize(imageUrl, "eng", {
       logger: (m) => {
         if (!m || !m.status) return;
-        const pct = m.progress ? Math.round(m.progress * 100) : "";
-        setStatus(`OCR: ${m.status} ${pct}%`);
+        const pct =
+          typeof m.progress === "number"
+            ? Math.round(m.progress * 100)
+            : "";
+        setStatus(`OCR: ${m.status}${pct !== "" ? ` ${pct}%` : ""}`);
       },
     });
 
-    return result.data.text;
+    return result?.data?.text || "";
   } finally {
     URL.revokeObjectURL(imageUrl);
   }
-}
-
-// =========================
-// UTIL
-// =========================
-function setStatus(msg) {
-  statusBox.innerHTML = `<p>${escapeHtml(msg)}</p>`;
 }
 
 function clearOutput(clearStatus = true) {
@@ -229,7 +205,11 @@ function clearOutput(clearStatus = true) {
   demoPhysician.value = "";
   demoAllergies.value = "";
 
-  if (clearStatus) setStatus("Ready.");
+  if (clearStatus) setStatus("Vision Intake ready.");
+}
+
+function setStatus(msg) {
+  statusBox.innerHTML = `<p>${escapeHtml(msg)}</p>`;
 }
 
 function escapeHtml(value = "") {

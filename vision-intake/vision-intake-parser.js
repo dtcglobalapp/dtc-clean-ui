@@ -95,7 +95,7 @@ export function parseVisionDocument(rawText) {
 
   function setField(key, value, score = 0.5) {
     const cleaned = typeof value === "boolean" ? value : clean(value);
-    const hasValue = typeof cleaned === "boolean" ? cleaned : Boolean(cleaned);
+    const hasValue = typeof cleaned === "boolean" ? true : Boolean(cleaned);
 
     if (!hasValue) return;
 
@@ -113,6 +113,13 @@ export function parseVisionDocument(rawText) {
     if (message && !warnings.includes(message)) {
       warnings.push(message);
     }
+  }
+
+  function normalizeYesNo(value = "") {
+    const v = clean(value).toLowerCase();
+    if (["y", "yes"].includes(v)) return "Y";
+    if (["n", "no"].includes(v)) return "N";
+    return clean(value);
   }
 
   function detectDocumentType() {
@@ -143,11 +150,6 @@ export function parseVisionDocument(rawText) {
 
     if (title) {
       setField("rawDocumentTitle", title, 0.9);
-      return;
-    }
-
-    if (lower.includes("child information")) {
-      setField("rawDocumentTitle", "Child Information", 0.4);
     }
   }
 
@@ -490,13 +492,6 @@ export function parseVisionDocument(rawText) {
     }
   }
 
-  function normalizeYesNo(value = "") {
-    const v = clean(value).toLowerCase();
-    if (["y", "yes"].includes(v)) return "Y";
-    if (["n", "no"].includes(v)) return "N";
-    return clean(value);
-  }
-
   detectDocumentType();
   detectRawTitle();
   detectChildName();
@@ -537,7 +532,6 @@ export function parseVisionDocument(rawText) {
 
 function buildVisibleFields(fields, confidence, documentType) {
   const template = getFormTemplate(documentType);
-
   const result = {};
 
   for (const key of template.visible) {
