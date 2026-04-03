@@ -1,7 +1,7 @@
 import { parseVisionDocument } from "./vision-intake-parser.js";
 
 /* ============================= */
-/* ELEMENTOS UI */
+/* ELEMENTOS */
 /* ============================= */
 
 const docInput = document.getElementById("docInput");
@@ -9,6 +9,7 @@ const extractBtn = document.getElementById("extractBtn");
 const fillDemoBtn = document.getElementById("fillDemoBtn");
 
 const statusBox = document.getElementById("statusBox");
+
 const fieldsBox = document.getElementById("fieldsBox");
 const warningsBox = document.getElementById("warningsBox");
 const textPreview = document.getElementById("textPreview");
@@ -27,25 +28,28 @@ const demoAllergies = document.getElementById("demoAllergies");
 
 let latestParsed = null;
 
+/* 🔥 MODO LIMPIO */
+let CLEAN_MODE = true;
+
 /* ============================= */
-/* BOTÓN ANALIZAR */
+/* ANALIZAR */
 /* ============================= */
 
 extractBtn.addEventListener("click", async () => {
   try {
     const file = docInput.files[0];
     if (!file) {
-      alert("Please select a file");
+      alert("Select a file first");
       return;
     }
 
-    setStatus("Reading document...");
+    setStatus("Analyzing document...");
     clearOutput(false);
 
     const text = await extractDocumentText(file);
 
     if (!text) {
-      setStatus("No readable text detected.");
+      setStatus("No text detected");
       return;
     }
 
@@ -57,11 +61,13 @@ extractBtn.addEventListener("click", async () => {
     renderFields(parsed.fields);
     renderWarnings(parsed.warnings);
 
-    /* 🔥 AUTO FILL INTELIGENTE */
     autofillDemo(parsed.fields);
     autoMapForm(parsed.fields);
 
-    setStatus("Document analyzed successfully.");
+    setStatus("Form ready ✔");
+
+    /* 🔥 ACTIVAR UI LIMPIA */
+    if (CLEAN_MODE) activateCleanUI();
 
   } catch (err) {
     console.error(err);
@@ -70,21 +76,21 @@ extractBtn.addEventListener("click", async () => {
 });
 
 /* ============================= */
-/* BOTÓN MANUAL */
-/* ============================= */
 
 fillDemoBtn.addEventListener("click", () => {
   if (!latestParsed) {
-    alert("Analyze a document first.");
+    alert("Analyze first");
     return;
   }
 
   autofillDemo(latestParsed.fields);
   autoMapForm(latestParsed.fields);
+
+  if (CLEAN_MODE) activateCleanUI();
 });
 
 /* ============================= */
-/* AUTOFILL DEMO */
+/* AUTOFILL */
 /* ============================= */
 
 function autofillDemo(fields) {
@@ -99,7 +105,7 @@ function autofillDemo(fields) {
 }
 
 /* ============================= */
-/* 🔥 AUTO MAPPING UNIVERSAL */
+/* AUTO MAP UNIVERSAL */
 /* ============================= */
 
 function autoMapForm(fields) {
@@ -121,16 +127,15 @@ function autoMapForm(fields) {
 
 function matchField(context, fields) {
   const map = [
-    { keys: ["first name", "firstname", "nombre"], value: fields.childFirstName },
-    { keys: ["last name", "lastname", "apellido"], value: fields.childLastName },
+    { keys: ["first name"], value: fields.childFirstName },
+    { keys: ["last name"], value: fields.childLastName },
     { keys: ["dob", "birth"], value: fields.dob },
-    { keys: ["gender", "sex"], value: fields.gender },
+    { keys: ["gender"], value: fields.gender },
     { keys: ["guardian", "parent"], value: fields.guardianName },
-    { keys: ["phone", "tel"], value: fields.phone },
+    { keys: ["phone"], value: fields.phone },
     { keys: ["physician", "doctor"], value: fields.physician },
     { keys: ["allerg"], value: fields.allergies },
-    { keys: ["address"], value: fields.address },
-    { keys: ["meal"], value: fields.meals }
+    { keys: ["address"], value: fields.address }
   ];
 
   for (const item of map) {
@@ -160,16 +165,49 @@ function getLabel(input) {
 }
 
 /* ============================= */
+/* 🔥 UI LIMPIA */
+/* ============================= */
+
+function activateCleanUI() {
+  if (fieldsBox) fieldsBox.style.display = "none";
+  if (warningsBox) warningsBox.style.display = "none";
+  if (textPreview) textPreview.style.display = "none";
+
+  /* También oculta títulos si existen */
+  hideSectionTitles();
+}
+
+/* ============================= */
+
+function hideSectionTitles() {
+  document.querySelectorAll("h3, h4").forEach(el => {
+    const text = el.innerText.toLowerCase();
+
+    if (
+      text.includes("detected") ||
+      text.includes("warnings") ||
+      text.includes("extracted")
+    ) {
+      el.style.display = "none";
+    }
+  });
+}
+
+/* ============================= */
 /* UI */
 /* ============================= */
 
 function renderFields(fields) {
+  if (!fieldsBox) return;
+
   fieldsBox.innerHTML = Object.entries(fields)
     .map(([k, v]) => `<div><b>${k}:</b> ${v || "—"}</div>`)
     .join("");
 }
 
 function renderWarnings(warnings) {
+  if (!warningsBox) return;
+
   if (!warnings.length) {
     warningsBox.innerHTML = "No warnings";
     return;
@@ -179,16 +217,17 @@ function renderWarnings(warnings) {
 }
 
 function setStatus(msg) {
-  statusBox.innerText = msg;
+  if (statusBox) statusBox.innerText = msg;
 }
 
 function clearOutput(clearStatus = true) {
-  fieldsBox.innerHTML = "";
-  warningsBox.innerHTML = "";
-  textPreview.textContent = "";
+  if (fieldsBox) fieldsBox.innerHTML = "";
+  if (warningsBox) warningsBox.innerHTML = "";
+  if (textPreview) textPreview.textContent = "";
+
   latestParsed = null;
 
-  if (clearStatus) setStatus("Waiting for document...");
+  if (clearStatus) setStatus("Waiting...");
 }
 
 /* ============================= */
