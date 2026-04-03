@@ -1,14 +1,19 @@
 import { parseVisionDocument } from "./vision-intake-parser.js";
 
+/* ============================= */
+/* ELEMENTOS UI */
+/* ============================= */
+
 const docInput = document.getElementById("docInput");
 const extractBtn = document.getElementById("extractBtn");
 const fillDemoBtn = document.getElementById("fillDemoBtn");
-const statusBox = document.getElementById("statusBox");
 
+const statusBox = document.getElementById("statusBox");
 const fieldsBox = document.getElementById("fieldsBox");
 const warningsBox = document.getElementById("warningsBox");
 const textPreview = document.getElementById("textPreview");
 
+/* DEMO FORM */
 const demoFirstName = document.getElementById("demoFirstName");
 const demoLastName = document.getElementById("demoLastName");
 const demoDob = document.getElementById("demoDob");
@@ -18,44 +23,30 @@ const demoPhone = document.getElementById("demoPhone");
 const demoPhysician = document.getElementById("demoPhysician");
 const demoAllergies = document.getElementById("demoAllergies");
 
+/* ============================= */
+
 let latestParsed = null;
-let isBusy = false;
 
-setStatus("Vision Intake ready.");
-
-docInput.addEventListener("change", () => {
-  const file = docInput.files?.[0];
-  if (!file) {
-    setStatus("Vision Intake ready.");
-    return;
-  }
-  setStatus(`File selected: ${file.name}`);
-});
+/* ============================= */
+/* BOTÓN ANALIZAR */
+/* ============================= */
 
 extractBtn.addEventListener("click", async () => {
-  const file = docInput.files?.[0];
-
-  if (!file) {
-    alert("Please choose a file first.");
-    return;
-  }
-
-  if (isBusy) return;
-
   try {
-    isBusy = true;
-    latestParsed = null;
-    extractBtn.disabled = true;
-    fillDemoBtn.disabled = true;
-    extractBtn.textContent = "Working...";
+    const file = docInput.files[0];
+    if (!file) {
+      alert("Please select a file");
+      return;
+    }
 
+    setStatus("Reading document...");
     clearOutput(false);
-    setStatus(`Starting analysis for: ${file.name}`);
 
-    const text = await extractText(file);
+    const text = await extractDocumentText(file);
 
-    if (!text || !text.trim()) {
-      throw new Error("No readable text was extracted.");
+    if (!text) {
+      setStatus("No readable text detected.");
+      return;
     }
 
     textPreview.textContent = text;
@@ -63,160 +54,187 @@ extractBtn.addEventListener("click", async () => {
     const parsed = parseVisionDocument(text);
     latestParsed = parsed;
 
-    renderVisibleFields(parsed.visibleFields);
+    renderFields(parsed.fields);
     renderWarnings(parsed.warnings);
-    autofillDemo(parsed.visibleFields);
+
+    /* 🔥 AUTO FILL INTELIGENTE */
+    autofillDemo(parsed.fields);
+    autoMapForm(parsed.fields);
 
     setStatus("Document analyzed successfully.");
-  } catch (error) {
-    console.error("Vision Intake error:", error);
-    setStatus(`Error: ${error.message || "Unknown error"}`);
-  } finally {
-    isBusy = false;
-    extractBtn.disabled = false;
-    fillDemoBtn.disabled = false;
-    extractBtn.textContent = "Extract & Analyze";
+
+  } catch (err) {
+    console.error(err);
+    setStatus("Error analyzing document");
   }
 });
+
+/* ============================= */
+/* BOTÓN MANUAL */
+/* ============================= */
 
 fillDemoBtn.addEventListener("click", () => {
   if (!latestParsed) {
-    alert("Analyze document first.");
+    alert("Analyze a document first.");
     return;
   }
 
-  autofillDemo(latestParsed.visibleFields);
-  setStatus("Form autofilled.");
+  autofillDemo(latestParsed.fields);
+  autoMapForm(latestParsed.fields);
 });
 
+/* ============================= */
+/* AUTOFILL DEMO */
+/* ============================= */
+
 function autofillDemo(fields) {
-  demoFirstName.value = fields.childFirstName?.value || "";
-  demoLastName.value = fields.childLastName?.value || "";
-  demoDob.value = fields.dob?.value || "";
-  demoGender.value = fields.gender?.value || "";
-  demoGuardian.value = fields.guardianName?.value || "";
-  demoPhone.value = fields.phone?.value || "";
-  demoPhysician.value = fields.physician?.value || "";
-  demoAllergies.value = fields.allergies?.value || "";
+  demoFirstName.value = fields.childFirstName || "";
+  demoLastName.value = fields.childLastName || "";
+  demoDob.value = fields.dob || "";
+  demoGender.value = fields.gender || "";
+  demoGuardian.value = fields.guardianName || "";
+  demoPhone.value = fields.phone || "";
+  demoPhysician.value = fields.physician || "";
+  demoAllergies.value = fields.allergies || "";
 }
 
-function renderVisibleFields(fields) {
-  const rows = Object.entries(fields).map(([key, data]) => {
-    const value = data?.value ?? "";
-    const conf = Math.round((data?.confidence || 0) * 100);
+/* ============================= */
+/* 🔥 AUTO MAPPING UNIVERSAL */
+/* ============================= */
 
-    return `
-      <div style="margin-bottom:6px;">
-        <strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}
-        <span style="color:gray; font-size:11px;">(${conf}%)</span>
-      </div>
-    `;
+function autoMapForm(fields) {
+  const inputs = document.querySelectorAll("input, textarea, select");
+
+  inputs.forEach(input => {
+    const label = getLabel(input);
+    const context = `${label} ${input.placeholder} ${input.name} ${input.id}`.toLowerCase();
+
+    const value = matchField(context, fields);
+
+    if (value !== null && value !== undefined) {
+      input.value = value;
+    }
   });
-
-  fieldsBox.innerHTML = rows.join("");
 }
 
-function renderWarnings(warnings) {
-  if (!warnings || !warnings.length) {
-    warningsBox.innerHTML = "<div>No warnings</div>";
-    return;
+/* ============================= */
+
+function matchField(context, fields) {
+  const map = [
+    { keys: ["first name", "firstname", "nombre"], value: fields.childFirstName },
+    { keys: ["last name", "lastname", "apellido"], value: fields.childLastName },
+    { keys: ["dob", "birth"], value: fields.dob },
+    { keys: ["gender", "sex"], value: fields.gender },
+    { keys: ["guardian", "parent"], value: fields.guardianName },
+    { keys: ["phone", "tel"], value: fields.phone },
+    { keys: ["physician", "doctor"], value: fields.physician },
+    { keys: ["allerg"], value: fields.allergies },
+    { keys: ["address"], value: fields.address },
+    { keys: ["meal"], value: fields.meals }
+  ];
+
+  for (const item of map) {
+    for (const key of item.keys) {
+      if (context.includes(key)) return item.value || "";
+    }
   }
 
-  warningsBox.innerHTML = warnings
-    .map((w) => `<div>⚠️ ${escapeHtml(w)}</div>`)
+  return null;
+}
+
+/* ============================= */
+
+function getLabel(input) {
+  let label = "";
+
+  if (input.id) {
+    const el = document.querySelector(`label[for="${input.id}"]`);
+    if (el) label += el.innerText;
+  }
+
+  if (!label && input.closest("label")) {
+    label += input.closest("label").innerText;
+  }
+
+  return label;
+}
+
+/* ============================= */
+/* UI */
+/* ============================= */
+
+function renderFields(fields) {
+  fieldsBox.innerHTML = Object.entries(fields)
+    .map(([k, v]) => `<div><b>${k}:</b> ${v || "—"}</div>`)
     .join("");
 }
 
-async function extractText(file) {
-  const type = file.type || "";
-  const name = (file.name || "").toLowerCase();
-
-  if (type === "application/pdf" || name.endsWith(".pdf")) {
-    return await extractPdfText(file);
+function renderWarnings(warnings) {
+  if (!warnings.length) {
+    warningsBox.innerHTML = "No warnings";
+    return;
   }
 
-  if (type.startsWith("image/")) {
-    return await extractImageText(file);
-  }
-
-  throw new Error("Unsupported file type.");
+  warningsBox.innerHTML = warnings.map(w => `<div>⚠ ${w}</div>`).join("");
 }
 
-async function extractPdfText(file) {
-  if (!window.pdfjsLib) {
-    throw new Error("PDF library not loaded.");
-  }
-
-  setStatus("Reading PDF...");
-
-  const buffer = await file.arrayBuffer();
-  const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
-
-  let text = "";
-
-  for (let i = 1; i <= pdf.numPages; i += 1) {
-    setStatus(`Page ${i}/${pdf.numPages}`);
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map((item) => item.str || "").join(" ") + "\n";
-  }
-
-  return text;
-}
-
-async function extractImageText(file) {
-  if (!window.Tesseract) {
-    throw new Error("OCR not loaded.");
-  }
-
-  setStatus("Running OCR...");
-
-  const imageUrl = URL.createObjectURL(file);
-
-  try {
-    const result = await window.Tesseract.recognize(imageUrl, "eng", {
-      logger: (m) => {
-        if (!m || !m.status) return;
-        const pct =
-          typeof m.progress === "number"
-            ? Math.round(m.progress * 100)
-            : "";
-        setStatus(`OCR: ${m.status}${pct !== "" ? ` ${pct}%` : ""}`);
-      },
-    });
-
-    return result?.data?.text || "";
-  } finally {
-    URL.revokeObjectURL(imageUrl);
-  }
+function setStatus(msg) {
+  statusBox.innerText = msg;
 }
 
 function clearOutput(clearStatus = true) {
   fieldsBox.innerHTML = "";
   warningsBox.innerHTML = "";
   textPreview.textContent = "";
+  latestParsed = null;
 
-  demoFirstName.value = "";
-  demoLastName.value = "";
-  demoDob.value = "";
-  demoGender.value = "";
-  demoGuardian.value = "";
-  demoPhone.value = "";
-  demoPhysician.value = "";
-  demoAllergies.value = "";
-
-  if (clearStatus) setStatus("Vision Intake ready.");
+  if (clearStatus) setStatus("Waiting for document...");
 }
 
-function setStatus(msg) {
-  statusBox.innerHTML = `<p>${escapeHtml(msg)}</p>`;
+/* ============================= */
+/* OCR + PDF */
+/* ============================= */
+
+async function extractDocumentText(file) {
+  const name = file.name.toLowerCase();
+  const type = file.type;
+
+  if (name.endsWith(".pdf") || type === "application/pdf") {
+    return extractPdfText(file);
+  }
+
+  if (type.startsWith("image")) {
+    return extractImageText(file);
+  }
+
+  throw new Error("Unsupported file type");
 }
 
-function escapeHtml(value = "") {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+/* ============================= */
+
+async function extractPdfText(file) {
+  const pdfjsLib = await import("https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.mjs");
+
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+  let text = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(i => i.str).join(" ") + "\n";
+  }
+
+  return text;
+}
+
+/* ============================= */
+
+async function extractImageText(file) {
+  const Tesseract = await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
+
+  const { data } = await Tesseract.recognize(file, "eng");
+
+  return data.text;
 }
