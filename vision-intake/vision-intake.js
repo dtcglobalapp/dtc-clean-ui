@@ -1,6 +1,12 @@
 import { parseVisionDocument } from "./vision-intake-parser.js";
 
 /* ============================= */
+/* CONFIG */
+/* ============================= */
+
+const OCR_API_URL = "https://dtc-ocr-backend-production.up.railway.app/extract-text";
+
+/* ============================= */
 /* ELEMENTOS */
 /* ============================= */
 
@@ -27,8 +33,6 @@ const demoAllergies = document.getElementById("demoAllergies");
 /* ============================= */
 
 let latestParsed = null;
-
-/* 🔥 MODO LIMPIO */
 let CLEAN_MODE = true;
 
 /* ============================= */
@@ -38,24 +42,25 @@ let CLEAN_MODE = true;
 extractBtn.addEventListener("click", async () => {
   try {
     const file = docInput.files[0];
+
     if (!file) {
       alert("Select a file first");
       return;
     }
 
-    setStatus("Analyzing document...");
+    setStatus("Uploading file to OCR server...");
     clearOutput(false);
 
-    const text = await extractDocumentText(file);
+    const rawText = await extractTextFromBackend(file);
 
-    if (!text) {
+    if (!rawText || !rawText.trim()) {
       setStatus("No text detected");
       return;
     }
 
-    textPreview.textContent = text;
+    textPreview.textContent = rawText;
 
-    const parsed = parseVisionDocument(text);
+    const parsed = parseVisionDocument(rawText);
     latestParsed = parsed;
 
     renderFields(parsed.fields);
@@ -66,12 +71,10 @@ extractBtn.addEventListener("click", async () => {
 
     setStatus("Form ready ✔");
 
-    /* 🔥 ACTIVAR UI LIMPIA */
     if (CLEAN_MODE) activateCleanUI();
-
   } catch (err) {
     console.error(err);
-    setStatus("Error analyzing document");
+    setStatus(getFriendlyError(err));
   }
 });
 
@@ -88,6 +91,38 @@ fillDemoBtn.addEventListener("click", () => {
 
   if (CLEAN_MODE) activateCleanUI();
 });
+
+/* ============================= */
+/* BACKEND OCR */
+/* ============================= */
+
+async function extractTextFromBackend(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(OCR_API_URL, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.error || `OCR server error (${response.status})`);
+  }
+
+  return data.text || "";
+}
+
+function getFriendlyError(error) {
+  const raw = String(error?.message || "Unknown error");
+
+  if (raw.toLowerCase().includes("failed to fetch")) {
+    return "Cannot reach OCR server";
+  }
+
+  return `Error analyzing document: ${raw}`;
+}
 
 /* ============================= */
 /* AUTOFILL */
@@ -111,43 +146,44 @@ function autofillDemo(fields) {
 function autoMapForm(fields) {
   const inputs = document.querySelectorAll("input, textarea, select");
 
-  inputs.forEach(input => {
+  inputs.forEach((input) => {
     const label = getLabel(input);
-    const context = `${label} ${input.placeholder} ${input.name} ${input.id}`.toLowerCase();
+    const context = `${label} ${input.placeholder || ""} ${input.name || ""} ${input.id || ""}`.toLowerCase();
 
     const value = matchField(context, fields);
 
     if (value !== null && value !== undefined) {
       input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
     }
   });
 }
 
-/* ============================= */
-
 function matchField(context, fields) {
   const map = [
-    { keys: ["first name"], value: fields.childFirstName },
-    { keys: ["last name"], value: fields.childLastName },
-    { keys: ["dob", "birth"], value: fields.dob },
-    { keys: ["gender"], value: fields.gender },
-    { keys: ["guardian", "parent"], value: fields.guardianName },
-    { keys: ["phone"], value: fields.phone },
+    { keys: ["first name", "firstname", "nombre", "child name", "student name"], value: fields.childFirstName },
+    { keys: ["last name", "lastname", "apellido"], value: fields.childLastName },
+    { keys: ["dob", "birth", "date of birth", "fecha"], value: fields.dob },
+    { keys: ["gender", "sex"], value: fields.gender },
+    { keys: ["guardian", "parent", "mother", "father"], value: fields.guardianName },
+    { keys: ["phone", "tel", "telefono"], value: fields.phone },
     { keys: ["physician", "doctor"], value: fields.physician },
-    { keys: ["allerg"], value: fields.allergies },
-    { keys: ["address"], value: fields.address }
+    { keys: ["allerg", "allergy"], value: fields.allergies },
+    { keys: ["address", "direccion"], value: fields.address },
+    { keys: ["meal", "food"], value: fields.meals }
   ];
 
   for (const item of map) {
     for (const key of item.keys) {
-      if (context.includes(key)) return item.value || "";
+      if (context.includes(key)) {
+        return item.value || "";
+      }
     }
   }
 
   return null;
 }
-
-/* ============================= */
 
 function getLabel(input) {
   let label = "";
@@ -165,7 +201,7 @@ function getLabel(input) {
 }
 
 /* ============================= */
-/* 🔥 UI LIMPIA */
+/* UI LIMPIA */
 /* ============================= */
 
 function activateCleanUI() {
@@ -173,15 +209,12 @@ function activateCleanUI() {
   if (warningsBox) warningsBox.style.display = "none";
   if (textPreview) textPreview.style.display = "none";
 
-  /* También oculta títulos si existen */
   hideSectionTitles();
 }
 
-/* ============================= */
-
 function hideSectionTitles() {
-  document.querySelectorAll("h3, h4").forEach(el => {
-    const text = el.innerText.toLowerCase();
+  document.querySelectorAll("h3, h4").forEach((el) => {
+    const text = (el.innerText || "").toLowerCase();
 
     if (
       text.includes("detected") ||
@@ -201,7 +234,7 @@ function renderFields(fields) {
   if (!fieldsBox) return;
 
   fieldsBox.innerHTML = Object.entries(fields)
-    .map(([k, v]) => `<div><b>${k}:</b> ${v || "—"}</div>`)
+    .map(([k, v]) => `<div><b>${escapeHtml(k)}:</b> ${escapeHtml(String(v || "—"))}</div>`)
     .join("");
 }
 
@@ -213,7 +246,9 @@ function renderWarnings(warnings) {
     return;
   }
 
-  warningsBox.innerHTML = warnings.map(w => `<div>⚠ ${w}</div>`).join("");
+  warningsBox.innerHTML = warnings
+    .map((w) => `<div>⚠ ${escapeHtml(w)}</div>`)
+    .join("");
 }
 
 function setStatus(msg) {
@@ -230,50 +265,11 @@ function clearOutput(clearStatus = true) {
   if (clearStatus) setStatus("Waiting...");
 }
 
-/* ============================= */
-/* OCR + PDF */
-/* ============================= */
-
-async function extractDocumentText(file) {
-  const name = file.name.toLowerCase();
-  const type = file.type;
-
-  if (name.endsWith(".pdf") || type === "application/pdf") {
-    return extractPdfText(file);
-  }
-
-  if (type.startsWith("image")) {
-    return extractImageText(file);
-  }
-
-  throw new Error("Unsupported file type");
-}
-
-/* ============================= */
-
-async function extractPdfText(file) {
-  const pdfjsLib = await import("https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.mjs");
-
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-
-  let text = "";
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(i => i.str).join(" ") + "\n";
-  }
-
-  return text;
-}
-
-/* ============================= */
-
-async function extractImageText(file) {
-  const Tesseract = await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
-
-  const { data } = await Tesseract.recognize(file, "eng");
-
-  return data.text;
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
