@@ -1,5 +1,5 @@
-import { parseVisionDocument } from "./vision-intake-parser.js";
-import { autoMapForm } from "./vision-auto-mapper.js";
+import { parseVisionDocument } from "./vision-intake-parser.js?v=20260405-visionfix4";
+import { autoMapForm } from "./vision-auto-mapper.js?v=20260405-visionfix4";
 
 /* ============================= */
 /* CONFIG */
@@ -145,11 +145,19 @@ function autofillDemo(fields) {
   demoPhysician.value = fields.physician || "";
   demoAllergies.value = fields.allergies || "";
 
-  [demoFirstName, demoLastName, demoDob, demoGender, demoGuardian, demoPhone, demoPhysician, demoAllergies]
-    .forEach((input) => {
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    });
+  [
+    demoFirstName,
+    demoLastName,
+    demoDob,
+    demoGender,
+    demoGuardian,
+    demoPhone,
+    demoPhysician,
+    demoAllergies
+  ].forEach((input) => {
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 }
 
 /* ============================= */

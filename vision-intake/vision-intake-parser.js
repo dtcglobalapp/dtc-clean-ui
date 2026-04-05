@@ -194,11 +194,6 @@ export function parseVisionDocument(rawText) {
       }
     }
 
-    if (!childFullName) {
-      const fallback = compact.match(/\bChild Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] || "";
-      childFullName = fallback;
-    }
-
     if (childFullName) {
       const parts = splitName(childFullName);
       setField("childFirstName", parts.first, 0.99);
@@ -269,7 +264,7 @@ export function parseVisionDocument(rawText) {
     const contactSection = getSectionSlice("contact", ["attendance details", "school details"]);
     const address =
       matchAfterLabel("Address", contactSection) ||
-      matchAfterLabel("Address", compact) ||
+      matchAfterLabel("Address") ||
       "";
 
     if (address) {
