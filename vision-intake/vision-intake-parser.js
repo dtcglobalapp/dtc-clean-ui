@@ -71,18 +71,24 @@ export function parseVisionDocument(rawText) {
     return clean(value);
   }
 
-  function splitName(fullName = "") {
-    const cleaned = clean(fullName);
+  function splitPersonName(fullName = "") {
+    const cleaned = clean(fullName)
+      .replace(/\b(primary|secondary)\b/gi, "")
+      .replace(/\b(dob|date of birth|phone|address|email)\b.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
     if (!cleaned) return { first: "", last: "" };
 
-    const parts = cleaned.split(/\s+/);
+    const parts = cleaned.split(/\s+/).filter(Boolean);
+
     if (parts.length === 1) {
       return { first: parts[0], last: "" };
     }
 
     return {
-      first: parts.slice(0, -1).join(" "),
-      last: parts.slice(-1)[0],
+      first: parts[0],
+      last: parts.slice(1).join(" "),
     };
   }
 
@@ -170,17 +176,21 @@ export function parseVisionDocument(rawText) {
     const contactSection = getSectionSlice("contact", ["attendance details", "school details"]);
 
     let childFullName = "";
-    let guardianName = "";
+    let guardianFullName = "";
 
     if (childSection) {
-      childFullName = matchAfterLabel("Name", childSection);
+      childFullName =
+        childSection.match(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
+        "";
     }
 
     if (contactSection) {
-      guardianName = matchAfterLabel("Name", contactSection);
+      guardianFullName =
+        contactSection.match(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
+        "";
     }
 
-    if (!childFullName || !guardianName) {
+    if (!childFullName || !guardianFullName) {
       const allNames = [...compact.matchAll(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/g)]
         .map((m) => clean(m[1]))
         .filter(Boolean);
@@ -189,23 +199,26 @@ export function parseVisionDocument(rawText) {
         childFullName = allNames[0];
       }
 
-      if (!guardianName && allNames.length >= 2) {
-        guardianName = allNames[1];
+      if (!guardianFullName && allNames.length >= 2) {
+        guardianFullName = allNames[1];
       }
     }
 
     if (childFullName) {
-      const parts = splitName(childFullName);
-      setField("childFirstName", parts.first, 0.99);
-      setField("childLastName", parts.last, 0.99);
+      const child = splitPersonName(childFullName);
+      setField("childFirstName", child.first, 0.99);
+      setField("childLastName", child.last, 0.99);
     } else {
       pushWarning("Child name not confidently detected");
     }
 
-    if (guardianName) {
-      const childFull = `${fields.childFirstName} ${fields.childLastName}`.trim().toLowerCase();
-      if (guardianName.toLowerCase() !== childFull) {
-        setField("guardianName", guardianName, 0.99);
+    if (guardianFullName) {
+      const guardian = splitPersonName(guardianFullName);
+      const guardianJoined = clean(`${guardian.first} ${guardian.last}`);
+      const childJoined = clean(`${fields.childFirstName} ${fields.childLastName}`).toLowerCase();
+
+      if (guardianJoined && guardianJoined.toLowerCase() !== childJoined) {
+        setField("guardianName", guardianJoined, 0.99);
       }
     } else {
       pushWarning("Guardian name not confidently detected");
@@ -498,12 +511,7 @@ function getFormTemplate(documentType) {
         "gender",
         "guardianName",
         "phone",
-        "physician",
-        "allergies",
-        "address",
-        "meals",
-        "enrollmentDate",
-        "attendanceSchedule",
+        "address"
       ],
     },
     enrollment_form: {
@@ -511,13 +519,11 @@ function getFormTemplate(documentType) {
         "childFirstName",
         "childLastName",
         "dob",
+        "gender",
         "guardianName",
         "phone",
         "address",
-        "enrollmentDate",
-        "meals",
-        "attendanceSchedule",
-        "paySource",
+        "enrollmentDate"
       ],
     },
     medical_form: {
