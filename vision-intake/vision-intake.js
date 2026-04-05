@@ -1,4 +1,5 @@
 import { parseVisionDocument } from "./vision-intake-parser.js";
+import { autoMapForm } from "./vision-auto-mapper.js";
 
 /* ============================= */
 /* CONFIG */
@@ -15,7 +16,6 @@ const extractBtn = document.getElementById("extractBtn");
 const fillDemoBtn = document.getElementById("fillDemoBtn");
 
 const statusBox = document.getElementById("statusBox");
-
 const fieldsBox = document.getElementById("fieldsBox");
 const warningsBox = document.getElementById("warningsBox");
 const textPreview = document.getElementById("textPreview");
@@ -30,10 +30,8 @@ const demoPhone = document.getElementById("demoPhone");
 const demoPhysician = document.getElementById("demoPhysician");
 const demoAllergies = document.getElementById("demoAllergies");
 
-/* ============================= */
-
 let latestParsed = null;
-let CLEAN_MODE = true;
+let CLEAN_MODE = false;
 
 /* ============================= */
 /* ANALIZAR */
@@ -59,6 +57,7 @@ extractBtn.addEventListener("click", async () => {
     }
 
     textPreview.textContent = rawText;
+    setStatus("Parsing document...");
 
     const parsed = parseVisionDocument(rawText);
     latestParsed = parsed;
@@ -71,7 +70,11 @@ extractBtn.addEventListener("click", async () => {
 
     setStatus("Form ready ✔");
 
-    if (CLEAN_MODE) activateCleanUI();
+    if (CLEAN_MODE) {
+      activateCleanUI();
+    } else {
+      deactivateCleanUI();
+    }
   } catch (err) {
     console.error(err);
     setStatus(getFriendlyError(err));
@@ -89,7 +92,11 @@ fillDemoBtn.addEventListener("click", () => {
   autofillDemo(latestParsed.fields);
   autoMapForm(latestParsed.fields);
 
-  if (CLEAN_MODE) activateCleanUI();
+  if (CLEAN_MODE) {
+    activateCleanUI();
+  } else {
+    deactivateCleanUI();
+  }
 });
 
 /* ============================= */
@@ -137,67 +144,12 @@ function autofillDemo(fields) {
   demoPhone.value = fields.phone || "";
   demoPhysician.value = fields.physician || "";
   demoAllergies.value = fields.allergies || "";
-}
 
-/* ============================= */
-/* AUTO MAP UNIVERSAL */
-/* ============================= */
-
-function autoMapForm(fields) {
-  const inputs = document.querySelectorAll("input, textarea, select");
-
-  inputs.forEach((input) => {
-    const label = getLabel(input);
-    const context = `${label} ${input.placeholder || ""} ${input.name || ""} ${input.id || ""}`.toLowerCase();
-
-    const value = matchField(context, fields);
-
-    if (value !== null && value !== undefined) {
-      input.value = value;
+  [demoFirstName, demoLastName, demoDob, demoGender, demoGuardian, demoPhone, demoPhysician, demoAllergies]
+    .forEach((input) => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  });
-}
-
-function matchField(context, fields) {
-  const map = [
-    { keys: ["first name", "firstname", "nombre", "child name", "student name"], value: fields.childFirstName },
-    { keys: ["last name", "lastname", "apellido"], value: fields.childLastName },
-    { keys: ["dob", "birth", "date of birth", "fecha"], value: fields.dob },
-    { keys: ["gender", "sex"], value: fields.gender },
-    { keys: ["guardian", "parent", "mother", "father"], value: fields.guardianName },
-    { keys: ["phone", "tel", "telefono"], value: fields.phone },
-    { keys: ["physician", "doctor"], value: fields.physician },
-    { keys: ["allerg", "allergy"], value: fields.allergies },
-    { keys: ["address", "direccion"], value: fields.address },
-    { keys: ["meal", "food"], value: fields.meals }
-  ];
-
-  for (const item of map) {
-    for (const key of item.keys) {
-      if (context.includes(key)) {
-        return item.value || "";
-      }
-    }
-  }
-
-  return null;
-}
-
-function getLabel(input) {
-  let label = "";
-
-  if (input.id) {
-    const el = document.querySelector(`label[for="${input.id}"]`);
-    if (el) label += el.innerText;
-  }
-
-  if (!label && input.closest("label")) {
-    label += input.closest("label").innerText;
-  }
-
-  return label;
+    });
 }
 
 /* ============================= */
@@ -208,21 +160,28 @@ function activateCleanUI() {
   if (fieldsBox) fieldsBox.style.display = "none";
   if (warningsBox) warningsBox.style.display = "none";
   if (textPreview) textPreview.style.display = "none";
-
   hideSectionTitles();
+}
+
+function deactivateCleanUI() {
+  if (fieldsBox) fieldsBox.style.display = "";
+  if (warningsBox) warningsBox.style.display = "";
+  if (textPreview) textPreview.style.display = "";
+  showSectionTitles();
 }
 
 function hideSectionTitles() {
   document.querySelectorAll("h3, h4").forEach((el) => {
     const text = (el.innerText || "").toLowerCase();
-
-    if (
-      text.includes("detected") ||
-      text.includes("warnings") ||
-      text.includes("extracted")
-    ) {
+    if (text.includes("detected") || text.includes("warnings") || text.includes("extracted")) {
       el.style.display = "none";
     }
+  });
+}
+
+function showSectionTitles() {
+  document.querySelectorAll("h3, h4").forEach((el) => {
+    el.style.display = "";
   });
 }
 

@@ -115,13 +115,6 @@ export function parseVisionDocument(rawText) {
     return clean(value);
   }
 
-  function matchLabelValue(label) {
-    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`\\b${escaped}\\s*:\\s*(.+?)(?=\\s+[A-Z][A-Za-z /()'-]{1,40}:|$)`, "i");
-    const match = compact.match(regex);
-    return match?.[1] ? clean(match[1]) : "";
-  }
-
   function getSectionSlice(startLabel, endLabels = []) {
     const startIndex = lower.indexOf(startLabel.toLowerCase());
     if (startIndex === -1) return "";
@@ -138,9 +131,19 @@ export function parseVisionDocument(rawText) {
     return compact.slice(startIndex, endIndex).trim();
   }
 
+  function matchAfterLabel(label, haystack = compact) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(
+      `\\b${escaped}\\s*:\\s*(.+?)(?=\\s+(?:[A-Z][A-Za-z /()'&.-]{1,40}:|Mo:|Tu:|We:|Th:|Fr:|Sa:|Su:)|$)`,
+      "i"
+    );
+    const match = haystack.match(regex);
+    return match?.[1] ? clean(match[1]) : "";
+  }
+
   function detectDocumentType() {
     if (lower.includes("child details") && lower.includes("contact")) {
-      setField("documentType", "child_information", 0.98);
+      setField("documentType", "child_information", 0.99);
       return;
     }
 
@@ -162,68 +165,56 @@ export function parseVisionDocument(rawText) {
     setField("documentType", "unknown", 0.2);
   }
 
-  function detectChildAndGuardianNamesFromSections() {
+  function detectNames() {
     const childSection = getSectionSlice("child details", ["contact", "attendance details", "school details"]);
     const contactSection = getSectionSlice("contact", ["attendance details", "school details"]);
 
+    let childFullName = "";
+    let guardianName = "";
+
     if (childSection) {
-      const childName = childSection.match(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] || "";
-      if (childName) {
-        const parts = splitName(childName);
-        setField("childFirstName", parts.first, 0.99);
-        setField("childLastName", parts.last, 0.99);
-      }
+      childFullName = matchAfterLabel("Name", childSection);
     }
 
     if (contactSection) {
-      const guardianName = contactSection.match(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] || "";
-      if (guardianName) {
-        setField("guardianName", guardianName, 0.99);
+      guardianName = matchAfterLabel("Name", contactSection);
+    }
+
+    if (!childFullName || !guardianName) {
+      const allNames = [...compact.matchAll(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/g)]
+        .map((m) => clean(m[1]))
+        .filter(Boolean);
+
+      if (!childFullName && allNames.length >= 1) {
+        childFullName = allNames[0];
+      }
+
+      if (!guardianName && allNames.length >= 2) {
+        guardianName = allNames[1];
       }
     }
-  }
 
-  function detectChildNameFallback() {
-    if (fields.childFirstName || fields.childLastName) return;
+    if (!childFullName) {
+      const fallback = compact.match(/\bChild Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] || "";
+      childFullName = fallback;
+    }
 
-    const childDetailsSection = getSectionSlice("child details", ["contact", "attendance details", "school details"]);
-    const fallbackName = childDetailsSection.match(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1]
-      || compact.match(/\bChild Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1]
-      || "";
-
-    if (!fallbackName) {
+    if (childFullName) {
+      const parts = splitName(childFullName);
+      setField("childFirstName", parts.first, 0.99);
+      setField("childLastName", parts.last, 0.99);
+    } else {
       pushWarning("Child name not confidently detected");
-      return;
     }
 
-    const parts = splitName(fallbackName);
-    setField("childFirstName", parts.first, 0.9);
-    setField("childLastName", parts.last, 0.9);
-  }
-
-  function detectGuardianNameFallback() {
-    if (fields.guardianName) return;
-
-    const contactSection = getSectionSlice("contact", ["attendance details", "school details"]);
-    let guardianName =
-      contactSection.match(/\bName:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
-      compact.match(/\bGuardian Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
-      compact.match(/\bParent(?:\/Guardian)? Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
-      compact.match(/\bMother(?:'s)? Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
-      compact.match(/\bFather(?:'s)? Name:\s*([A-Z][A-Za-z'.,-]+(?:\s+[A-Z][A-Za-z'.,-]+){1,5})/i)?.[1] ||
-      "";
-
-    const childFull = `${fields.childFirstName} ${fields.childLastName}`.trim().toLowerCase();
-    if (guardianName && guardianName.toLowerCase() === childFull) {
-      guardianName = "";
-    }
-
-    if (!guardianName) {
+    if (guardianName) {
+      const childFull = `${fields.childFirstName} ${fields.childLastName}`.trim().toLowerCase();
+      if (guardianName.toLowerCase() !== childFull) {
+        setField("guardianName", guardianName, 0.99);
+      }
+    } else {
       pushWarning("Guardian name not confidently detected");
-      return;
     }
-
-    setField("guardianName", guardianName, 0.88);
   }
 
   function detectDob() {
@@ -258,9 +249,11 @@ export function parseVisionDocument(rawText) {
 
   function detectPhone() {
     const contactSection = getSectionSlice("contact", ["attendance details", "school details"]);
+
     const phoneRaw =
       contactSection.match(/\bPrimary\s*-\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i)?.[1] ||
-      contactSection.match(/\bPhone:\s*(?:Primary\s*-\s*)?(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i)?.[1] ||
+      contactSection.match(/\bSecondary\s*-\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i)?.[1] ||
+      compact.match(/\bPrimary\s*-\s*(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/i)?.[1] ||
       compact.match(/(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/)?.[1] ||
       "";
 
@@ -275,8 +268,8 @@ export function parseVisionDocument(rawText) {
   function detectAddress() {
     const contactSection = getSectionSlice("contact", ["attendance details", "school details"]);
     const address =
-      contactSection.match(/\bAddress:\s*(.+?)(?=\s+[A-Z][A-Za-z /()'-]{1,40}:|$)/i)?.[1] ||
-      compact.match(/\bAddress:\s*(.+?)(?=\s+[A-Z][A-Za-z /()'-]{1,40}:|$)/i)?.[1] ||
+      matchAfterLabel("Address", contactSection) ||
+      matchAfterLabel("Address", compact) ||
       "";
 
     if (address) {
@@ -285,10 +278,7 @@ export function parseVisionDocument(rawText) {
   }
 
   function detectEnrollmentDate() {
-    const value =
-      compact.match(/\bEnrollment date:\s*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{2,4})/i)?.[1] ||
-      "";
-
+    const value = matchAfterLabel("Enrollment date");
     if (value) {
       setField("enrollmentDate", value, 0.92);
     }
@@ -296,10 +286,7 @@ export function parseVisionDocument(rawText) {
 
   function detectMeals() {
     const attendanceSection = getSectionSlice("attendance details", ["school details"]);
-    const value =
-      attendanceSection.match(/\bMeals:\s*(.+?)(?=\s+[A-Z][A-Za-z /()?-]{1,50}:|$)/i)?.[1] ||
-      "";
-
+    const value = matchAfterLabel("Meals", attendanceSection);
     if (value) {
       setField("meals", value, 0.9);
     }
@@ -307,78 +294,52 @@ export function parseVisionDocument(rawText) {
 
   function detectAttendance() {
     const attendanceSection = getSectionSlice("attendance details", ["school details"]);
-    const matches = attendanceSection.match(
-      /(?:Mo|Tu|We|Th|Fr|Sa|Su):\s*[0-9:AMPamp\s\-]{5,40}/g
-    );
-
-    if (matches?.length) {
-      setField("attendanceSchedule", matches.map(clean).join(" | "), 0.88);
-      return;
-    }
-
     const rows = [...attendanceSection.matchAll(/\b(Mo|Tu|We|Th|Fr|Sa|Su):\s*([0-9: ]+[AP]M\s*-\s*[0-9: ]+[AP]M)/gi)];
+
     if (rows.length) {
       setField(
         "attendanceSchedule",
         rows.map((m) => `${m[1]}: ${clean(m[2])}`).join(" | "),
-        0.88
+        0.9
       );
     }
   }
 
   function detectRelationToProvider() {
-    const value = matchLabelValue("Relation to provider");
-    if (value) {
-      setField("relationToProvider", value, 0.88);
-    }
+    const value = matchAfterLabel("Relation to provider");
+    if (value) setField("relationToProvider", value, 0.88);
   }
 
   function detectSpecialNeeds() {
-    const value =
-      compact.match(/\bSpecial needs:\s*([YN]|Yes|No)\b/i)?.[1] ||
-      "";
-
-    if (value) {
-      setField("specialNeeds", normalizeYesNo(value), 0.86);
-    }
+    const value = compact.match(/\bSpecial needs:\s*([YN]|Yes|No)\b/i)?.[1] || "";
+    if (value) setField("specialNeeds", normalizeYesNo(value), 0.86);
   }
 
   function detectSpecialDiet() {
-    const value =
-      compact.match(/\bSpecial diet:\s*([YN]|Yes|No)\b/i)?.[1] ||
-      "";
-
-    if (value) {
-      setField("specialDiet", normalizeYesNo(value), 0.86);
-    }
+    const value = compact.match(/\bSpecial diet:\s*([YN]|Yes|No)\b/i)?.[1] || "";
+    if (value) setField("specialDiet", normalizeYesNo(value), 0.86);
   }
 
   function detectPaySource() {
-    const value = matchLabelValue("Pay source");
-    if (value) {
-      setField("paySource", value, 0.88);
-    }
+    const value = matchAfterLabel("Pay source");
+    if (value) setField("paySource", value, 0.88);
   }
 
   function detectRace() {
-    const value = matchLabelValue("Race");
-    if (value) {
-      setField("race", value, 0.86);
-    }
+    const value = matchAfterLabel("Race");
+    if (value) setField("race", value, 0.86);
   }
 
   function detectEthnicity() {
-    const value = matchLabelValue("Ethnicity");
-    if (value) {
-      setField("ethnicity", value, 0.86);
-    }
+    const value = matchAfterLabel("Ethnicity");
+    if (value) setField("ethnicity", value, 0.86);
   }
 
   function detectPhysician() {
     const value =
-      compact.match(/\bPhysician:\s*([A-Za-z .,'-]{3,100})/i)?.[1] ||
-      compact.match(/\bDoctor:\s*([A-Za-z .,'-]{3,100})/i)?.[1] ||
-      compact.match(/\bPediatrician:\s*([A-Za-z .,'-]{3,100})/i)?.[1] ||
+      matchAfterLabel("Physician") ||
+      matchAfterLabel("Doctor") ||
+      matchAfterLabel("Pediatrician") ||
       "";
 
     if (value) {
@@ -388,8 +349,9 @@ export function parseVisionDocument(rawText) {
 
   function detectAllergies() {
     let value =
-      compact.match(/\bAllerg(?:y|ies):\s*([A-Za-z0-9 ,.'()\/-]{2,200})/i)?.[1] ||
-      compact.match(/\bFood Allergies:\s*([A-Za-z0-9 ,.'()\/-]{2,200})/i)?.[1] ||
+      matchAfterLabel("Allergies") ||
+      matchAfterLabel("Allergy") ||
+      matchAfterLabel("Food Allergies") ||
       "";
 
     if (!value && /no known allergies/i.test(compact)) {
@@ -425,16 +387,7 @@ export function parseVisionDocument(rawText) {
       "email",
       "address",
       "meals",
-      "will pick up and drop off times vary",
-      "will days vary weekly",
-      "overnight child",
       "days in care",
-      "school district",
-      "school name",
-      "grade/level",
-      "days in school",
-      "depart time",
-      "return time",
       "attendance details",
       "child details",
       "contact",
@@ -458,9 +411,7 @@ export function parseVisionDocument(rawText) {
   }
 
   detectDocumentType();
-  detectChildAndGuardianNamesFromSections();
-  detectChildNameFallback();
-  detectGuardianNameFallback();
+  detectNames();
   detectDob();
   detectGender();
   detectPhone();
